@@ -635,262 +635,199 @@ Todos poderão acompanhar a movimentação da Arena durante a competição.
 
 </main>
 
-<script>
+<script type="module">
+import {
+  iniciarFirebase,
+  salvarArena,
+  atualizarArena,
+  observarArena,
+  observarCompetidores,
+  liberarEntrada,
+  bloquearEntrada,
+  definirStatusArena,
+  registrarEvento
+} from "./js/firebase-service.js";
 
-const listaDescritores=[
-"D001_M","D002_M","D003_M","D004_M","D005_M",
-"D006_M","D007_M","D008_M","D009_M","D010_M",
-"D011_M","D012_M","D013_M","D014_M","D015_M",
-"D016_M","D017_M","D018_M","D019_M","D020_M",
-"D021_M","D022_M","D023_M","D024_M","D025_M",
-"D026_M","D027_M","D028_M","D029_M","D030_M",
-"D074_M","D088_M","D097_M","D111_M","D125_M"
+iniciarFirebase();
+
+const listaDescritores = [
+  "D001_M","D002_M","D003_M","D004_M","D005_M",
+  "D006_M","D007_M","D008_M","D009_M","D010_M",
+  "D011_M","D012_M","D013_M","D014_M","D015_M",
+  "D016_M","D017_M","D018_M","D019_M","D020_M",
+  "D021_M","D022_M","D023_M","D024_M","D025_M",
+  "D026_M","D027_M","D028_M","D029_M","D030_M",
+  "D074_M","D088_M","D097_M","D111_M","D125_M"
 ];
 
-const area=document.getElementById("descritores");
+const area = document.getElementById("descritores");
 
-listaDescritores.forEach(d=>{
- const box=document.createElement("label");
- box.className="desc"+(d==="D111_M"?" destaque":"");
- box.innerHTML=`<input type="checkbox" value="${d}"><span>${d}</span>`;
- area.appendChild(box);
+area.innerHTML = "";
+
+listaDescritores.forEach(d => {
+  const box = document.createElement("label");
+
+  box.className =
+    "desc" + (d === "D111_M" ? " destaque" : "");
+
+  box.innerHTML =
+    `<input type="checkbox" value="${d}">
+     <span>${d}</span>`;
+
+  area.appendChild(box);
 });
 
-function marcarPrincipais(){
+let pararArena = null;
+let pararCompetidores = null;
 
- document.querySelectorAll(".desc input").forEach(x=>{
-   x.checked=[
-     "D074_M",
-     "D088_M",
-     "D097_M",
-     "D111_M",
-     "D125_M"
-   ].includes(x.value);
- });
 
+/* =========================================
+   UTILIDADES
+========================================= */
+
+function gerarCodigo() {
+  return "MAT-" +
+    Math.floor(1000 + Math.random() * 9000);
 }
 
-function limpar(){
- document.querySelectorAll(".desc input").forEach(x=>x.checked=false);
+function arenaLocal() {
+  try {
+    return JSON.parse(
+      localStorage.getItem("arenaPAEBES")
+    );
+  } catch {
+    return null;
+  }
 }
 
-function gerarCodigo(){
- return "MAT-"+Math.floor(1000+Math.random()*9000);
+function salvarLocal(arena) {
+  localStorage.setItem(
+    "arenaPAEBES",
+    JSON.stringify(arena)
+  );
 }
 
-async function criarArena(){
 
-    const selecionados = [...document.querySelectorAll(".desc input:checked")]
-        .map(x => x.value);
+/* =========================================
+   DESCRITORES
+========================================= */
 
-    if (selecionados.length === 0) {
-        alert("Selecione pelo menos um descritor.");
-        return;
-    }
+window.marcarPrincipais = function() {
 
-    const codigo = gerarCodigo();
+  const principais = [
+    "D074_M",
+    "D088_M",
+    "D097_M",
+    "D111_M",
+    "D125_M"
+  ];
 
-    const dados = {
-        codigo: codigo,
-        nome: document.getElementById("nomeArena").value || "Arena Matemática",
-        turma: document.getElementById("turma").value,
-        quantidade: Number(document.getElementById("qtd").value) || 15,
-        limite: Number(document.getElementById("limite").value) || 60,
-        descritores: selecionados,
-        status: "preparacao",
-        competidores: {},
-        criadaEm: new Date().toISOString()
-    };
+  document
+    .querySelectorAll(".desc input")
+    .forEach(x => {
+      x.checked = principais.includes(x.value);
+    });
+};
 
-    try {
+window.limpar = function() {
 
-        await salvarArena(codigo, dados);
+  document
+    .querySelectorAll(".desc input")
+    .forEach(x => x.checked = false);
+};
 
-        localStorage.setItem(
-            "arenaPAEBES",
-            JSON.stringify(dados)
-        );
 
-        document.getElementById("codigo").textContent = codigo;
+/* =========================================
+   RANKING
+========================================= */
 
-        document.getElementById("competidores").textContent =
-            "0/" + dados.limite;
+function atualizarRanking(competidores = {}) {
 
-        document.getElementById("questaoAtual").textContent =
-            "0/" + dados.quantidade;
+  const lista = Object.values(
+    competidores || {}
+  );
 
-        document.getElementById("estado").textContent = "Preparação";
+  const limite =
+    Number(
+      document.getElementById("limite").value
+    ) || 60;
 
-        document.getElementById("mensagem").innerHTML =
-            "🎮 Arena criada. Código <strong>" +
-            codigo +
-            "</strong>. Agora libere a entrada dos estudantes.";
+  document.getElementById("competidores")
+    .textContent =
+      lista.length + "/" + limite;
 
-        alert("Arena criada com sucesso! Código: " + codigo);
+  const ranking = [...lista].sort(
+    (a, b) =>
+      Number(b.xp || 0) -
+      Number(a.xp || 0)
+  );
 
-    } catch (erro) {
+  const areaRanking =
+    document.getElementById("ranking");
 
-        console.error("ERRO AO CRIAR ARENA:", erro);
+  if (ranking.length === 0) {
 
-        alert(
-            "Não foi possível criar a Arena no Firebase. " +
-            "Abra o console para verificar o erro."
-        );
-    }
-}
-function acao(tipo){
+    document.getElementById("lider")
+      .textContent = "—";
 
- const arena=JSON.parse(localStorage.getItem("arenaPAEBES"));
-
- if(!arena){
-   alert("Crie uma Arena primeiro.");
-   return;
- }
-
- arena.status=tipo;
- localStorage.setItem("arenaPAEBES",JSON.stringify(arena));
-
- const nomes={
-   iniciada:"Em disputa",
-   pausada:"Pausada",
-   continuada:"Em disputa",
-   encerrada:"Encerrada"
- };
-
- document.getElementById("estado").textContent=nomes[tipo];
-
- document.getElementById("mensagem").innerHTML=
- "⚡ Arena <strong>"+nomes[tipo]+"</strong>.";
-
-}
-
-function liberar(){
-
- const arena=JSON.parse(localStorage.getItem("arenaPAEBES"));
-
- if(!arena){
-   alert("Crie uma Arena primeiro.");
-   return;
- }
-
- arena.acesso=true;
-
- localStorage.setItem("arenaPAEBES",JSON.stringify(arena));
-
- document.getElementById("mensagem").innerHTML=
- "🔓 Entrada dos estudantes <strong>LIBERADA</strong>.";
-
-}
-
-function bloquear(){
-
- const arena=JSON.parse(localStorage.getItem("arenaPAEBES"));
-
- if(!arena)return;
-
- arena.acesso=false;
-
- localStorage.setItem("arenaPAEBES",JSON.stringify(arena));
-
- document.getElementById("mensagem").innerHTML=
- "🔒 Novas entradas foram bloqueadas.";
-
-}
-
-function evento(nome){
-
- const arena=JSON.parse(localStorage.getItem("arenaPAEBES"));
-
- if(!arena){
-   alert("Crie uma Arena primeiro.");
-   return;
- }
-
- arena.evento={
-   nome,
-   momento:new Date().toISOString()
- };
-
- localStorage.setItem("arenaPAEBES",JSON.stringify(arena));
-
- document.getElementById("mensagem").innerHTML=
- "⚡ EVENTO DISPARADO: <strong>"+nome+"</strong>";
-
-}
-
-function restaurar(){
-
-  const arena=JSON.parse(localStorage.getItem("arenaPAEBES"));
-
-  if(!arena)return;
-
-  document.getElementById("codigo").textContent=arena.codigo;
-  document.getElementById("nomeArena").value=arena.nome;
-  document.getElementById("qtd").value=arena.quantidade;
-  document.getElementById("limite").value=arena.limite;
-
-  const competidores =
-    arena.competidores ? Object.values(arena.competidores) : [];
-
-  document.getElementById("competidores").textContent=
-    competidores.length+"/"+arena.limite;
-
-  document.getElementById("questaoAtual").textContent=
-    "0/"+arena.quantidade;
-
-  document.querySelectorAll(".desc input").forEach(x=>{
-    x.checked=arena.descritores.includes(x.value);
-  });
-
-  const ranking = [...competidores].sort((a,b)=>{
-    if((b.xp || 0)!==(a.xp || 0)){
-      return (b.xp || 0)-(a.xp || 0);
-    }
-    return (b.sequencia || 0)-(a.sequencia || 0);
-  });
-
-  const areaRanking=document.getElementById("ranking");
-
-  if(ranking.length===0){
-
-    areaRanking.innerHTML=`
+    areaRanking.innerHTML = `
       <div class="rank">
         <div class="pos">🥇</div>
+
         <div>
           <strong>Aguardando competidores...</strong>
           <div class="progress">
             <div style="width:0%"></div>
           </div>
         </div>
-        <div>0 pontos</div>
+
+        <div>0 acertos</div>
         <div>0 XP</div>
       </div>
     `;
 
-    document.getElementById("lider").textContent="—";
+    return;
+  }
 
-  }else{
+  document.getElementById("lider")
+    .textContent =
+      ranking[0].nome || "Competidor";
 
-    const maiorXP=Math.max(
-      ...ranking.map(j=>Number(j.xp || 0)),
-      1
-    );
+  const maiorXP = Math.max(
+    ...ranking.map(j => Number(j.xp || 0)),
+    1
+  );
 
-    areaRanking.innerHTML=ranking.map((j,i)=>{
+  areaRanking.innerHTML =
+    ranking.map((j, i) => {
 
-      const medalhas=["🥇","🥈","🥉"];
-      const medalha=medalhas[i] || (i+1)+"º";
+      const medalhas =
+        ["🥇", "🥈", "🥉"];
 
-      const xp=Number(j.xp || 0);
-      const acertos=Number(j.acertos || 0);
-      const progresso=Math.min(100,(xp/maiorXP)*100);
+      const pos =
+        medalhas[i] || `${i + 1}º`;
+
+      const xp =
+        Number(j.xp || 0);
+
+      const acertos =
+        Number(j.acertos || 0);
+
+      const progresso =
+        Math.min(
+          100,
+          (xp / maiorXP) * 100
+        );
 
       return `
         <div class="rank">
-          <div class="pos">${medalha}</div>
+
+          <div class="pos">${pos}</div>
 
           <div>
-            <strong>${j.nome || "Competidor"}</strong>
+            <strong>
+              ${j.nome || "Competidor"}
+            </strong>
 
             <div class="progress">
               <div style="width:${progresso}%"></div>
@@ -898,74 +835,89 @@ function restaurar(){
           </div>
 
           <div>${acertos} acertos</div>
+
           <div>${xp} XP</div>
+
         </div>
       `;
     }).join("");
-
-    document.getElementById("lider").textContent=
-      ranking[0].nome || "—";
-  }
-
-  document.getElementById("mensagem").innerHTML=
-    "💾 Arena anterior recuperada: <strong>"+
-    arena.codigo+"</strong>.";
 }
 
- const arena=JSON.parse(localStorage.getItem("arenaPAEBES"));
 
- if(!arena)return;
+/* =========================================
+   RESTAURAR INTERFACE
+========================================= */
 
- document.getElementById("codigo").textContent=arena.codigo;
+function restaurar(arena = arenaLocal()) {
 
- document.getElementById("nomeArena").value=arena.nome;
+  if (!arena) return;
 
- document.getElementById("qtd").value=arena.quantidade;
+  document.getElementById("codigo")
+    .textContent =
+      arena.codigo || "---";
 
- document.getElementById("limite").value=arena.limite;
-
- document.getElementById("competidores").textContent=
- "0/"+arena.limite;
-
- document.getElementById("questaoAtual").textContent=
- "0/"+arena.quantidade;
-
- document.querySelectorAll(".desc input").forEach(x=>{
-   x.checked=arena.descritores.includes(x.value);
- });
-
- document.getElementById("mensagem").innerHTML=
- "💾 Arena anterior recuperada: <strong>"+
- arena.codigo+"</strong>.";
-
-}
-
-restaurar();
-
-</script>
-<script type="module">
-import {
-  iniciarFirebase,
-  observarArena,
-  observarCompetidores
-} from "./js/firebase-service.js";
-
-iniciarFirebase();
-
-let pararArena = null;
-let pararCompetidores = null;
-
-function conectarArenaFirebase() {
-  const arenaSalva = JSON.parse(localStorage.getItem("arenaPAEBES"));
-
-  if (!arenaSalva || !arenaSalva.codigo) {
-    console.log("Nenhuma Arena ativa para conectar.");
-    return;
+  if (arena.nome) {
+    document.getElementById("nomeArena")
+      .value = arena.nome;
   }
 
-  const codigo = arenaSalva.codigo;
+  if (arena.turma) {
+    document.getElementById("turma")
+      .value = arena.turma;
+  }
 
-  // Evita criar vários observadores ao mesmo tempo
+  if (arena.quantidade) {
+    document.getElementById("qtd")
+      .value = arena.quantidade;
+  }
+
+  if (arena.limite) {
+    document.getElementById("limite")
+      .value = arena.limite;
+  }
+
+  if (Array.isArray(arena.descritores)) {
+
+    document
+      .querySelectorAll(".desc input")
+      .forEach(x => {
+        x.checked =
+          arena.descritores.includes(x.value);
+      });
+  }
+
+  const nomesStatus = {
+    preparacao: "Preparação",
+    iniciada: "Em disputa",
+    pausada: "Pausada",
+    continuada: "Em disputa",
+    encerrada: "Encerrada"
+  };
+
+  document.getElementById("estado")
+    .textContent =
+      nomesStatus[arena.status] ||
+      arena.status ||
+      "Preparação";
+
+  document.getElementById("questaoAtual")
+    .textContent =
+      `${Number(arena.questaoAtual || 0)}/${Number(arena.quantidade || 15)}`;
+
+  atualizarRanking(
+    arena.competidores || {}
+  );
+}
+
+
+/* =========================================
+   FIREBASE EM TEMPO REAL
+========================================= */
+
+function conectarArena(codigo) {
+
+  if (!codigo) return;
+
   if (typeof pararArena === "function") {
     pararArena();
   }
@@ -974,58 +926,365 @@ function conectarArenaFirebase() {
     pararCompetidores();
   }
 
-  // Sincroniza os dados gerais da Arena
-  pararArena = observarArena(codigo, (arenaAtualizada) => {
-    if (!arenaAtualizada) return;
+  pararArena =
+    observarArena(
+      codigo,
+      arena => {
 
-    const arenaLocal =
-      JSON.parse(localStorage.getItem("arenaPAEBES")) || {};
+        if (!arena) return;
 
-    const arenaMesclada = {
-      ...arenaLocal,
-      ...arenaAtualizada,
-      codigo: codigo
-    };
+        salvarLocal(arena);
 
-    localStorage.setItem(
-      "arenaPAEBES",
-      JSON.stringify(arenaMesclada)
+        restaurar(arena);
+      }
     );
 
-    if (typeof restaurar === "function") {
-      restaurar();
-    }
-  });
+  pararCompetidores =
+    observarCompetidores(
+      codigo,
+      competidores => {
 
-  // Sincroniza estudantes/competidores em tempo real
-  pararCompetidores = observarCompetidores(
-    codigo,
-    (competidoresAtualizados) => {
+        const arena =
+          arenaLocal() || {
+            codigo: codigo
+          };
 
-      const arenaLocal =
-        JSON.parse(localStorage.getItem("arenaPAEBES")) || {};
+        arena.competidores =
+          competidores || {};
 
-      arenaLocal.competidores =
-        competidoresAtualizados || [];
+        salvarLocal(arena);
 
-      localStorage.setItem(
-        "arenaPAEBES",
-        JSON.stringify(arenaLocal)
-      );
-
-      if (typeof restaurar === "function") {
-        restaurar();
+        atualizarRanking(
+          competidores || {}
+        );
       }
-    }
-  );
-
-  console.log(
-    "🔥 Professor conectado à Arena:",
-    codigo
-  );
+    );
 }
 
-conectarArenaFirebase();
+
+/* =========================================
+   CRIAR ARENA
+========================================= */
+
+window.criarArena = async function() {
+
+  const selecionados = [
+    ...document.querySelectorAll(
+      ".desc input:checked"
+    )
+  ].map(x => x.value);
+
+  if (selecionados.length === 0) {
+
+    alert(
+      "Selecione pelo menos um descritor."
+    );
+
+    return;
+  }
+
+  const codigo = gerarCodigo();
+
+  const dados = {
+
+    codigo,
+
+    nome:
+      document
+        .getElementById("nomeArena")
+        .value ||
+      "Arena Matemática",
+
+    turma:
+      document
+        .getElementById("turma")
+        .value,
+
+    quantidade:
+      Number(
+        document
+          .getElementById("qtd")
+          .value
+      ) || 15,
+
+    limite:
+      Number(
+        document
+          .getElementById("limite")
+          .value
+      ) || 60,
+
+    descritores:
+      selecionados,
+
+    status:
+      "preparacao",
+
+    entradaLiberada:
+      false,
+
+    aceitaNovos:
+      false,
+
+    questaoAtual:
+      0,
+
+    competidores:
+      {},
+
+    criadaEm:
+      new Date().toISOString()
+  };
+
+  try {
+
+    await salvarArena(
+      codigo,
+      dados
+    );
+
+    salvarLocal(dados);
+
+    restaurar(dados);
+
+    conectarArena(codigo);
+
+    document
+      .getElementById("mensagem")
+      .innerHTML =
+      `🎮 Arena criada com sucesso.
+       Código <strong>${codigo}</strong>.
+       Agora clique em
+       <strong>Liberar estudantes</strong>.`;
+
+    alert(
+      "Arena criada com sucesso! Código: " +
+      codigo
+    );
+
+  } catch (erro) {
+
+    console.error(
+      "ERRO AO CRIAR ARENA:",
+      erro
+    );
+
+    alert(
+      "Erro ao criar a Arena no Firebase."
+    );
+  }
+};
+
+
+/* =========================================
+   LIBERAR ESTUDANTES
+========================================= */
+
+window.liberar = async function() {
+
+  const arena = arenaLocal();
+
+  if (!arena || !arena.codigo) {
+
+    alert(
+      "Crie uma Arena primeiro."
+    );
+
+    return;
+  }
+
+  try {
+
+    await liberarEntrada(
+      arena.codigo
+    );
+
+    arena.entradaLiberada = true;
+    arena.aceitaNovos = true;
+
+    salvarLocal(arena);
+
+    document
+      .getElementById("mensagem")
+      .innerHTML =
+      "🔓 Entrada dos estudantes <strong>LIBERADA</strong>.";
+
+  } catch (erro) {
+
+    console.error(erro);
+
+    alert(
+      "Não foi possível liberar os estudantes."
+    );
+  }
+};
+
+
+/* =========================================
+   BLOQUEAR ENTRADAS
+========================================= */
+
+window.bloquear = async function() {
+
+  const arena = arenaLocal();
+
+  if (!arena || !arena.codigo) {
+    return;
+  }
+
+  try {
+
+    await bloquearEntrada(
+      arena.codigo
+    );
+
+    arena.entradaLiberada = false;
+    arena.aceitaNovos = false;
+
+    salvarLocal(arena);
+
+    document
+      .getElementById("mensagem")
+      .innerHTML =
+      "🔒 Novas entradas foram bloqueadas.";
+
+  } catch (erro) {
+
+    console.error(erro);
+
+    alert(
+      "Não foi possível bloquear as entradas."
+    );
+  }
+};
+
+
+/* =========================================
+   CONTROLE DA DISPUTA
+========================================= */
+
+window.acao = async function(tipo) {
+
+  const arena = arenaLocal();
+
+  if (!arena || !arena.codigo) {
+
+    alert(
+      "Crie uma Arena primeiro."
+    );
+
+    return;
+  }
+
+  const nomes = {
+    iniciada: "Em disputa",
+    pausada: "Pausada",
+    continuada: "Em disputa",
+    encerrada: "Encerrada"
+  };
+
+  try {
+
+    await definirStatusArena(
+      arena.codigo,
+      tipo
+    );
+
+    arena.status = tipo;
+
+    salvarLocal(arena);
+
+    document
+      .getElementById("estado")
+      .textContent =
+      nomes[tipo];
+
+    document
+      .getElementById("mensagem")
+      .innerHTML =
+      `⚡ Arena <strong>${nomes[tipo]}</strong>.`;
+
+  } catch (erro) {
+
+    console.error(erro);
+
+    alert(
+      "Não foi possível alterar o status da Arena."
+    );
+  }
+};
+
+
+/* =========================================
+   EVENTOS
+========================================= */
+
+window.evento = async function(nome) {
+
+  const arena = arenaLocal();
+
+  if (!arena || !arena.codigo) {
+
+    alert(
+      "Crie uma Arena primeiro."
+    );
+
+    return;
+  }
+
+  try {
+
+    await registrarEvento(
+      arena.codigo,
+      {
+        nome,
+        momento:
+          new Date().toISOString()
+      }
+    );
+
+    document
+      .getElementById("mensagem")
+      .innerHTML =
+      `⚡ EVENTO DISPARADO:
+       <strong>${nome}</strong>`;
+
+  } catch (erro) {
+
+    console.error(erro);
+
+    alert(
+      "Não foi possível disparar o evento."
+    );
+  }
+};
+
+
+/* =========================================
+   INICIALIZAÇÃO
+========================================= */
+
+const salva = arenaLocal();
+
+if (salva && salva.codigo) {
+
+  restaurar(salva);
+
+  conectarArena(
+    salva.codigo
+  );
+
+} else {
+
+  document
+    .getElementById("mensagem")
+    .textContent =
+    "Aguardando criação da Arena.";
+}
+
+console.log(
+  "🔥 Painel do professor conectado ao Firebase."
+);
 </script>
 </body>
 </html>
