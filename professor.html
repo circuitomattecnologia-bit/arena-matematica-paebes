@@ -801,6 +801,98 @@ function evento(nome){
 
 function restaurar(){
 
+  const arena=JSON.parse(localStorage.getItem("arenaPAEBES"));
+
+  if(!arena)return;
+
+  document.getElementById("codigo").textContent=arena.codigo;
+  document.getElementById("nomeArena").value=arena.nome;
+  document.getElementById("qtd").value=arena.quantidade;
+  document.getElementById("limite").value=arena.limite;
+
+  const competidores =
+    arena.competidores ? Object.values(arena.competidores) : [];
+
+  document.getElementById("competidores").textContent=
+    competidores.length+"/"+arena.limite;
+
+  document.getElementById("questaoAtual").textContent=
+    "0/"+arena.quantidade;
+
+  document.querySelectorAll(".desc input").forEach(x=>{
+    x.checked=arena.descritores.includes(x.value);
+  });
+
+  const ranking = [...competidores].sort((a,b)=>{
+    if((b.xp || 0)!==(a.xp || 0)){
+      return (b.xp || 0)-(a.xp || 0);
+    }
+    return (b.sequencia || 0)-(a.sequencia || 0);
+  });
+
+  const areaRanking=document.getElementById("ranking");
+
+  if(ranking.length===0){
+
+    areaRanking.innerHTML=`
+      <div class="rank">
+        <div class="pos">🥇</div>
+        <div>
+          <strong>Aguardando competidores...</strong>
+          <div class="progress">
+            <div style="width:0%"></div>
+          </div>
+        </div>
+        <div>0 pontos</div>
+        <div>0 XP</div>
+      </div>
+    `;
+
+    document.getElementById("lider").textContent="—";
+
+  }else{
+
+    const maiorXP=Math.max(
+      ...ranking.map(j=>Number(j.xp || 0)),
+      1
+    );
+
+    areaRanking.innerHTML=ranking.map((j,i)=>{
+
+      const medalhas=["🥇","🥈","🥉"];
+      const medalha=medalhas[i] || (i+1)+"º";
+
+      const xp=Number(j.xp || 0);
+      const acertos=Number(j.acertos || 0);
+      const progresso=Math.min(100,(xp/maiorXP)*100);
+
+      return `
+        <div class="rank">
+          <div class="pos">${medalha}</div>
+
+          <div>
+            <strong>${j.nome || "Competidor"}</strong>
+
+            <div class="progress">
+              <div style="width:${progresso}%"></div>
+            </div>
+          </div>
+
+          <div>${acertos} acertos</div>
+          <div>${xp} XP</div>
+        </div>
+      `;
+    }).join("");
+
+    document.getElementById("lider").textContent=
+      ranking[0].nome || "—";
+  }
+
+  document.getElementById("mensagem").innerHTML=
+    "💾 Arena anterior recuperada: <strong>"+
+    arena.codigo+"</strong>.";
+}
+
  const arena=JSON.parse(localStorage.getItem("arenaPAEBES"));
 
  if(!arena)return;
