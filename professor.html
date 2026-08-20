@@ -931,26 +931,82 @@ import {
   observarCompetidores
 } from "./js/firebase-service.js";
 
-  try {
-    iniciarFirebase();
-    const arenaSalva = JSON.parse(localStorage.getItem("arenaPAEBES"));
+iniciarFirebase();
 
-if (arenaSalva && arenaSalva.codigo) {
-  observarArena(arenaSalva.codigo, (arenaAtualizada) => {
+let pararArena = null;
+let pararCompetidores = null;
+
+function conectarArenaFirebase() {
+  const arenaSalva = JSON.parse(localStorage.getItem("arenaPAEBES"));
+
+  if (!arenaSalva || !arenaSalva.codigo) {
+    console.log("Nenhuma Arena ativa para conectar.");
+    return;
+  }
+
+  const codigo = arenaSalva.codigo;
+
+  // Evita criar vários observadores ao mesmo tempo
+  if (typeof pararArena === "function") {
+    pararArena();
+  }
+
+  if (typeof pararCompetidores === "function") {
+    pararCompetidores();
+  }
+
+  // Sincroniza os dados gerais da Arena
+  pararArena = observarArena(codigo, (arenaAtualizada) => {
     if (!arenaAtualizada) return;
+
+    const arenaLocal =
+      JSON.parse(localStorage.getItem("arenaPAEBES")) || {};
+
+    const arenaMesclada = {
+      ...arenaLocal,
+      ...arenaAtualizada,
+      codigo: codigo
+    };
 
     localStorage.setItem(
       "arenaPAEBES",
-      JSON.stringify(arenaAtualizada)
+      JSON.stringify(arenaMesclada)
     );
 
-    restaurar();
+    if (typeof restaurar === "function") {
+      restaurar();
+    }
   });
+
+  // Sincroniza estudantes/competidores em tempo real
+  pararCompetidores = observarCompetidores(
+    codigo,
+    (competidoresAtualizados) => {
+
+      const arenaLocal =
+        JSON.parse(localStorage.getItem("arenaPAEBES")) || {};
+
+      arenaLocal.competidores =
+        competidoresAtualizados || [];
+
+      localStorage.setItem(
+        "arenaPAEBES",
+        JSON.stringify(arenaLocal)
+      );
+
+      if (typeof restaurar === "function") {
+        restaurar();
+      }
+    }
+  );
+
+  console.log(
+    "🔥 Professor conectado à Arena:",
+    codigo
+  );
 }
-    console.log("🔥 Arena Matemática conectada ao Firebase.");
-  } catch (erro) {
-    console.error("Erro ao conectar a Arena ao Firebase:", erro);
-  }
+
+conectarArenaFirebase();
 </script>
 </body>
 </html>
