@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Arena Matemática — Competidor</title>
+
+<style>
+*{
+  box-sizing:border-box;
+}
+
+:root{
+  --bg:#050b18;
+  --card:#0d1b34;
+  --card2:#112442;
+  --line:#253c60;
+  --cyan:#27d8ff;
+  --blue:#438cff;
+  --purple:#9b55ff;
+  --pink:#ed3d9d;
+  --orange:#ff9d57;
+  --green:#2dd79a;
+  --yellow:#ffd45a;
+  --red:#ff647c;
+  --text:#f4f7ff;
+  --muted:#aab8d2;
+}
+
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:Arial,Helvetica,sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(circle at 15% 10%,rgba(0,188,255,.18),transparent 27%),
+    radial-gradient(circle at 85% 20%,rgba(237,61,157,.16),transparent 30%),
+    linear-gradient(135deg,#071426,#050916 70%);
+}
+
+button,input{
+  font:inherit;
+}
+
+button{
+  cursor:pointer;
+}
+
+.wrap{
+  width:min(1400px,94%);
+  margin:auto;
+}
+
+/* TOPO */
+
+header{
+  padding:25px 0 18px;
+}
+
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:20px;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:15px;
+}
+
+.logo{
+  width:58px;
+  height:58px;
+  border-radius:18px;
+  display:grid;
+  place-items:center;
+  font-size:30px;
+  background:linear-gradient(135deg,var(--blue),var(--purple),var(--pink));
+  box-shadow:0 0 30px rgba(80,100,255,.25);
+}
+
+.small{
+  color:var(--cyan);
+  font-size:13px;
+  font-weight:900;
+  letter-spacing:3px;
+}
+
+h1{
+  margin:4px 0 0;
+  font-size:27px;
+}
+
+.badge{
+  border:1px solid #394a68;
+  background:rgba(255,255,255,.05);
+  padding:11px 18px;
+  border-radius:999px;
+  font-weight:800;
+}
+
+/* LOGIN */
+
+.login{
+  max-width:760px;
+  margin:60px auto;
+  background:linear-gradient(145deg,rgba(17,36,66,.96),rgba(7,19,38,.96));
+  border:1px solid var(--line);
+  border-radius:26px;
+  padding:32px;
+  box-shadow:0 30px 80px rgba(0,0,0,.35);
+}
+
+.login h2{
+  font-size:30px;
+  margin:0 0 8px;
+}
+
+.login p{
+  color:var(--muted);
+  line-height:1.55;
+}
+
+label{
+  display:block;
+  margin:20px 0 8px;
+  color:#c4d0e6;
+  font-weight:800;
+  font-size:14px;
+}
+
+input{
+  width:100%;
+  padding:15px;
+  border-radius:13px;
+  border:1px solid #29415f;
+  background:#07162b;
+  color:white;
+  outline:none;
+}
+
+input:focus{
+  border-color:var(--cyan);
+}
+
+.primary{
+  width:100%;
+  margin-top:24px;
+  padding:16px;
+  border:0;
+  border-radius:14px;
+  color:white;
+  font-weight:900;
+  background:linear-gradient(90deg,#19acef,#7259f4,#ed3d9d);
+}
+
+.note{
+  margin-top:18px;
+  border-left:3px solid var(--cyan);
+  background:#0b2941;
+  padding:14px;
+  color:#ccefff;
+  border-radius:4px 12px 12px 4px;
+}
+
+/* ARENA */
+
+#arena{
+  display:none;
+}
+
+.playerHead{
+  margin:15px 0 18px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:15px;
+  background:rgba(13,27,52,.92);
+  border:1px solid var(--line);
+  border-radius:20px;
+  padding:18px 22px;
+}
+
+.playerName{
+  font-size:25px;
+  font-weight:900;
+}
+
+.status{
+  color:var(--green);
+  font-weight:900;
+}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:12px;
+  margin-bottom:18px;
+}
+
+.stat{
+  background:rgba(13,27,52,.92);
+  border:1px solid var(--line);
+  border-radius:17px;
+  padding:17px;
+}
+
+.stat span{
+  display:block;
+  color:var(--muted);
+  font-size:13px;
+  margin-bottom:8px;
+}
+
+.stat strong{
+  font-size:23px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:1.5fr .85fr;
+  gap:18px;
+}
+
+.card{
+  background:rgba(13,27,52,.94);
+  border:1px solid var(--line);
+  border-radius:22px;
+  padding:24px;
+  margin-bottom:18px;
+}
+
+.card h2{
+  margin-top:0;
+}
+
+.progressText{
+  display:flex;
+  justify-content:space-between;
+  color:var(--muted);
+  font-weight:800;
+  margin-bottom:9px;
+}
+
+.progress{
+  height:10px;
+  border-radius:999px;
+  overflow:hidden;
+  background:#061225;
+}
+
+.progress div{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,var(--cyan),var(--purple),var(--pink));
+  transition:.4s;
+}
+
+.questionTop{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  margin:22px 0 12px;
+}
+
+.descritor{
+  color:var(--cyan);
+  font-weight:900;
+}
+
+.nivel{
+  color:var(--yellow);
+  font-weight:900;
+}
+
+.question{
+  font-size:22px;
+  font-weight:800;
+  line-height:1.45;
+  margin:18px 0 22px;
+}
+
+.options{
+  display:grid;
+  gap:11px;
+}
+
+.option{
+  border:1px solid #2b4468;
+  border-radius:14px;
+  padding:15px 17px;
+  background:#102441;
+  color:white;
+  text-align:left;
+  font-weight:800;
+  transition:.15s;
+}
+
+.option:hover{
+  transform:translateY(-1px);
+  border-color:var(--cyan);
+  background:#143153;
+}
+
+.option.selected{
+  border-color:var(--cyan);
+  box-shadow:0 0 0 2px rgba(39,216,255,.15);
+}
+
+.answer{
+  margin-top:18px;
+  display:flex;
+  gap:10px;
+}
+
+.answer button{
+  border:0;
+  border-radius:13px;
+  padding:14px 20px;
+  color:white;
+  font-weight:900;
+}
+
+.confirm{
+  background:linear-gradient(90deg,#149fe5,#7658ee);
+}
+
+.confirm:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+
+.feedback{
+  display:none;
+  margin-top:18px;
+  padding:15px;
+  border-radius:13px;
+  font-weight:800;
+}
+
+.feedback.ok{
+  display:block;
+  background:rgba(45,215,154,.13);
+  border:1px solid var(--green);
+  color:#a8ffdf;
+}
+
+.feedback.no{
+  display:block;
+  background:rgba(255,100,124,.12);
+  border:1px solid var(--red);
+  color:#ffc1ca;
+}
+
+/* RANKING */
+
+.rankItem{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:12px 4px;
+  border-bottom:1px solid #203654;
+}
+
+.rankItem:last-child{
+  border-bottom:0;
+}
+
+.pos{
+  width:35px;
+  font-size:18px;
+  font-weight:900;
+}
+
+.rankName{
+  flex:1;
+  font-weight:800;
+}
+
+.rankXP{
+  color:var(--yellow);
+  font-weight:900;
+}
+
+/* EVENTOS */
+
+.event{
+  border:1px solid #6845a7;
+  background:
+    radial-gradient(circle at 80% 20%,rgba(237,61,157,.18),transparent 30%),
+    #111c39;
+}
+
+.eventTitle{
+  color:#ff9ed0;
+  font-weight:900;
+  letter-spacing:1px;
+}
+
+.eventBox{
+  margin-top:13px;
+  background:#0a1830;
+  border-radius:14px;
+  padding:15px;
+  line-height:1.5;
+}
+
+/* FEED */
+
+.feed{
+  max-height:270px;
+  overflow:auto;
+}
+
+.feedItem{
+  padding:12px;
+  background:#0a1d35;
+  border-left:3px solid var(--cyan);
+  border-radius:5px 12px 12px 5px;
+  margin-bottom:10px;
+  line-height:1.4;
+}
+
+/* PODERES */
+
+.powerGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.power{
+  background:#102441;
+  border:1px solid #2b4468;
+  padding:13px;
+  border-radius:13px;
+}
+
+.power b{
+  display:block;
+  margin-bottom:5px;
+}
+
+.power span{
+  color:var(--yellow);
+}
+
+/* PAUSA */
+
+.pauseOverlay{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(2,7,17,.92);
+  z-index:20;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+
+.pauseBox{
+  width:min(560px,100%);
+  text-align:center;
+  padding:35px;
+  border-radius:25px;
+  border:1px solid #40567a;
+  background:#0d1b34;
+}
+
+.pauseBox h2{
+  font-size:34px;
+}
+
+.pauseBox p{
+  color:var(--muted);
+  line-height:1.5;
+}
+
+/* MOBILE */
+
+@media(max-width:900px){
+  .grid{
+    grid-template-columns:1fr;
+  }
+
+  .stats{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .top{
+    align-items:flex-start;
+  }
+}
+
+@media(max-width:600px){
+  .stats{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .playerHead{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+
+  .question{
+    font-size:19px;
+  }
+
+  .powerGrid{
+    grid-template-columns:1fr;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrap">
+
+<header>
+  <div class="top">
+
+    <div class="brand">
+      <div class="logo">🏆</div>
+
+      <div>
+        <div class="small">PROFESSOR LEOPOLDO</div>
+        <h1>Arena Matemática — Rumo ao PAEBES</h1>
+      </div>
+    </div>
+
+    <div class="badge">
+      🎯 Área do Competidor
+    </div>
+
+  </div>
+</header>
+
+<!-- ENTRADA -->
+
+<section id="login" class="login">
+
+<h2>⚡ Entre na Arena</h2>
+
+<p>
+Digite o código informado pelo professor e seu nome.
+Seu progresso ficará registrado neste dispositivo para que a disputa
+possa continuar em outra aula.
+</p>
+
+<label>Código da Arena</label>
+<input
+  id="codigo"
+  maxlength="15"
+  placeholder="Ex.: MAT-2048"
+  autocomplete="off"
+>
+
+<label>Seu nome</label>
+<input
+  id="nome"
+  maxlength="50"
+  placeholder="Nome e sobrenome"
+  autocomplete="off"
+>
+
+<button class="primary" onclick="entrar()">
+⚔️ ENTRAR NA COMPETIÇÃO
+</button>
+
+<div class="note">
+🔥 Prepare-se. Cada acerto, sequência e desafio pode alterar o ranking.
+</div>
+
+</section>
+
+<!-- ARENA -->
+
+<section id="arena">
+
+<div class="playerHead">
+
+  <div>
+    <div class="small">COMPETIDOR</div>
+    <div id="playerName" class="playerName">—</div>
+  </div>
+
+  <div>
+    <div id="roomName" class="badge">Arena —</div>
+  </div>
+
+  <div id="status" class="status">
+    ● ARENA ATIVA
+  </div>
+
+</div>
+
+<div class="stats">
+
+  <div class="stat">
+    <span>🏆 POSIÇÃO</span>
+    <strong id="position">—</strong>
+  </div>
+
+  <div class="stat">
+    <span>⚡ XP</span>
+    <strong id="xp">0</strong>
+  </div>
+
+  <div class="stat">
+    <span>🔥 SEQUÊNCIA</span>
+    <strong id="streak">0</strong>
+  </div>
+
+  <div class="stat">
+    <span>✅ ACERTOS</span>
+    <strong id="hits">0</strong>
+  </div>
+
+  <div class="stat">
+    <span>🎯 QUESTÃO</span>
+    <strong id="qcount">1/20</strong>
+  </div>
+
+</div>
+
+<div class="grid">
+
+<!-- ESQUERDA -->
+
+<div>
+
+<div class="card">
+
+<div class="progressText">
+  <span>PROGRESSO DA ARENA</span>
+  <span id="progressLabel">0%</span>
+</div>
+
+<div class="progress">
+  <div id="progressBar"></div>
+</div>
+
+<div class="questionTop">
+  <span id="descriptor" class="descritor">D111_M</span>
+  <span id="level" class="nivel">BÁSICO</span>
+</div>
+
+<div id="question" class="question">
+Aguardando a primeira questão da Arena...
+</div>
+
+<div id="options" class="options"></div>
+
+<div class="answer">
+  <button
+    id="confirmButton"
+    class="confirm"
+    onclick="confirmarResposta()"
+    disabled
+  >
+  CONFIRMAR RESPOSTA
+  </button>
+</div>
+
+<div id="feedback" class="feedback"></div>
+
+</div>
+
+<div id="eventCard" class="card event">
+
+<div class="eventTitle">
+⚡ CENTRAL DE EVENTOS
+</div>
+
+<h2 id="eventName">
+Arena preparada
+</h2>
+
+<div id="eventText" class="eventBox">
+Os eventos especiais aparecerão aqui durante a competição.
+</div>
+
+</div>
+
+</div>
+
+<!-- DIREITA -->
+
+<div>
+
+<div class="card">
+
+<h2>🏆 Ranking ao vivo</h2>
+
+<div id="ranking">
+
+<div class="rankItem">
+  <div class="pos">1º</div>
+  <div class="rankName">Aguardando competidores</div>
+  <div class="rankXP">—</div>
+</div>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>📡 Movimentação da Arena</h2>
+
+<div id="feed" class="feed">
+
+<div class="feedItem">
+🔥 A Arena foi preparada para a competição.
+</div>
+
+<div class="feedItem">
+🎯 Acerto e nível da questão têm maior peso que velocidade.
+</div>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>🛡️ Inventário</h2>
+
+<div class="powerGrid">
+
+<div class="power">
+  <b>🛡️ Escudo</b>
+  <span id="shield">0</span>
+</div>
+
+<div class="power">
+  <b>⚡ Multiplicador</b>
+  <span id="multiplier">0</span>
+</div>
+
+<div class="power">
+  <b>💚 Recuperação</b>
+  <span id="recovery">0</span>
+</div>
+
+<div class="power">
+  <b>🔐 Questão secreta</b>
+  <span id="secret">0</span>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+</div>
+
+<!-- PAUSA -->
+
+<div id="pauseOverlay" class="pauseOverlay">
+
+<div class="pauseBox">
+
+<div style="font-size:55px">⏸️</div>
+
+<h2>Arena pausada</h2>
+
+<p>
+Seu progresso foi preservado.
+Quando o professor continuar a Arena, você poderá seguir exatamente
+do ponto em que parou.
+</p>
+
+<div class="badge">
+💾 PROGRESSO SALVO
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+/* =====================================================
+   ARENA MATEMÁTICA
+   ÁREA DO ESTUDANTE
+   Estrutura inicial — 20 questões regulares
+===================================================== */
+
+const TOTAL_QUESTIONS = 20;
+
+let player = {
+  name:"",
+  room:"",
+  xp:0,
+  streak:0,
+  hits:0,
+  questionIndex:0,
+  selected:null,
+  shield:0,
+  multiplier:0,
+  recovery:0,
+  secret:0
+};
+
+
+/* =====================================================
+   BANCO TEMPORÁRIO
+
+   Estas questões são SOMENTE para testar a interface.
+   O banco pedagógico definitivo será conectado depois.
+===================================================== */
+
+const demoQuestions = [
+
+{
+ descriptor:"D111_M",
+ level:"BÁSICO",
+ text:"Um cubo possui quantas faces?",
+ options:[
+   "4 faces",
+   "5 faces",
+   "6 faces",
+   "8 faces",
+   "12 faces"
+ ],
+ correct:2,
+ baseXP:120
+},
+
+{
+ descriptor:"D074_M",
+ level:"BÁSICO",
+ text:"Uma loja concedeu desconto de 20% em um produto de R$ 100,00. Qual é o valor do desconto?",
+ options:[
+   "R$ 10,00",
+   "R$ 20,00",
+   "R$ 25,00",
+   "R$ 40,00",
+   "R$ 80,00"
+ ],
+ correct:1,
+ baseXP:120
+},
+
+{
+ descriptor:"D088_M",
+ level:"ABAIXO DO BÁSICO",
+ text:"Observe a sequência: 2, 4, 6, 8, __. Qual número completa a sequência?",
+ options:[
+   "9",
+   "10",
+   "11",
+   "12",
+   "14"
+ ],
+ correct:1,
+ baseXP:100
+},
+
+{
+ descriptor:"D097_M",
+ level:"BÁSICO",
+ text:"Se x + 5 = 12, qual é o valor de x?",
+ options:[
+   "5",
+   "6",
+   "7",
+   "8",
+   "17"
+ ],
+ correct:2,
+ baseXP:120
+},
+
+{
+ descriptor:"D125_M",
+ level:"PROFICIENTE",
+ text:"Uma turma possui 40 estudantes e 30 deles participaram de uma atividade. Qual percentual da turma participou?",
+ options:[
+   "25%",
+   "40%",
+   "60%",
+   "75%",
+   "80%"
+ ],
+ correct:3,
+ baseXP:180
+}
+
+];
+
+
+/* =====================================================
+   ENTRADA
+===================================================== */
+
+function entrar(){
+
+  const codigo =
+    document.getElementById("codigo").value.trim().toUpperCase();
+
+  const nome =
+    document.getElementById("nome").value.trim();
+
+  if(!codigo || !nome){
+    alert("Digite o código da Arena e seu nome.");
+    return;
+  }
+
+  player.room = codigo;
+  player.name = nome;
+
+  recuperar();
+
+  document.getElementById("login").style.display="none";
+  document.getElementById("arena").style.display="block";
+
+  document.getElementById("playerName").textContent =
+    player.name;
+
+  document.getElementById("roomName").textContent =
+    "Arena "+player.room;
+
+  adicionarFeed(
+    "⚡ "+player.name+" entrou na Arena."
+  );
+
+  renderQuestion();
+  atualizarPainel();
+}
+
+
+/* =====================================================
+   QUESTÃO
+===================================================== */
+
+function renderQuestion(){
+
+  const index =
+    player.questionIndex % demoQuestions.length;
+
+  const q =
+    demoQuestions[index];
+
+  document.getElementById("descriptor").textContent =
+    q.descriptor;
+
+  document.getElementById("level").textContent =
+    q.level;
+
+  document.getElementById("question").textContent =
+    q.text;
+
+  const options =
+    document.getElementById("options");
+
+  options.innerHTML="";
+
+  q.options.forEach((text,i)=>{
+
+    const button =
+      document.createElement("button");
+
+    button.className="option";
+
+    button.innerHTML =
+      "<strong>"+
+      String.fromCharCode(65+i)+
+      ")</strong> "+text;
+
+    button.onclick=()=>selecionar(i,button);
+
+    options.appendChild(button);
+
+  });
+
+  player.selected=null;
+
+  document.getElementById("confirmButton").disabled=true;
+
+  document.getElementById("feedback").className="feedback";
+  document.getElementById("feedback").textContent="";
+}
+
+
+function selecionar(index,button){
+
+  player.selected=index;
+
+  document.querySelectorAll(".option")
+  .forEach(x=>x.classList.remove("selected"));
+
+  button.classList.add("selected");
+
+  document.getElementById("confirmButton").disabled=false;
+}
+
+
+/* =====================================================
+   RESPOSTA
+===================================================== */
+
+function confirmarResposta(){
+
+  if(player.selected===null) return;
+
+  const index =
+    player.questionIndex % demoQuestions.length;
+
+  const q =
+    demoQuestions[index];
+
+  const feedback =
+    document.getElementById("feedback");
+
+  if(player.selected===q.correct){
+
+    player.hits++;
+    player.streak++;
+
+    let bonus =
+      Math.min(player.streak*10,50);
+
+    let ganho =
+      q.baseXP + bonus;
+
+    if(player.multiplier>0){
+      ganho*=2;
+      player.multiplier--;
+    }
+
+    player.xp+=ganho;
+
+    feedback.className="feedback ok";
+
+    feedback.innerHTML=
+      "✅ RESPOSTA CORRETA! +"+
+      ganho+
+      " XP";
+
+    adicionarFeed(
+      "🔥 "+player.name+
+      " alcançou "+player.streak+
+      " acerto(s) consecutivo(s)!"
+    );
+
+  }else{
+
+    player.streak=0;
+
+    feedback.className="feedback no";
+
+    feedback.innerHTML=
+      "❌ Não foi dessa vez. Continue na disputa!";
+
+  }
+
+  document.querySelectorAll(".option")
+  .forEach(x=>x.disabled=true);
+
+  document.getElementById("confirmButton").disabled=true;
+
+  player.questionIndex++;
+
+  salvar();
+  atualizarPainel();
+
+  setTimeout(()=>{
+
+    if(player.questionIndex>=TOTAL_QUESTIONS){
+
+      finalizarArena();
+
+    }else{
+
+      eventoAutomatico();
+
+      renderQuestion();
+
+    }
+
+  },1300);
+}
+
+
+/* =====================================================
+   PAINEL
+===================================================== */
+
+function atualizarPainel(){
+
+  document.getElementById("xp").textContent =
+    player.xp;
+
+  document.getElementById("streak").textContent =
+    player.streak;
+
+  document.getElementById("hits").textContent =
+    player.hits;
+
+  let shown =
+    Math.min(player.questionIndex+1,TOTAL_QUESTIONS);
+
+  document.getElementById("qcount").textContent =
+    shown+"/"+TOTAL_QUESTIONS;
+
+  let pct =
+    Math.round(
+      (player.questionIndex/TOTAL_QUESTIONS)*100
+    );
+
+  document.getElementById("progressBar").style.width =
+    pct+"%";
+
+  document.getElementById("progressLabel").textContent =
+    pct+"%";
+
+  document.getElementById("shield").textContent =
+    player.shield;
+
+  document.getElementById("multiplier").textContent =
+    player.multiplier;
+
+  document.getElementById("recovery").textContent =
+    player.recovery;
+
+  document.getElementById("secret").textContent =
+    player.secret;
+}
+
+
+/* =====================================================
+   EVENTOS
+===================================================== */
+
+function eventoAutomatico(){
+
+  const q =
+    player.questionIndex;
+
+  if(q===5){
+
+    mostrarEvento(
+      "⚡ DESAFIO RELÂMPAGO",
+      "A Arena entrou em zona de bônus. A próxima sequência de acertos pode mudar o ranking."
+    );
+
+  }
+
+  if(q===8){
+
+    player.multiplier++;
+
+    mostrarEvento(
+      "🎁 PODER CONQUISTADO",
+      "Você recebeu um multiplicador 2×. Ele será utilizado automaticamente no próximo acerto."
+    );
+
+  }
+
+  if(q===12){
+
+    player.shield++;
+
+    mostrarEvento(
+      "🛡️ ESCUDO MATEMÁTICO",
+      "Você conquistou um escudo estratégico para os próximos eventos da Arena."
+    );
+
+  }
+
+  if(q===16){
+
+    mostrarEvento(
+      "🔥 CAÇA AO LÍDER",
+      "A reta final começou. As próximas questões podem provocar grandes mudanças na classificação."
+    );
+
+  }
+
+  salvar();
+  atualizarPainel();
+}
+
+
+function mostrarEvento(nome,texto){
+
+  document.getElementById("eventName").textContent =
+    nome;
+
+  document.getElementById("eventText").textContent =
+    texto;
+
+  adicionarFeed(nome+" — "+texto);
+}
+
+
+/* =====================================================
+   FEED
+===================================================== */
+
+function adicionarFeed(text){
+
+  const feed =
+    document.getElementById("feed");
+
+  const item =
+    document.createElement("div");
+
+  item.className="feedItem";
+
+  item.textContent=text;
+
+  feed.prepend(item);
+}
+
+
+/* =====================================================
+   SALVAMENTO LOCAL
+
+   Mantém progresso caso navegador seja fechado.
+   Depois conectaremos ao banco compartilhado.
+===================================================== */
+
+function salvar(){
+
+  if(!player.room || !player.name) return;
+
+  const key =
+    "arena_math_"+
+    player.room+"_"+
+    player.name.toLowerCase();
+
+  localStorage.setItem(
+    key,
+    JSON.stringify(player)
+  );
+}
+
+
+function recuperar(){
+
+  const key =
+    "arena_math_"+
+    player.room+"_"+
+    player.name.toLowerCase();
+
+  const saved =
+    localStorage.getItem(key);
+
+  if(saved){
+
+    try{
+
+      const data =
+        JSON.parse(saved);
+
+      player={
+        ...player,
+        ...data,
+        name:player.name,
+        room:player.room
+      };
+
+    }catch(e){
+      console.log("Sem progresso anterior.");
+    }
+  }
+}
+
+
+/* =====================================================
+   PAUSA
+   Preparado para comando futuro do professor
+===================================================== */
+
+function pausarArena(){
+
+  salvar();
+
+  document.getElementById("pauseOverlay").style.display =
+    "flex";
+
+  document.getElementById("status").textContent =
+    "● ARENA PAUSADA";
+
+  document.getElementById("status").style.color =
+    "#ffd45a";
+}
+
+
+function continuarArena(){
+
+  document.getElementById("pauseOverlay").style.display =
+    "none";
+
+  document.getElementById("status").textContent =
+    "● ARENA ATIVA";
+
+  document.getElementById("status").style.color =
+    "#2dd79a";
+}
+
+
+/* =====================================================
+   FINAL
+===================================================== */
+
+function finalizarArena(){
+
+  salvar();
+
+  document.getElementById("question").innerHTML =
+    "🏆 <strong>ARENA CONCLUÍDA!</strong><br><br>"+
+    "Você terminou as 20 questões regulares.";
+
+  document.getElementById("options").innerHTML="";
+
+  document.getElementById("confirmButton").style.display =
+    "none";
+
+  document.getElementById("progressBar").style.width =
+    "100%";
+
+  document.getElementById("progressLabel").textContent =
+    "100%";
+
+  document.getElementById("qcount").textContent =
+    "20/20";
+
+  mostrarEvento(
+    "👑 BOSS FINAL",
+    "As questões regulares terminaram. Aguarde o professor liberar o desafio final da Arena."
+  );
+
+}
+
+
+/* =====================================================
+   DEMONSTRAÇÃO DE RANKING
+
+   Será substituído pelo ranking real compartilhado.
+===================================================== */
+
+function rankingDemo(){
+
+  const ranking =
+    document.getElementById("ranking");
+
+  ranking.innerHTML=`
+
+  <div class="rankItem">
+    <div class="pos">🥇</div>
+    <div class="rankName">Liderança da Arena</div>
+    <div class="rankXP">— XP</div>
+  </div>
+
+  <div class="rankItem">
+    <div class="pos">🥈</div>
+    <div class="rankName">2º colocado</div>
+    <div class="rankXP">— XP</div>
+  </div>
+
+  <div class="rankItem">
+    <div class="pos">🥉</div>
+    <div class="rankName">3º colocado</div>
+    <div class="rankXP">— XP</div>
+  </div>
+
+  `;
+
+}
+
+rankingDemo();
+
+</script>
+
+</body>
+</html>
