@@ -1448,17 +1448,31 @@ function rankingReal(){
 
       if (!ranking) return;
 
-      const lista = Object.values(competidores || {})
-        .sort((a,b) => {
-          const xpA = Number(a.xp || 0);
-          const xpB = Number(b.xp || 0);
+     const classificados = Object.values(competidores || {})
+  .sort((a,b) => {
+    const xpA = Number(a.xp || 0);
+    const xpB = Number(b.xp || 0);
 
-          if (xpB !== xpA) return xpB - xpA;
+    if (xpB !== xpA) return xpB - xpA;
 
-          return Number(b.acertos || 0) -
-                 Number(a.acertos || 0);
-        })
-        .slice(0,3);
+    return Number(b.acertos || 0) -
+           Number(a.acertos || 0);
+  });
+
+const lista = classificados.slice(0,3);
+
+const minhaPosicao = classificados.findIndex(
+  competidor =>
+    competidor.id === player.id ||
+    competidor.jogadorId === player.id
+);
+
+const campoPosicao = document.getElementById("position");
+
+if (campoPosicao) {
+  campoPosicao.textContent =
+    minhaPosicao >= 0 ? (minhaPosicao + 1) + "º" : "—";
+}
 
       ranking.innerHTML = "";
 
