@@ -1098,7 +1098,20 @@ function confirmarResposta(){
     }
 
     player.xp+=ganho;
-
+if (window.arenaFirebase && player.room && player.id) {
+    window.arenaFirebase.atualizarCompetidor(
+        player.room,
+        player.id,
+        {
+            xp: Number(player.xp || 0),
+            acertos: Number(player.hits || 0),
+            sequencia: Number(player.streak || 0),
+            estrelas: Number(player.estrelas || 0)
+        }
+    ).catch((erro) => {
+        console.error("Erro ao atualizar competidor no Firebase:", erro);
+    });
+}
     feedback.className="feedback ok";
 
     feedback.innerHTML=
