@@ -1423,36 +1423,88 @@ function finalizarArena(){
    Será substituído pelo ranking real compartilhado.
 ===================================================== */
 
-function rankingDemo(){
+let rankingConectado = false;
 
-  const ranking =
-    document.getElementById("ranking");
+function rankingReal(){
 
-  ranking.innerHTML=`
+  if (
+    !window.arenaFirebase ||
+    !window.arenaFirebase.observarCompetidores ||
+    !player.room
+  ){
+    setTimeout(rankingReal, 300);
+    return;
+  }
 
-  <div class="rankItem">
-    <div class="pos">🥇</div>
-    <div class="rankName">Liderança da Arena</div>
-    <div class="rankXP">— XP</div>
-  </div>
+  if (rankingConectado) return;
+  rankingConectado = true;
 
-  <div class="rankItem">
-    <div class="pos">🥈</div>
-    <div class="rankName">2º colocado</div>
-    <div class="rankXP">— XP</div>
-  </div>
+  window.arenaFirebase.observarCompetidores(
+    player.room,
+    (competidores) => {
 
-  <div class="rankItem">
-    <div class="pos">🥉</div>
-    <div class="rankName">3º colocado</div>
-    <div class="rankXP">— XP</div>
-  </div>
+      const ranking =
+        document.getElementById("ranking");
 
-  `;
+      if (!ranking) return;
 
+      const lista = Object.values(competidores || {})
+        .sort((a,b) => {
+          const xpA = Number(a.xp || 0);
+          const xpB = Number(b.xp || 0);
+
+          if (xpB !== xpA) return xpB - xpA;
+
+          return Number(b.acertos || 0) -
+                 Number(a.acertos || 0);
+        })
+        .slice(0,3);
+
+      ranking.innerHTML = "";
+
+      const medalhas = ["🥇","🥈","🥉"];
+
+      if (lista.length === 0){
+        ranking.innerHTML = `
+          <div class="rankItem">
+            <div class="pos">🏆</div>
+            <div class="rankName">Aguardando competidores</div>
+            <div class="rankXP">— XP</div>
+          </div>
+        `;
+        return;
+      }
+
+      lista.forEach((competidor, indice) => {
+
+        const item = document.createElement("div");
+        item.className = "rankItem";
+
+        const pos = document.createElement("div");
+        pos.className = "pos";
+        pos.textContent = medalhas[indice];
+
+        const nome = document.createElement("div");
+        nome.className = "rankName";
+        nome.textContent =
+          competidor.nome || "Competidor";
+
+        const xp = document.createElement("div");
+        xp.className = "rankXP";
+        xp.textContent =
+          Number(competidor.xp || 0) + " XP";
+
+        item.appendChild(pos);
+        item.appendChild(nome);
+        item.appendChild(xp);
+
+        ranking.appendChild(item);
+      });
+    }
+  );
 }
 
-rankingDemo();
+rankingReal();
 
 </script>
 <script type="module">
