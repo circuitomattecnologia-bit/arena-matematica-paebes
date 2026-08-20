@@ -45,7 +45,7 @@ export function iniciarFirebase() {
     if (getApps().length > 0) {
       app = getApp();
     } else {
-      app = initializeApp(FIREBASE);
+      app = initializeApp(FIREBASE.configuracao);
     }
 
     db = getDatabase(app);
