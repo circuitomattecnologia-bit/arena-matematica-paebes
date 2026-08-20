@@ -1389,18 +1389,21 @@ rankingDemo();
 import {
   iniciarFirebase,
   buscarArena,
-  entrarNaArena
+  entrarNaArena,
+  observarArena,
+  observarCompetidores
 } from "./js/firebase-service.js";
 
 iniciarFirebase();
 
 window.arenaFirebase = {
   buscarArena,
-  entrarNaArena
+  entrarNaArena,
+  observarArena,
+  observarCompetidores
 };
 
 console.log("🔥 Portal do estudante conectado ao Firebase.");
 </script>
-
 </body>
 </html>
