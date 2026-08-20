@@ -832,6 +832,17 @@ function restaurar(){
 restaurar();
 
 </script>
+<script type="module">
+  import {
+    iniciarFirebase
+  } from "./js/firebase-service.js";
 
+  try {
+    iniciarFirebase();
+    console.log("🔥 Arena Matemática conectada ao Firebase.");
+  } catch (erro) {
+    console.error("Erro ao conectar a Arena ao Firebase:", erro);
+  }
+</script>
 </body>
 </html>
