@@ -833,12 +833,27 @@ restaurar();
 
 </script>
 <script type="module">
-  import {
-    iniciarFirebase
-  } from "./js/firebase-service.js";
+ import {
+  iniciarFirebase,
+  observarArena
+} from "./js/firebase-service.js";
 
   try {
     iniciarFirebase();
+    const arenaSalva = JSON.parse(localStorage.getItem("arenaPAEBES"));
+
+if (arenaSalva && arenaSalva.codigo) {
+  observarArena(arenaSalva.codigo, (arenaAtualizada) => {
+    if (!arenaAtualizada) return;
+
+    localStorage.setItem(
+      "arenaPAEBES",
+      JSON.stringify(arenaAtualizada)
+    );
+
+    restaurar();
+  });
+}
     console.log("🔥 Arena Matemática conectada ao Firebase.");
   } catch (erro) {
     console.error("Erro ao conectar a Arena ao Firebase:", erro);
