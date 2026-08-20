@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Arena Matemática PAEBES — Professor</title>
+
+<style>
+*{
+  box-sizing:border-box;
+}
+
+:root{
+  --bg:#04101f;
+  --bg2:#071b35;
+  --card:#0c2342;
+  --card2:#102b50;
+  --line:#23466e;
+  --cyan:#22d3ee;
+  --blue:#38bdf8;
+  --purple:#8b5cf6;
+  --pink:#ec4899;
+  --gold:#facc15;
+  --green:#22c55e;
+  --red:#ef4444;
+  --white:#f8fafc;
+  --muted:#a8bdd7;
+}
+
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  color:var(--white);
+  background:
+    radial-gradient(circle at 20% 10%,#123b6a 0,transparent 30%),
+    radial-gradient(circle at 85% 20%,#35145e 0,transparent 28%),
+    linear-gradient(135deg,#020817,#07162b 55%,#020817);
+  min-height:100vh;
+}
+
+header{
+  padding:28px 5%;
+  border-bottom:1px solid rgba(255,255,255,.10);
+  background:rgba(3,12,27,.75);
+}
+
+.top{
+  max-width:1450px;
+  margin:auto;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:20px;
+}
+
+.brand small{
+  color:var(--cyan);
+  font-weight:900;
+  letter-spacing:3px;
+}
+
+.brand h1{
+  margin:7px 0 3px;
+  font-size:34px;
+}
+
+.brand p{
+  margin:0;
+  color:var(--muted);
+}
+
+.live{
+  padding:12px 18px;
+  border-radius:999px;
+  border:1px solid #ef476f;
+  color:#ff9fb3;
+  font-weight:900;
+  background:#351225;
+}
+
+main{
+  max-width:1450px;
+  margin:auto;
+  padding:28px 5% 70px;
+}
+
+.hero{
+  border:1px solid var(--line);
+  border-radius:24px;
+  padding:30px;
+  background:linear-gradient(135deg,rgba(16,43,80,.96),rgba(8,24,48,.96));
+  box-shadow:0 20px 60px rgba(0,0,0,.25);
+  margin-bottom:24px;
+}
+
+.hero h2{
+  font-size:30px;
+  margin:0 0 10px;
+}
+
+.hero p{
+  color:#c8d8eb;
+  line-height:1.6;
+  max-width:1000px;
+}
+
+.badges{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:18px;
+}
+
+.badge{
+  background:#07182d;
+  border:1px solid #28517c;
+  padding:10px 14px;
+  border-radius:999px;
+  font-weight:800;
+  color:#dcecff;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:22px;
+}
+
+.card{
+  background:rgba(10,31,59,.94);
+  border:1px solid var(--line);
+  border-radius:22px;
+  padding:25px;
+  box-shadow:0 15px 45px rgba(0,0,0,.20);
+}
+
+.card.full{
+  grid-column:1/-1;
+}
+
+.card h2{
+  margin-top:0;
+  font-size:23px;
+}
+
+.card h3{
+  margin:22px 0 10px;
+  color:#dcecff;
+}
+
+label{
+  display:block;
+  color:#a9c0db;
+  font-size:13px;
+  font-weight:900;
+  margin:14px 0 7px;
+}
+
+input,select{
+  width:100%;
+  padding:14px;
+  border-radius:12px;
+  border:1px solid #294b70;
+  background:#06172b;
+  color:white;
+  font-size:16px;
+  outline:none;
+}
+
+input:focus,select:focus{
+  border-color:var(--cyan);
+}
+
+.two{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+
+button{
+  border:0;
+  cursor:pointer;
+  color:white;
+  font-weight:900;
+  font-size:14px;
+  border-radius:12px;
+  padding:14px 18px;
+}
+
+.primary{
+  background:linear-gradient(90deg,#0ea5e9,#7c3aed,#ec4899);
+}
+
+.green{
+  background:#15803d;
+}
+
+.red{
+  background:#b91c1c;
+}
+
+.gold{
+  background:#b77905;
+}
+
+.blue{
+  background:#155eaa;
+}
+
+.gray{
+  background:#243b55;
+}
+
+.actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:18px;
+}
+
+.descritores{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:10px;
+  margin-top:15px;
+}
+
+.desc{
+  background:#071a31;
+  border:1px solid #294c74;
+  border-radius:12px;
+  padding:11px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:13px;
+  font-weight:800;
+}
+
+.desc input{
+  width:auto;
+}
+
+.desc.destaque{
+  border-color:#facc15;
+  box-shadow:0 0 0 1px rgba(250,204,21,.25);
+}
+
+.desc.destaque span{
+  color:#fde68a;
+}
+
+.status{
+  margin-top:18px;
+  padding:16px;
+  border-left:4px solid var(--cyan);
+  border-radius:10px;
+  background:#0c2b47;
+  color:#d9ebff;
+}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+}
+
+.stat{
+  background:#07182d;
+  border:1px solid #24486e;
+  border-radius:15px;
+  padding:18px;
+}
+
+.stat span{
+  display:block;
+  color:#9db5d1;
+  font-size:13px;
+}
+
+.stat strong{
+  display:block;
+  font-size:25px;
+  margin-top:7px;
+}
+
+.ranking{
+  margin-top:15px;
+}
+
+.rank{
+  display:grid;
+  grid-template-columns:55px 1fr 130px 120px;
+  align-items:center;
+  gap:12px;
+  background:#07182d;
+  border:1px solid #24486e;
+  border-radius:13px;
+  padding:13px;
+  margin-bottom:9px;
+}
+
+.pos{
+  font-size:21px;
+  font-weight:900;
+  color:var(--gold);
+}
+
+.progress{
+  height:8px;
+  background:#132c49;
+  border-radius:99px;
+  overflow:hidden;
+  margin-top:7px;
+}
+
+.progress div{
+  height:100%;
+  background:linear-gradient(90deg,#22d3ee,#8b5cf6,#ec4899);
+}
+
+.arena-code{
+  text-align:center;
+  border:1px dashed #f5bd42;
+  border-radius:18px;
+  padding:20px;
+  margin-top:18px;
+  background:#07182d;
+}
+
+.arena-code span{
+  color:#9fb4ce;
+}
+
+.arena-code strong{
+  display:block;
+  color:#ffd166;
+  font-size:35px;
+  letter-spacing:4px;
+  margin-top:8px;
+}
+
+.eventos{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+}
+
+.evento{
+  padding:18px;
+  border-radius:15px;
+  background:#07182d;
+  border:1px solid #294b70;
+}
+
+.evento strong{
+  display:block;
+  margin-bottom:7px;
+}
+
+.evento p{
+  color:#a9bdd5;
+  font-size:13px;
+  min-height:42px;
+}
+
+.small{
+  color:#91aac5;
+  font-size:13px;
+  line-height:1.5;
+}
+
+@media(max-width:950px){
+  .grid,.two{
+    grid-template-columns:1fr;
+  }
+
+  .descritores{
+    grid-template-columns:repeat(3,1fr);
+  }
+
+  .stats{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .eventos{
+    grid-template-columns:1fr;
+  }
+}
+
+@media(max-width:600px){
+  .descritores{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .rank{
+    grid-template-columns:45px 1fr;
+  }
+
+  .top{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="top">
+    <div class="brand">
+      <small>PROFESSOR LEOPOLDO</small>
+      <h1>⚔️ ARENA MATEMÁTICA — RUMO AO PAEBES</h1>
+      <p>Central de comando do professor</p>
+    </div>
+
+    <div class="live">● ARENA EM PREPARAÇÃO</div>
+  </div>
+</header>
+
+<main>
+
+<section class="hero">
+  <h2>🏟️ Central de Comando da Arena</h2>
+
+  <p>
+    Configure a batalha matemática, selecione os descritores,
+    libere os competidores e acompanhe a classificação em tempo real.
+    A Arena poderá ser pausada e retomada em outra aula sem perder o progresso.
+  </p>
+
+  <div class="badges">
+    <div class="badge">👥 Até 60 competidores</div>
+    <div class="badge">❓ 15 questões</div>
+    <div class="badge">🏆 Ranking ao vivo</div>
+    <div class="badge">💾 Progresso salvo</div>
+    <div class="badge">⚡ Eventos surpresa</div>
+    <div class="badge">🎯 Pesos por descritor</div>
+  </div>
+</section>
+
+<div class="grid">
+
+<section class="card">
+
+<h2>🎮 Criar nova Arena</h2>
+
+<div class="two">
+
+<div>
+<label>Nome da Arena</label>
+<input id="nomeArena" value="Desafio PAEBES">
+</div>
+
+<div>
+<label>Turma</label>
+<select id="turma">
+<option>3ª M01 — Integral</option>
+<option>3ª M01 — Técnico ADM</option>
+<option>Unir as duas turmas</option>
+<option>Outra turma</option>
+</select>
+</div>
+
+</div>
+
+<div class="two">
+
+<div>
+<label>Quantidade de questões</label>
+<input id="qtd" type="number" value="15" min="5" max="30">
+</div>
+
+<div>
+<label>Limite de participantes</label>
+<input id="limite" type="number" value="60" min="1" max="60">
+</div>
+
+</div>
+
+<h3>📚 Selecione os descritores</h3>
+
+<p class="small">
+O professor poderá reutilizar esta Arena futuramente apenas alterando
+os descritores selecionados.
+</p>
+
+<div class="descritores" id="descritores"></div>
+
+<div class="status">
+⭐ <strong>D111_M</strong> poderá receber peso maior na geração das questões,
+permitindo reforçar conteúdos de nível abaixo do básico/básico.
+</div>
+
+<div class="actions">
+<button class="primary" onclick="criarArena()">⚔️ CRIAR ARENA</button>
+<button class="gray" onclick="marcarPrincipais()">✓ Selecionar estreia</button>
+<button class="gray" onclick="limpar()">Limpar seleção</button>
+</div>
+
+<div class="arena-code">
+<span>CÓDIGO DE ACESSO</span>
+<strong id="codigo">---</strong>
+</div>
+
+</section>
+
+<section class="card">
+
+<h2>🎛️ Controle da disputa</h2>
+
+<div class="stats">
+
+<div class="stat">
+<span>Competidores</span>
+<strong id="competidores">0/60</strong>
+</div>
+
+<div class="stat">
+<span>Questão atual</span>
+<strong id="questaoAtual">0/15</strong>
+</div>
+
+<div class="stat">
+<span>Status</span>
+<strong id="estado">Preparação</strong>
+</div>
+
+<div class="stat">
+<span>Líder</span>
+<strong id="lider">—</strong>
+</div>
+
+</div>
+
+<div class="actions">
+<button class="green" onclick="acao('iniciada')">▶ INICIAR</button>
+<button class="gold" onclick="acao('pausada')">⏸ PAUSAR</button>
+<button class="blue" onclick="acao('continuada')">▶ CONTINUAR</button>
+<button class="red" onclick="acao('encerrada')">■ ENCERRAR</button>
+</div>
+
+<div class="status" id="mensagem">
+Aguardando criação da Arena.
+</div>
+
+<h3>🔐 Controle de acesso</h3>
+
+<div class="actions">
+<button class="green" onclick="liberar()">🔓 Liberar estudantes</button>
+<button class="red" onclick="bloquear()">🔒 Bloquear novas entradas</button>
+<button class="gray">👤 Gerenciar individualmente</button>
+</div>
+
+</section>
+
+<section class="card full">
+
+<h2>⚡ Eventos especiais da Arena</h2>
+
+<p class="small">
+Durante a competição o professor poderá lançar acontecimentos para
+aumentar a interação entre os estudantes.
+</p>
+
+<div class="eventos">
+
+<div class="evento">
+<strong>🔥 Questão Relâmpago</strong>
+<p>Uma questão especial poderá valer pontuação extra.</p>
+<button class="gold" onclick="evento('QUESTÃO RELÂMPAGO')">DISPARAR</button>
+</div>
+
+<div class="evento">
+<strong>⚔️ Duelo Matemático</strong>
+<p>Dois competidores podem receber um desafio simultâneo.</p>
+<button class="primary" onclick="evento('DUELO MATEMÁTICO')">CRIAR DUELO</button>
+</div>
+
+<div class="evento">
+<strong>💎 Bônus PAEBES</strong>
+<p>Rodada surpresa com bônus de XP para resposta correta.</p>
+<button class="blue" onclick="evento('BÔNUS PAEBES')">LIBERAR BÔNUS</button>
+</div>
+
+<div class="evento">
+<strong>🎯 Desafio do Descritor</strong>
+<p>O professor escolhe um descritor para uma disputa especial.</p>
+<button class="green" onclick="evento('DESAFIO DO DESCRITOR')">LANÇAR</button>
+</div>
+
+<div class="evento">
+<strong>👑 Caçada ao Líder</strong>
+<p>Os estudantes recebem um desafio para tentar alcançar o primeiro colocado.</p>
+<button class="red" onclick="evento('CAÇADA AO LÍDER')">ATIVAR</button>
+</div>
+
+<div class="evento">
+<strong>🛡️ Escudo Matemático</strong>
+<p>O competidor pode conquistar proteção de pontuação em uma rodada.</p>
+<button class="gray" onclick="evento('ESCUDO MATEMÁTICO')">LIBERAR</button>
+</div>
+
+</div>
+
+</section>
+
+<section class="card full">
+
+<h2>🏆 Ranking ao vivo</h2>
+
+<p class="small">
+Todos poderão acompanhar a movimentação da Arena durante a competição.
+</p>
+
+<div class="ranking" id="ranking">
+
+<div class="rank">
+<div class="pos">🥇</div>
+<div>
+<strong>Aguardando competidores...</strong>
+<div class="progress"><div style="width:0%"></div></div>
+</div>
+<div>0 pontos</div>
+<div>0 XP</div>
+</div>
+
+</div>
+
+</section>
+
+</div>
+
+</main>
+
+<script>
+
+const listaDescritores=[
+"D001_M","D002_M","D003_M","D004_M","D005_M",
+"D006_M","D007_M","D008_M","D009_M","D010_M",
+"D011_M","D012_M","D013_M","D014_M","D015_M",
+"D016_M","D017_M","D018_M","D019_M","D020_M",
+"D021_M","D022_M","D023_M","D024_M","D025_M",
+"D026_M","D027_M","D028_M","D029_M","D030_M",
+"D074_M","D088_M","D097_M","D111_M","D125_M"
+];
+
+const area=document.getElementById("descritores");
+
+listaDescritores.forEach(d=>{
+ const box=document.createElement("label");
+ box.className="desc"+(d==="D111_M"?" destaque":"");
+ box.innerHTML=`<input type="checkbox" value="${d}"><span>${d}</span>`;
+ area.appendChild(box);
+});
+
+function marcarPrincipais(){
+
+ document.querySelectorAll(".desc input").forEach(x=>{
+   x.checked=[
+     "D074_M",
+     "D088_M",
+     "D097_M",
+     "D111_M",
+     "D125_M"
+   ].includes(x.value);
+ });
+
+}
+
+function limpar(){
+ document.querySelectorAll(".desc input").forEach(x=>x.checked=false);
+}
+
+function gerarCodigo(){
+ return "MAT-"+Math.floor(1000+Math.random()*9000);
+}
+
+function criarArena(){
+
+ const selecionados=[...document.querySelectorAll(".desc input:checked")]
+ .map(x=>x.value);
+
+ if(selecionados.length===0){
+   alert("Selecione pelo menos um descritor.");
+   return;
+ }
+
+ const codigo=gerarCodigo();
+
+ document.getElementById("codigo").textContent=codigo;
+
+ const dados={
+   codigo,
+   nome:document.getElementById("nomeArena").value,
+   turma:document.getElementById("turma").value,
+   quantidade:Number(document.getElementById("qtd").value),
+   limite:Number(document.getElementById("limite").value),
+   descritores:selecionados,
+   status:"preparacao",
+   criadaEm:new Date().toISOString()
+ };
+
+ localStorage.setItem("arenaPAEBES",JSON.stringify(dados));
+
+ document.getElementById("competidores").textContent=
+ "0/"+dados.limite;
+
+ document.getElementById("questaoAtual").textContent=
+ "0/"+dados.quantidade;
+
+ document.getElementById("estado").textContent="Preparação";
+
+ document.getElementById("mensagem").innerHTML=
+ "🏟️ Arena criada. Código <strong>"+codigo+
+ "</strong>. Agora libere a entrada dos estudantes.";
+
+}
+
+function acao(tipo){
+
+ const arena=JSON.parse(localStorage.getItem("arenaPAEBES"));
+
+ if(!arena){
+   alert("Crie uma Arena primeiro.");
+   return;
+ }
+
+ arena.status=tipo;
+ localStorage.setItem("arenaPAEBES",JSON.stringify(arena));
+
+ const nomes={
+   iniciada:"Em disputa",
+   pausada:"Pausada",
+   continuada:"Em disputa",
+   encerrada:"Encerrada"
+ };
+
+ document.getElementById("estado").textContent=nomes[tipo];
+
+ document.getElementById("mensagem").innerHTML=
+ "⚡ Arena <strong>"+nomes[tipo]+"</strong>.";
+
+}
+
+function liberar(){
+
+ const arena=JSON.parse(localStorage.getItem("arenaPAEBES"));
+
+ if(!arena){
+   alert("Crie uma Arena primeiro.");
+   return;
+ }
+
+ arena.acesso=true;
+
+ localStorage.setItem("arenaPAEBES",JSON.stringify(arena));
+
+ document.getElementById("mensagem").innerHTML=
+ "🔓 Entrada dos estudantes <strong>LIBERADA</strong>.";
+
+}
+
+function bloquear(){
+
+ const arena=JSON.parse(localStorage.getItem("arenaPAEBES"));
+
+ if(!arena)return;
+
+ arena.acesso=false;
+
+ localStorage.setItem("arenaPAEBES",JSON.stringify(arena));
+
+ document.getElementById("mensagem").innerHTML=
+ "🔒 Novas entradas foram bloqueadas.";
+
+}
+
+function evento(nome){
+
+ const arena=JSON.parse(localStorage.getItem("arenaPAEBES"));
+
+ if(!arena){
+   alert("Crie uma Arena primeiro.");
+   return;
+ }
+
+ arena.evento={
+   nome,
+   momento:new Date().toISOString()
+ };
+
+ localStorage.setItem("arenaPAEBES",JSON.stringify(arena));
+
+ document.getElementById("mensagem").innerHTML=
+ "⚡ EVENTO DISPARADO: <strong>"+nome+"</strong>";
+
+}
+
+function restaurar(){
+
+ const arena=JSON.parse(localStorage.getItem("arenaPAEBES"));
+
+ if(!arena)return;
+
+ document.getElementById("codigo").textContent=arena.codigo;
+
+ document.getElementById("nomeArena").value=arena.nome;
+
+ document.getElementById("qtd").value=arena.quantidade;
+
+ document.getElementById("limite").value=arena.limite;
+
+ document.getElementById("competidores").textContent=
+ "0/"+arena.limite;
+
+ document.getElementById("questaoAtual").textContent=
+ "0/"+arena.quantidade;
+
+ document.querySelectorAll(".desc input").forEach(x=>{
+   x.checked=arena.descritores.includes(x.value);
+ });
+
+ document.getElementById("mensagem").innerHTML=
+ "💾 Arena anterior recuperada: <strong>"+
+ arena.codigo+"</strong>.";
+
+}
+
+restaurar();
+
+</script>
+
+</body>
+</html>
