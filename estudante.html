@@ -1385,6 +1385,22 @@ function rankingDemo(){
 rankingDemo();
 
 </script>
+<script type="module">
+import {
+  iniciarFirebase,
+  buscarArena,
+  entrarNaArena
+} from "./js/firebase-service.js";
+
+iniciarFirebase();
+
+window.arenaFirebase = {
+  buscarArena,
+  entrarNaArena
+};
+
+console.log("🔥 Portal do estudante conectado ao Firebase.");
+</script>
 
 </body>
 </html>
