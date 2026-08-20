@@ -678,7 +678,7 @@ function gerarCodigo(){
  return "MAT-"+Math.floor(1000+Math.random()*9000);
 }
 
-function criarArena(){
+async function criarArena(){
 
  const selecionados=[...document.querySelectorAll(".desc input:checked")]
  .map(x=>x.value);
@@ -704,7 +704,7 @@ function criarArena(){
  };
 
  localStorage.setItem("arenaPAEBES",JSON.stringify(dados));
-
+await salvarArena(codigo, dados);
  document.getElementById("competidores").textContent=
  "0/"+dados.limite;
 
