@@ -680,45 +680,64 @@ function gerarCodigo(){
 
 async function criarArena(){
 
- const selecionados=[...document.querySelectorAll(".desc input:checked")]
- .map(x=>x.value);
+    const selecionados = [...document.querySelectorAll(".desc input:checked")]
+        .map(x => x.value);
 
- if(selecionados.length===0){
-   alert("Selecione pelo menos um descritor.");
-   return;
- }
+    if (selecionados.length === 0) {
+        alert("Selecione pelo menos um descritor.");
+        return;
+    }
 
- const codigo=gerarCodigo();
+    const codigo = gerarCodigo();
 
- document.getElementById("codigo").textContent=codigo;
+    const dados = {
+        codigo: codigo,
+        nome: document.getElementById("nomeArena").value || "Arena Matemática",
+        turma: document.getElementById("turma").value,
+        quantidade: Number(document.getElementById("qtd").value) || 15,
+        limite: Number(document.getElementById("limite").value) || 60,
+        descritores: selecionados,
+        status: "preparacao",
+        competidores: {},
+        criadaEm: new Date().toISOString()
+    };
 
- const dados={
-   codigo,
-   nome:document.getElementById("nomeArena").value,
-   turma:document.getElementById("turma").value,
-   quantidade:Number(document.getElementById("qtd").value),
-   limite:Number(document.getElementById("limite").value),
-   descritores:selecionados,
-   status:"preparacao",
-   criadaEm:new Date().toISOString()
- };
+    try {
 
- localStorage.setItem("arenaPAEBES",JSON.stringify(dados));
-await salvarArena(codigo, dados);
- document.getElementById("competidores").textContent=
- "0/"+dados.limite;
+        await salvarArena(codigo, dados);
 
- document.getElementById("questaoAtual").textContent=
- "0/"+dados.quantidade;
+        localStorage.setItem(
+            "arenaPAEBES",
+            JSON.stringify(dados)
+        );
 
- document.getElementById("estado").textContent="Preparação";
+        document.getElementById("codigo").textContent = codigo;
 
- document.getElementById("mensagem").innerHTML=
- "🏟️ Arena criada. Código <strong>"+codigo+
- "</strong>. Agora libere a entrada dos estudantes.";
+        document.getElementById("competidores").textContent =
+            "0/" + dados.limite;
 
+        document.getElementById("questaoAtual").textContent =
+            "0/" + dados.quantidade;
+
+        document.getElementById("estado").textContent = "Preparação";
+
+        document.getElementById("mensagem").innerHTML =
+            "🎮 Arena criada. Código <strong>" +
+            codigo +
+            "</strong>. Agora libere a entrada dos estudantes.";
+
+        alert("Arena criada com sucesso! Código: " + codigo);
+
+    } catch (erro) {
+
+        console.error("ERRO AO CRIAR ARENA:", erro);
+
+        alert(
+            "Não foi possível criar a Arena no Firebase. " +
+            "Abra o console para verificar o erro."
+        );
+    }
 }
-
 function acao(tipo){
 
  const arena=JSON.parse(localStorage.getItem("arenaPAEBES"));
