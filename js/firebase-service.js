@@ -247,52 +247,99 @@ export async function entrarNaArena(codigo, competidor = {}) {
     throw new Error("A entrada de estudantes está bloqueada.");
   }
 
-  const jogadorId =
-    competidor.id ||
-    competidor.jogadorId ||
-    competidor.uid ||
-    criarId("competidor");
+  const competidoresExistentes = arena.competidores || {};
 
-  const dadosCompetidor = {
+const nomeRecebido = String(
+  competidor.nome ||
+  competidor.name ||
+  ""
+).trim().toLowerCase();
 
-    ...competidor,
+const encontrados = Object.entries(competidoresExistentes)
+  .filter(([id, dados]) =>
+    String(dados?.nome || "")
+      .trim()
+      .toLowerCase() === nomeRecebido
+  )
+  .sort(([, a], [, b]) =>
+    Number(b?.xp || 0) - Number(a?.xp || 0)
+  );
 
-    id: jogadorId,
-    jogadorId: jogadorId,
+const registroExistente =
+  encontrados.length > 0 ? encontrados[0] : null;
 
-    nome:
-      competidor.nome ||
-      competidor.name ||
-      "Competidor",
+const jogadorId =
+  competidor.id ||
+  competidor.jogadorId ||
+  competidor.uid ||
+  (registroExistente ? registroExistente[0] : null) ||
+  criarId("competidor");
 
-    xp: Number(competidor.xp || 0),
+const dadosAnteriores =
+  registroExistente ? registroExistente[1] : {};
 
-    sequencia: Number(
-      competidor.sequencia ??
-      competidor.streak ??
-      0
-    ),
+ const dadosCompetidor = {
 
-    acertos: Number(
-      competidor.acertos ??
-      competidor.hits ??
-      0
-    ),
+  ...dadosAnteriores,
+  ...competidor,
 
-    estrelas: Number(competidor.estrelas || 0),
+  id: jogadorId,
+  jogadorId: jogadorId,
 
-    bloqueado: Boolean(competidor.bloqueado),
+  nome:
+    competidor.nome ||
+    competidor.name ||
+    dadosAnteriores.nome ||
+    "Competidor",
 
-    jaFoiBloqueado: Boolean(
-      competidor.jaFoiBloqueado
-    ),
+  xp: registroExistente
+    ? Number(dadosAnteriores.xp || 0)
+    : Number(competidor.xp || 0),
 
-    online: true,
+  sequencia: registroExistente
+    ? Number(
+        dadosAnteriores.sequencia ??
+        dadosAnteriores.streak ??
+        0
+      )
+    : Number(
+        competidor.sequencia ??
+        competidor.streak ??
+        0
+      ),
 
-    entrouEm: serverTimestamp(),
+  acertos: registroExistente
+    ? Number(
+        dadosAnteriores.acertos ??
+        dadosAnteriores.hits ??
+        0
+      )
+    : Number(
+        competidor.acertos ??
+        competidor.hits ??
+        0
+      ),
 
-    atualizadoEm: serverTimestamp()
-  };
+  estrelas: registroExistente
+    ? Number(dadosAnteriores.estrelas || 0)
+    : Number(competidor.estrelas || 0),
+
+  bloqueado: registroExistente
+    ? Boolean(dadosAnteriores.bloqueado)
+    : Boolean(competidor.bloqueado),
+
+  jaFoiBloqueado: registroExistente
+    ? Boolean(dadosAnteriores.jaFoiBloqueado)
+    : Boolean(competidor.jaFoiBloqueado),
+
+  online: true,
+
+  entrouEm:
+    dadosAnteriores.entrouEm ||
+    serverTimestamp(),
+
+  atualizadoEm: serverTimestamp()
+};
 
   await set(
     ref(
