@@ -905,41 +905,98 @@ const demoQuestions = [
    ENTRADA
 ===================================================== */
 
-function entrar(){
+async function entrar(){
 
-  const codigo =
-    document.getElementById("codigo").value.trim().toUpperCase();
+    const codigo =
+        document.getElementById("codigo").value.trim().toUpperCase();
 
-  const nome =
-    document.getElementById("nome").value.trim();
+    const nome =
+        document.getElementById("nome").value.trim();
 
-  if(!codigo || !nome){
-    alert("Digite o código da Arena e seu nome.");
-    return;
-  }
+    if(!codigo || !nome){
+        alert("Digite o código da Arena e seu nome.");
+        return;
+    }
 
-  player.room = codigo;
-  player.name = nome;
+    if(!window.arenaFirebase){
+        alert("A conexão com a Arena ainda está carregando. Aguarde alguns segundos e tente novamente.");
+        return;
+    }
 
-  recuperar();
+    try {
 
-  document.getElementById("login").style.display="none";
-  document.getElementById("arena").style.display="block";
+        // Recupera eventual progresso anterior
+        recuperar();
 
-  document.getElementById("playerName").textContent =
-    player.name;
+        // Mantém os dados informados nesta entrada
+        player.room = codigo;
+        player.name = nome;
 
-  document.getElementById("roomName").textContent =
-    "Arena "+player.room;
+        // Mantém o mesmo ID se o estudante entrar novamente
+        const chaveId =
+            "arena_competidor_id_" +
+            codigo + "_" +
+            nome.toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]/g, "_");
 
-  adicionarFeed(
-    "⚡ "+player.name+" entrou na Arena."
-  );
+        const idAnterior = localStorage.getItem(chaveId);
 
-  renderQuestion();
-  atualizarPainel();
+        // REGISTRA DE VERDADE NO FIREBASE
+        const jogadorId =
+            await window.arenaFirebase.entrarNaArena(
+                codigo,
+                {
+                    id: idAnterior || undefined,
+                    nome: nome,
+                    xp: Number(player.xp || 0),
+                    sequencia: Number(player.streak || 0),
+                    acertos: Number(player.hits || 0),
+                    estrelas: Number(player.estrelas || 0)
+                }
+            );
+
+        // Guarda o ID para futuras reconexões
+        if(jogadorId){
+            localStorage.setItem(chaveId, jogadorId);
+            player.id = jogadorId;
+        }
+
+        // Só abre a Arena depois do Firebase confirmar a entrada
+        document.getElementById("login").style.display = "none";
+        document.getElementById("arena").style.display = "block";
+
+        document.getElementById("playerName").textContent =
+            player.name;
+
+        document.getElementById("roomName").textContent =
+            "Arena " + player.room;
+
+        adicionarFeed(
+            "⚡ " + player.name + " entrou na Arena."
+        );
+
+        renderQuestion();
+        atualizarPainel();
+
+        console.log(
+            "✅ Estudante registrado na Arena:",
+            jogadorId,
+            nome,
+            codigo
+        );
+
+    } catch(erro) {
+
+        console.error("ERRO AO ENTRAR NA ARENA:", erro);
+
+        alert(
+            erro?.message ||
+            "Não foi possível entrar na Arena."
+        );
+    }
 }
-
 
 /* =====================================================
    QUESTÃO
