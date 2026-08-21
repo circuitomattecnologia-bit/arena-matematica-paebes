@@ -481,6 +481,29 @@ input:focus{
   line-height:1.5;
 }
 
+
+/* ENCERRAMENTO */
+.endOverlay{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(2,7,17,.96);
+  z-index:40;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+.endBox{
+  width:min(620px,100%);
+  text-align:center;
+  padding:36px;
+  border-radius:25px;
+  border:1px solid var(--yellow);
+  background:#0d1b34;
+}
+.endBox h2{font-size:34px;margin:12px 0;}
+.endBox p{color:var(--muted);line-height:1.55;}
+
 /* MOBILE */
 
 @media(max-width:900px){
@@ -816,6 +839,17 @@ do ponto em que parou.
 
 </div>
 
+
+<!-- ENCERRAMENTO -->
+<div id="endOverlay" class="endOverlay">
+  <div class="endBox">
+    <div style="font-size:58px">🏁</div>
+    <h2>Arena encerrada</h2>
+    <p>A competição foi encerrada pelo professor. Seu XP, progresso e resultado final foram preservados.</p>
+    <div class="badge">🏆 RESULTADO FINAL SALVO</div>
+  </div>
+</div>
+
 <script>
 
 /* =====================================================
@@ -839,6 +873,73 @@ let player = {
   recovery:0,
   secret:0
 };
+
+
+
+/* =====================================================
+   BOSS FINAL
+===================================================== */
+
+let bossAtual = null;
+let bossRespondido = false;
+
+function mostrarBossFinal(boss) {
+  if (!boss || boss.status !== "liberado" || bossRespondido) return;
+
+  bossAtual = boss;
+  player.selected = null;
+
+  document.getElementById("descriptor").textContent = boss.descriptor || "BOSS_FINAL";
+  document.getElementById("level").textContent = boss.level || "BOSS";
+  document.getElementById("question").textContent = boss.text || "Desafio final";
+  document.getElementById("eventName").textContent = "👑 BOSS FINAL";
+  document.getElementById("eventText").textContent =
+    "O professor liberou o desafio final. Vale +" +
+    Number(boss.bonusXP || 300) + " XP para resposta correta.";
+  document.getElementById("status").textContent = "● BOSS FINAL";
+
+  const area = document.getElementById("options");
+  area.innerHTML = "";
+
+  (boss.options || []).forEach((texto, i) => {
+    const botao = document.createElement("button");
+    botao.className = "option";
+    botao.textContent = String.fromCharCode(65 + i) + ") " + texto;
+    botao.onclick = () => {
+      document.querySelectorAll("#options .option").forEach(b => b.classList.remove("selected"));
+      botao.classList.add("selected");
+      player.selected = i;
+      document.getElementById("confirmButton").disabled = false;
+    };
+    area.appendChild(botao);
+  });
+
+  document.getElementById("confirmButton").disabled = true;
+}
+
+async function confirmarBossFinal() {
+  if (!bossAtual || bossRespondido || player.selected === null) return false;
+  if (!window.arenaFirebase?.responderBossFinal || !window.__arenaJogadorId) return false;
+
+  const resultado = await window.arenaFirebase.responderBossFinal(
+    player.room,
+    window.__arenaJogadorId,
+    player.selected
+  );
+
+  bossRespondido = true;
+  bossAtual = null;
+
+  const feedback = document.getElementById("feedback");
+  feedback.className = "feedback " + (resultado.correta ? "ok" : "no");
+  feedback.textContent = resultado.correta
+    ? "👑 BOSS FINAL CONCLUÍDO! +" + Number(resultado.bonusXP || 0) + " XP."
+    : "👑 BOSS FINAL CONCLUÍDO. Resultado registrado.";
+
+  document.getElementById("confirmButton").disabled = true;
+  document.getElementById("status").textContent = "● BOSS FINAL CONCLUÍDO";
+  return true;
+}
 
 
 /* =====================================================
@@ -1157,6 +1258,17 @@ if (window.arenaFirebase && player.room && player.id) {
             estrelas: Number(player.estrelas || 0)
         }
     ).catch((erro) => {
+      const estadoAtual = String(arenaAtual?.status || arenaAtual?.estado || "").toLowerCase();
+
+      if (estadoAtual === "encerrada") {
+        document.getElementById("pauseOverlay").style.display = "none";
+        document.getElementById("endOverlay").style.display = "flex";
+        document.getElementById("status").textContent = "■ ARENA ENCERRADA";
+        return;
+      } else {
+        document.getElementById("endOverlay").style.display = "none";
+      }
+
         console.error("Erro ao atualizar competidor no Firebase:", erro);
     });
 }
@@ -1809,7 +1921,10 @@ window.arenaFirebase = {
     observarCompetidores,
 observarEventos,
     observarDueloAtual,
-    responderDuelo};
+    responderDuelo,
+  responderBossFinal,
+  observarBossFinal
+};
 
 console.log("🔥 Portal do estudante conectado ao Firebase.");
 </script>
