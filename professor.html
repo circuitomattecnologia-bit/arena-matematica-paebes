@@ -576,12 +576,14 @@ permitindo reforçar conteúdos de nível abaixo do básico/básico.
 <button class="green" onclick="acao('iniciada')">▶ INICIAR</button>
 <button class="gold" onclick="acao('pausada')">⏸ PAUSAR</button>
 <button class="blue" onclick="acao('continuada')">▶ CONTINUAR</button>
+<button class="primary" onclick="liberarBoss()">👑 LIBERAR BOSS FINAL</button>
 <button class="red" onclick="acao('encerrada')">■ ENCERRAR</button>
 </div>
 
 <div class="status" id="mensagem">
 Arena criada. Aguardando início da competição.
 </div>
+<div class="status" id="bossStatusProfessor" style="display:none;border-left-color:#facc15"></div>
 
 <h3>🔐 Controle de acesso</h3>
 
@@ -711,7 +713,9 @@ import {
   definirStatusArena,
   registrarEvento,
   criarDuelo,
-  observarDueloAtual
+  observarDueloAtual,
+  liberarBossFinal,
+  observarBossFinal
 } from "./js/firebase-service.js";
 
 iniciarFirebase();
@@ -746,6 +750,56 @@ listaDescritores.forEach(d => {
 let pararArena = null;
 let pararCompetidores = null;
 let pararDuelo = null;
+
+
+
+/* =========================================
+   BOSS FINAL
+========================================= */
+
+window.liberarBoss = async function() {
+  const arena = arenaLocal();
+  if (!arena?.codigo) {
+    alert("Crie ou recupere uma Arena primeiro.");
+    return;
+  }
+
+  if (String(arena.status || "").toLowerCase() === "encerrada") {
+    alert("Esta Arena já foi encerrada. O Boss Final precisa ser liberado antes do encerramento.");
+    return;
+  }
+
+  const confirmar = confirm(
+    "Liberar o BOSS FINAL para todos os competidores agora? O desafio valerá +300 XP para quem acertar."
+  );
+  if (!confirmar) return;
+
+  await liberarBossFinal(arena.codigo, { bonusXP: 300 });
+
+  document.getElementById("mensagem").innerHTML =
+    "👑 <strong>BOSS FINAL LIBERADO.</strong> Aguarde os competidores concluírem o desafio antes de encerrar a Arena.";
+};
+
+function acompanharBoss(codigo) {
+  observarBossFinal(codigo, boss => {
+    const box = document.getElementById("bossStatusProfessor");
+    if (!boss) {
+      box.style.display = "none";
+      return;
+    }
+
+    const respostas = Object.values(boss.respostas || {});
+    const concluidos = respostas.length;
+    const acertos = respostas.filter(r => r.correta).length;
+
+    box.style.display = "block";
+    box.innerHTML =
+      "👑 <strong>BOSS FINAL:</strong> " +
+      concluidos + " concluído(s) • " +
+      acertos + " acerto(s) • " +
+      Number(boss.bonusXP || 300) + " XP de bônus.";
+  });
+}
 
 
 /* =========================================
