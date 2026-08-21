@@ -23,25 +23,13 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
-
-// ======================================================
-// CONFIGURAÇÃO
-// ======================================================
-
 let app = null;
 let db = null;
 
 const RAIZ = "arenaMatematica";
 
-
-// ======================================================
-// INICIAR FIREBASE
-// ======================================================
-
 export function iniciarFirebase() {
-
   if (!app) {
-
     if (getApps().length > 0) {
       app = getApp();
     } else {
@@ -49,47 +37,25 @@ export function iniciarFirebase() {
     }
 
     db = getDatabase(app);
-
     console.log("🔥 Firebase inicializado.");
   }
 
   return db;
 }
 
-
-// ======================================================
-// BANCO
-// ======================================================
-
 export function banco() {
-
-  if (!db) {
-    iniciarFirebase();
-  }
-
+  if (!db) iniciarFirebase();
   return db;
 }
 
-
-// ======================================================
-// CAMINHO SEGURO
-// ======================================================
-
 export function caminhoSeguro(valor = "") {
-
   return String(valor)
     .trim()
     .toUpperCase()
     .replace(/[.#$\[\]\/]/g, "-");
 }
 
-
-// ======================================================
-// CRIAR ID
-// ======================================================
-
 export function criarId(prefixo = "id") {
-
   return (
     prefixo +
     "-" +
@@ -99,23 +65,11 @@ export function criarId(prefixo = "id") {
   );
 }
 
-
 // ======================================================
-// CAMINHO DA ARENA
-// ======================================================
-
-function caminhoArena(codigo) {
-
-  return `${RAIZ}/arenas/${caminhoSeguro(codigo)}`;
-}
-
-
-// ======================================================
-// SALVAR ARENA
+// ARENA
 // ======================================================
 
 export async function salvarArena(codigo, dados = {}) {
-
   const database = banco();
   const arenaId = caminhoSeguro(codigo);
 
@@ -125,23 +79,12 @@ export async function salvarArena(codigo, dados = {}) {
     atualizadoEm: serverTimestamp()
   };
 
-  await set(
-    ref(database, `${RAIZ}/arenas/${arenaId}`),
-    arena
-  );
-
-  console.log("✅ Arena salva:", codigo);
+  await set(ref(database, `${RAIZ}/arenas/${arenaId}`), arena);
 
   return arena;
 }
 
-
-// ======================================================
-// BUSCAR ARENA
-// ======================================================
-
 export async function buscarArena(codigo) {
-
   const database = banco();
   const arenaId = caminhoSeguro(codigo);
 
@@ -149,46 +92,24 @@ export async function buscarArena(codigo) {
     ref(database, `${RAIZ}/arenas/${arenaId}`)
   );
 
-  if (!snapshot.exists()) {
-    return null;
-  }
+  if (!snapshot.exists()) return null;
 
   return snapshot.val();
 }
 
-
-// ======================================================
-// OBSERVAR ARENA EM TEMPO REAL
-// ======================================================
-
 export function observarArena(codigo, callback) {
-
   const database = banco();
   const arenaId = caminhoSeguro(codigo);
 
-  const referencia = ref(
-    database,
-    `${RAIZ}/arenas/${arenaId}`
-  );
-
-  return onValue(referencia, snapshot => {
-
-    if (!snapshot.exists()) {
-      callback(null);
-      return;
+  return onValue(
+    ref(database, `${RAIZ}/arenas/${arenaId}`),
+    snapshot => {
+      callback(snapshot.exists() ? snapshot.val() : null);
     }
-
-    callback(snapshot.val());
-  });
+  );
 }
 
-
-// ======================================================
-// ATUALIZAR ARENA
-// ======================================================
-
 export async function atualizarArena(codigo, dados = {}) {
-
   const database = banco();
   const arenaId = caminhoSeguro(codigo);
 
@@ -199,17 +120,9 @@ export async function atualizarArena(codigo, dados = {}) {
       atualizadoEm: serverTimestamp()
     }
   );
-
-  console.log("🔄 Arena atualizada:", codigo);
 }
 
-
-// ======================================================
-// REMOVER ARENA
-// ======================================================
-
 export async function removerArena(codigo) {
-
   const database = banco();
   const arenaId = caminhoSeguro(codigo);
 
@@ -218,17 +131,14 @@ export async function removerArena(codigo) {
   );
 }
 
-
 // ======================================================
-// ENTRAR NA ARENA
+// ENTRADA / REENTRADA DO ESTUDANTE
 // ======================================================
 
 export async function entrarNaArena(codigo, competidor = {}) {
-
   const database = banco();
   const arenaId = caminhoSeguro(codigo);
 
-  // Confere se a Arena realmente existe
   const arenaSnapshot = await get(
     ref(database, `${RAIZ}/arenas/${arenaId}`)
   );
@@ -239,7 +149,6 @@ export async function entrarNaArena(codigo, competidor = {}) {
 
   const arena = arenaSnapshot.val();
 
-  // Se existir controle de entrada e estiver bloqueado
   if (
     arena.entradaLiberada === false ||
     arena.aceitaNovos === false
@@ -249,97 +158,104 @@ export async function entrarNaArena(codigo, competidor = {}) {
 
   const competidoresExistentes = arena.competidores || {};
 
-const nomeRecebido = String(
-  competidor.nome ||
-  competidor.name ||
-  ""
-).trim().toLowerCase();
-
-const encontrados = Object.entries(competidoresExistentes)
-  .filter(([id, dados]) =>
-    String(dados?.nome || "")
-      .trim()
-      .toLowerCase() === nomeRecebido
-  )
-  .sort(([, a], [, b]) =>
-    Number(b?.xp || 0) - Number(a?.xp || 0)
-  );
-
-const registroExistente =
-  encontrados.length > 0 ? encontrados[0] : null;
-
-const jogadorId =
-  competidor.id ||
-  competidor.jogadorId ||
-  competidor.uid ||
-  (registroExistente ? registroExistente[0] : null) ||
-  criarId("competidor");
-
-const dadosAnteriores =
-  registroExistente ? registroExistente[1] : {};
-
- const dadosCompetidor = {
-
-  ...dadosAnteriores,
-  ...competidor,
-
-  id: jogadorId,
-  jogadorId: jogadorId,
-
-  nome:
+  const nomeRecebido = String(
     competidor.nome ||
     competidor.name ||
-    dadosAnteriores.nome ||
-    "Competidor",
+    ""
+  ).trim().toLowerCase();
 
-  xp: registroExistente
-    ? Number(dadosAnteriores.xp || 0)
-    : Number(competidor.xp || 0),
+  const encontrados = Object.entries(competidoresExistentes)
+    .filter(([id, dados]) =>
+      String(dados?.nome || "")
+        .trim()
+        .toLowerCase() === nomeRecebido
+    )
+    .sort(([, a], [, b]) =>
+      Number(b?.xp || 0) - Number(a?.xp || 0)
+    );
 
-  sequencia: registroExistente
-    ? Number(
-        dadosAnteriores.sequencia ??
-        dadosAnteriores.streak ??
-        0
-      )
-    : Number(
-        competidor.sequencia ??
-        competidor.streak ??
-        0
-      ),
+  const registroExistente =
+    encontrados.length > 0 ? encontrados[0] : null;
 
-  acertos: registroExistente
-    ? Number(
-        dadosAnteriores.acertos ??
-        dadosAnteriores.hits ??
-        0
-      )
-    : Number(
-        competidor.acertos ??
-        competidor.hits ??
-        0
-      ),
+  const idInformado =
+    competidor.id ||
+    competidor.jogadorId ||
+    competidor.uid ||
+    null;
 
-  estrelas: registroExistente
-    ? Number(dadosAnteriores.estrelas || 0)
-    : Number(competidor.estrelas || 0),
+  const idInformadoExiste =
+    Boolean(
+      idInformado &&
+      competidoresExistentes[idInformado]
+    );
 
-  bloqueado: registroExistente
-    ? Boolean(dadosAnteriores.bloqueado)
-    : Boolean(competidor.bloqueado),
+  const jogadorId =
+    (idInformadoExiste ? idInformado : null) ||
+    (registroExistente ? registroExistente[0] : null) ||
+    idInformado ||
+    criarId("competidor");
 
-  jaFoiBloqueado: registroExistente
-    ? Boolean(dadosAnteriores.jaFoiBloqueado)
-    : Boolean(competidor.jaFoiBloqueado),
+  const dadosAnteriores =
+    competidoresExistentes[jogadorId] ||
+    (registroExistente ? registroExistente[1] : {});
 
-  online: true,
+  const dadosCompetidor = {
+    ...dadosAnteriores,
+    ...competidor,
 
-  entrouEm:
-    dadosAnteriores.entrouEm ||
-    serverTimestamp(),
+    id: jogadorId,
+    jogadorId,
 
-  atualizadoEm: serverTimestamp()
-};
+    nome:
+      competidor.nome ||
+      competidor.name ||
+      dadosAnteriores.nome ||
+      "Competidor",
+
+    xp: Number(dadosAnteriores.xp ?? competidor.xp ?? 0),
+
+    sequencia: Number(
+      dadosAnteriores.sequencia ??
+      dadosAnteriores.streak ??
+      competidor.sequencia ??
+      competidor.streak ??
+      0
+    ),
+
+    acertos: Number(
+      dadosAnteriores.acertos ??
+      dadosAnteriores.hits ??
+      competidor.acertos ??
+      competidor.hits ??
+      0
+    ),
+
+    estrelas: Number(
+      dadosAnteriores.estrelas ??
+      competidor.estrelas ??
+      0
+    ),
+
+    bloqueado: Boolean(
+      dadosAnteriores.bloqueado ??
+      competidor.bloqueado ??
+      false
+    ),
+
+    jaFoiBloqueado: Boolean(
+      dadosAnteriores.jaFoiBloqueado ??
+      competidor.jaFoiBloqueado ??
+      false
+    ),
+
+    online: true,
+
+    entrouEm:
+      dadosAnteriores.entrouEm ||
+      serverTimestamp(),
+
+    atualizadoEm: serverTimestamp()
+  };
 
   await set(
     ref(
@@ -349,18 +265,11 @@ const dadosAnteriores =
     dadosCompetidor
   );
 
-  console.log(
-    "👤 Competidor entrou:",
-    dadosCompetidor.nome,
-    codigo
-  );
-
   return jogadorId;
 }
 
-
 // ======================================================
-// ATUALIZAR COMPETIDOR
+// COMPETIDORES / RANKING
 // ======================================================
 
 export async function atualizarCompetidor(
@@ -368,7 +277,6 @@ export async function atualizarCompetidor(
   jogadorId,
   dados = {}
 ) {
-
   const database = banco();
   const arenaId = caminhoSeguro(codigo);
 
@@ -388,16 +296,7 @@ export async function atualizarCompetidor(
   );
 }
 
-
-// ======================================================
-// BUSCAR COMPETIDOR
-// ======================================================
-
-export async function buscarCompetidor(
-  codigo,
-  jogadorId
-) {
-
+export async function buscarCompetidor(codigo, jogadorId) {
   const database = banco();
   const arenaId = caminhoSeguro(codigo);
 
@@ -408,52 +307,27 @@ export async function buscarCompetidor(
     )
   );
 
-  if (!snapshot.exists()) {
-    return null;
-  }
+  if (!snapshot.exists()) return null;
 
   return snapshot.val();
 }
 
-
-// ======================================================
-// OBSERVAR COMPETIDORES
-// ======================================================
-
-export function observarCompetidores(
-  codigo,
-  callback
-) {
-
+export function observarCompetidores(codigo, callback) {
   const database = banco();
   const arenaId = caminhoSeguro(codigo);
 
-  const referencia = ref(
-    database,
-    `${RAIZ}/arenas/${arenaId}/competidores`
-  );
-
-  return onValue(referencia, snapshot => {
-
-    if (!snapshot.exists()) {
-      callback({});
-      return;
+  return onValue(
+    ref(
+      database,
+      `${RAIZ}/arenas/${arenaId}/competidores`
+    ),
+    snapshot => {
+      callback(snapshot.exists() ? snapshot.val() : {});
     }
-
-    callback(snapshot.val());
-  });
+  );
 }
 
-
-// ======================================================
-// REMOVER COMPETIDOR
-// ======================================================
-
-export async function removerCompetidor(
-  codigo,
-  jogadorId
-) {
-
+export async function removerCompetidor(codigo, jogadorId) {
   const database = banco();
   const arenaId = caminhoSeguro(codigo);
 
@@ -465,29 +339,8 @@ export async function removerCompetidor(
   );
 }
 
-
 // ======================================================
-// STATUS ONLINE
-// ======================================================
-
-export async function definirCompetidorOnline(
-  codigo,
-  jogadorId,
-  online = true
-) {
-
-  return atualizarCompetidor(
-    codigo,
-    jogadorId,
-    {
-      online: Boolean(online)
-    }
-  );
-}
-
-
-// ======================================================
-// SALVAR RESPOSTA
+// RESPOSTAS
 // ======================================================
 
 export async function salvarResposta(
@@ -495,7 +348,6 @@ export async function salvarResposta(
   jogadorId,
   resposta = {}
 ) {
-
   const database = banco();
   const arenaId = caminhoSeguro(codigo);
 
@@ -506,160 +358,83 @@ export async function salvarResposta(
     )
   );
 
-  await set(
-    referencia,
-    {
-      ...resposta,
-      jogadorId,
-      criadoEm: serverTimestamp()
-    }
-  );
+  await set(referencia, {
+    ...resposta,
+    jogadorId,
+    criadoEm: serverTimestamp()
+  });
 
   return referencia.key;
 }
 
-
-// ======================================================
-// OBSERVAR RESPOSTAS
-// ======================================================
-
-export function observarRespostas(
-  codigo,
-  callback
-) {
-
+export function observarRespostas(codigo, callback) {
   const database = banco();
   const arenaId = caminhoSeguro(codigo);
 
   return onValue(
-    ref(
-      database,
-      `${RAIZ}/arenas/${arenaId}/respostas`
-    ),
+    ref(database, `${RAIZ}/arenas/${arenaId}/respostas`),
     snapshot => {
-
-      callback(
-        snapshot.exists()
-          ? snapshot.val()
-          : {}
-      );
+      callback(snapshot.exists() ? snapshot.val() : {});
     }
   );
 }
 
-
 // ======================================================
-// REGISTRAR EVENTO
+// EVENTOS EM TEMPO REAL
 // ======================================================
 
-export async function registrarEvento(
-  codigo,
-  evento = {}
-) {
-
+export async function registrarEvento(codigo, evento = {}) {
   const database = banco();
   const arenaId = caminhoSeguro(codigo);
 
   const referencia = push(
-    ref(
-      database,
-      `${RAIZ}/arenas/${arenaId}/eventos`
-    )
+    ref(database, `${RAIZ}/arenas/${arenaId}/eventos`)
   );
 
-  await set(
-    referencia,
-    {
-      ...evento,
-      criadoEm: serverTimestamp()
-    }
-  );
+  await set(referencia, {
+    ...evento,
+    criadoEm: serverTimestamp()
+  });
 
   return referencia.key;
 }
 
-
-// ======================================================
-// OBSERVAR EVENTOS
-// ======================================================
-
-export function observarEventos(
-  codigo,
-  callback
-) {
-
+export function observarEventos(codigo, callback) {
   const database = banco();
   const arenaId = caminhoSeguro(codigo);
 
   return onValue(
-    ref(
-      database,
-      `${RAIZ}/arenas/${arenaId}/eventos`
-    ),
+    ref(database, `${RAIZ}/arenas/${arenaId}/eventos`),
     snapshot => {
-
-      callback(
-        snapshot.exists()
-          ? snapshot.val()
-          : {}
-      );
+      callback(snapshot.exists() ? snapshot.val() : {});
     }
   );
 }
 
-
 // ======================================================
-// LIBERAR ENTRADA
+// CONTROLE
 // ======================================================
 
 export async function liberarEntrada(codigo) {
-
-  await atualizarArena(
-    codigo,
-    {
-      entradaLiberada: true,
-      aceitaNovos: true
-    }
-  );
+  await atualizarArena(codigo, {
+    entradaLiberada: true,
+    aceitaNovos: true
+  });
 }
-
-
-// ======================================================
-// BLOQUEAR NOVAS ENTRADAS
-// ======================================================
 
 export async function bloquearEntrada(codigo) {
-
-  await atualizarArena(
-    codigo,
-    {
-      entradaLiberada: false,
-      aceitaNovos: false
-    }
-  );
+  await atualizarArena(codigo, {
+    entradaLiberada: false,
+    aceitaNovos: false
+  });
 }
 
-
-// ======================================================
-// STATUS DA ARENA
-// ======================================================
-
-export async function definirStatusArena(
-  codigo,
-  status
-) {
-
-  await atualizarArena(
-    codigo,
-    {
-      status
-    }
-  );
+export async function definirStatusArena(codigo, status) {
+  await atualizarArena(codigo, { status });
 }
 
-
 // ======================================================
-// INICIAR AUTOMATICAMENTE
+// INICIALIZAÇÃO
 // ======================================================
 
 iniciarFirebase();
