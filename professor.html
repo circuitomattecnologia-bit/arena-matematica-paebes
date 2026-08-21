@@ -1221,42 +1221,67 @@ window.acao = async function(tipo) {
 ========================================= */
 
 window.evento = async function(nome) {
-
   const arena = arenaLocal();
 
   if (!arena || !arena.codigo) {
-
-    alert(
-      "Crie uma Arena primeiro."
-    );
-
+    alert("Crie uma Arena primeiro.");
     return;
   }
 
-  try {
+  // Identifica automaticamente o botão que foi clicado
+  const botao = event?.currentTarget;
+  const textoOriginal = botao ? botao.innerHTML : "";
 
+  if (botao) {
+    botao.disabled = true;
+    botao.innerHTML = "⏳ ACIONANDO...";
+    botao.style.transform = "scale(0.96)";
+  }
+
+  try {
     await registrarEvento(
       arena.codigo,
       {
         nome,
-        momento:
-          new Date().toISOString()
+        momento: new Date().toISOString()
       }
     );
+
+    // Confirmação visual
+    if (botao) {
+      botao.innerHTML = "✅ ACIONADO!";
+      botao.style.transform = "scale(1.05)";
+      botao.style.boxShadow = "0 0 18px rgba(34,197,94,.8)";
+    }
 
     document
       .getElementById("mensagem")
       .innerHTML =
-      `⚡ EVENTO DISPARADO:
-       <strong>${nome}</strong>`;
+      `⚡ EVENTO DISPARADO: <strong>${nome}</strong>`;
+
+    // Volta ao botão normal
+    setTimeout(() => {
+      if (botao) {
+        botao.innerHTML = textoOriginal;
+        botao.disabled = false;
+        botao.style.transform = "";
+        botao.style.boxShadow = "";
+      }
+    }, 1800);
 
   } catch (erro) {
-
     console.error(erro);
 
-    alert(
-      "Não foi possível disparar o evento."
-    );
+    if (botao) {
+      botao.innerHTML = "❌ ERRO";
+      botao.disabled = false;
+
+      setTimeout(() => {
+        botao.innerHTML = textoOriginal;
+      }, 1800);
+    }
+
+    alert("Não foi possível disparar o evento.");
   }
 };
 
