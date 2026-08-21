@@ -403,6 +403,43 @@ button{
     flex-direction:column;
   }
 }
+
+
+/* DUELO MATEMÁTICO */
+.dueloPanel{
+  display:none;
+  margin-top:18px;
+  padding:22px;
+  border:1px solid #7c3aed;
+  border-radius:18px;
+  background:linear-gradient(135deg,#0a1d35,#17163c);
+}
+.dueloPanel.ativo{display:block;}
+.dueloGrid{
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  gap:14px;
+  align-items:end;
+}
+.dueloVs{
+  font-size:25px;
+  font-weight:900;
+  color:#facc15;
+  padding-bottom:12px;
+}
+.dueloStatus{
+  margin-top:14px;
+  padding:13px;
+  border-radius:12px;
+  background:#07182d;
+  border:1px solid #294b70;
+  color:#dcecff;
+}
+@media(max-width:700px){
+  .dueloGrid{grid-template-columns:1fr;}
+  .dueloVs{text-align:center;padding:0;}
+}
+
 </style>
 </head>
 
@@ -576,7 +613,7 @@ aumentar a interação entre os estudantes.
 <div class="evento">
 <strong>⚔️ Duelo Matemático</strong>
 <p>Dois competidores podem receber um desafio simultâneo.</p>
-<button class="primary" onclick="evento('DUELO MATEMÁTICO')">CRIAR DUELO</button>
+<button class="primary" onclick="abrirDuelo()">CRIAR DUELO</button>
 </div>
 
 <div class="evento">
@@ -603,6 +640,32 @@ aumentar a interação entre os estudantes.
 <button class="gray" onclick="evento('ESCUDO MATEMÁTICO')">LIBERAR</button>
 </div>
 
+</div>
+
+<div id="dueloPanel" class="dueloPanel">
+  <h3 style="margin-top:0">⚔️ Configurar Duelo Matemático</h3>
+  <p class="small">Escolha dois competidores. Os dois receberão a mesma questão; o primeiro a acertar vence o duelo e recebe <strong>+200 XP</strong>.</p>
+
+  <div class="dueloGrid">
+    <div>
+      <label>Competidor 1</label>
+      <select id="dueloCompetidor1"></select>
+    </div>
+    <div class="dueloVs">VS</div>
+    <div>
+      <label>Competidor 2</label>
+      <select id="dueloCompetidor2"></select>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="primary" onclick="iniciarDuelo()">⚔️ INICIAR DUELO</button>
+    <button class="gray" onclick="fecharDuelo()">FECHAR</button>
+  </div>
+
+  <div id="dueloStatusProfessor" class="dueloStatus">
+    Selecione dois competidores para iniciar.
+  </div>
 </div>
 
 </section>
@@ -646,7 +709,9 @@ import {
   liberarEntrada,
   bloquearEntrada,
   definirStatusArena,
-  registrarEvento
+  registrarEvento,
+  criarDuelo,
+  observarDueloAtual
 } from "./js/firebase-service.js";
 
 iniciarFirebase();
@@ -680,6 +745,7 @@ listaDescritores.forEach(d => {
 
 let pararArena = null;
 let pararCompetidores = null;
+let pararDuelo = null;
 
 
 /* =========================================
@@ -960,6 +1026,16 @@ function conectarArena(codigo) {
         );
       }
     );
+
+
+  if (typeof pararDuelo === "function") {
+    pararDuelo();
+  }
+
+  pararDuelo = observarDueloAtual(
+    codigo,
+    duelo => renderDueloProfessor(duelo)
+  );
 }
 
 
@@ -1215,6 +1291,142 @@ window.acao = async function(tipo) {
   }
 };
 
+
+
+/* =========================================
+   DUELO MATEMÁTICO
+========================================= */
+
+const questoesDuelo = [
+  {
+    descritor:"D111_M",
+    texto:"Um cubo possui quantas faces?",
+    opcoes:["4 faces","5 faces","6 faces","8 faces","12 faces"],
+    correta:2
+  },
+  {
+    descritor:"D074_M",
+    texto:"Uma loja deu 20% de desconto em R$ 100,00. Qual foi o desconto?",
+    opcoes:["R$ 10,00","R$ 20,00","R$ 25,00","R$ 40,00","R$ 80,00"],
+    correta:1
+  },
+  {
+    descritor:"D097_M",
+    texto:"Se x + 5 = 12, qual é o valor de x?",
+    opcoes:["5","6","7","8","17"],
+    correta:2
+  },
+  {
+    descritor:"D125_M",
+    texto:"Em uma turma de 40 estudantes, 30 participaram de uma atividade. Qual percentual participou?",
+    opcoes:["25%","40%","60%","75%","80%"],
+    correta:3
+  }
+];
+
+window.abrirDuelo = function() {
+  const arena = arenaLocal();
+  const competidores = Object.values(arena?.competidores || {})
+    .filter(c => c && (c.id || c.jogadorId));
+
+  if (competidores.length < 2) {
+    alert("É necessário ter pelo menos 2 competidores na Arena para criar um duelo.");
+    return;
+  }
+
+  const montar = (id) => {
+    const select = document.getElementById(id);
+    select.innerHTML = competidores.map(c => {
+      const cid = c.id || c.jogadorId;
+      return `<option value="${cid}">${c.nome || "Competidor"} — ${Number(c.xp || 0)} XP</option>`;
+    }).join("");
+  };
+
+  montar("dueloCompetidor1");
+  montar("dueloCompetidor2");
+
+  const s2 = document.getElementById("dueloCompetidor2");
+  if (s2.options.length > 1) s2.selectedIndex = 1;
+
+  document.getElementById("dueloPanel").classList.add("ativo");
+  document.getElementById("dueloStatusProfessor").textContent =
+    "Selecione dois competidores e clique em INICIAR DUELO.";
+  document.getElementById("dueloPanel").scrollIntoView({behavior:"smooth", block:"center"});
+};
+
+window.fecharDuelo = function() {
+  document.getElementById("dueloPanel")?.classList.remove("ativo");
+};
+
+window.iniciarDuelo = async function() {
+  const arena = arenaLocal();
+  if (!arena?.codigo) return;
+
+  const id1 = document.getElementById("dueloCompetidor1").value;
+  const id2 = document.getElementById("dueloCompetidor2").value;
+
+  if (!id1 || !id2 || id1 === id2) {
+    alert("Selecione dois competidores diferentes.");
+    return;
+  }
+
+  const competidores = arena.competidores || {};
+  const c1 = competidores[id1] || Object.values(competidores).find(c => (c.id || c.jogadorId) === id1);
+  const c2 = competidores[id2] || Object.values(competidores).find(c => (c.id || c.jogadorId) === id2);
+  const q = questoesDuelo[Math.floor(Math.random() * questoesDuelo.length)];
+
+  try {
+    const dueloId = await criarDuelo(arena.codigo, {
+      competidor1Id:id1,
+      competidor1Nome:c1?.nome || "Competidor 1",
+      competidor2Id:id2,
+      competidor2Nome:c2?.nome || "Competidor 2",
+      descritor:q.descritor,
+      pergunta:q.texto,
+      opcoes:q.opcoes,
+      correta:q.correta,
+      bonusXP:200
+    });
+
+    await registrarEvento(arena.codigo, {
+      nome:"DUELO MATEMÁTICO",
+      tipo:"duelo_iniciado",
+      dueloId,
+      competidor1Id:id1,
+      competidor1Nome:c1?.nome || "Competidor 1",
+      competidor2Id:id2,
+      competidor2Nome:c2?.nome || "Competidor 2",
+      momento:new Date().toISOString()
+    });
+
+    document.getElementById("dueloStatusProfessor").innerHTML =
+      `⚔️ <strong>DUELO INICIADO:</strong> ${c1?.nome || "Competidor 1"} × ${c2?.nome || "Competidor 2"}. Aguardando respostas...`;
+
+    document.getElementById("mensagem").innerHTML =
+      `⚔️ Duelo iniciado: <strong>${c1?.nome || "Competidor 1"} × ${c2?.nome || "Competidor 2"}</strong>.`;
+  } catch (erro) {
+    console.error(erro);
+    alert("Não foi possível iniciar o duelo.");
+  }
+};
+
+function renderDueloProfessor(duelo) {
+  if (!duelo) return;
+
+  const painel = document.getElementById("dueloPanel");
+  const status = document.getElementById("dueloStatusProfessor");
+  if (!painel || !status) return;
+
+  painel.classList.add("ativo");
+
+  if (duelo.status === "ativo") {
+    status.innerHTML = `⚔️ <strong>DUELO EM ANDAMENTO:</strong> ${duelo.competidor1Nome} × ${duelo.competidor2Nome}. Aguardando o primeiro acerto.`;
+  } else if (duelo.status === "encerrado") {
+    status.innerHTML = `🏆 <strong>VENCEDOR DO DUELO:</strong> ${duelo.vencedorNome || "Competidor"} — +${Number(duelo.bonusXP || 200)} XP.`;
+    document.getElementById("mensagem").innerHTML =
+      `🏆 Duelo encerrado. Vencedor: <strong>${duelo.vencedorNome || "Competidor"}</strong>.`;
+  }
+}
 
 /* =========================================
    EVENTOS
