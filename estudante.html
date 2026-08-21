@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -797,7 +798,7 @@ do ponto em que parou.
    Estrutura inicial — 20 questões regulares
 ===================================================== */
 
-const TOTAL_QUESTIONS = 20;
+let TOTAL_QUESTIONS = 20;
 
 let player = {
   name:"",
@@ -925,14 +926,19 @@ async function entrar(){
 
     try {
 
-        // Recupera eventual progresso anterior
-        recuperar();
-
-        // Mantém os dados informados nesta entrada
+        // Define a identidade ANTES de recuperar o progresso local.
         player.room = codigo;
         player.name = nome;
+        recuperar();
 
-        // Mantém o mesmo ID se o estudante entrar novamente
+        // Lê a configuração real da Arena (quantidade, status etc.).
+        const arenaAtual = await window.arenaFirebase.buscarArena(codigo);
+        if(!arenaAtual){
+            throw new Error("Arena não encontrada.");
+        }
+
+        TOTAL_QUESTIONS = Math.max(1, Number(arenaAtual.quantidade || 20));
+
         const chaveId =
             "arena_competidor_id_" +
             codigo + "_" +
@@ -943,7 +949,7 @@ async function entrar(){
 
         const idAnterior = localStorage.getItem(chaveId);
 
-        // REGISTRA DE VERDADE NO FIREBASE
+        // Registra/reconecta usando o mesmo competidor quando ele já existir.
         const jogadorId =
             await window.arenaFirebase.entrarNaArena(
                 codigo,
@@ -957,31 +963,46 @@ async function entrar(){
                 }
             );
 
-        // Guarda o ID para futuras reconexões
         if(jogadorId){
             localStorage.setItem(chaveId, jogadorId);
             player.id = jogadorId;
         }
 
-        // Só abre a Arena depois do Firebase confirmar a entrada
+        // Recupera do Firebase o progresso oficial do competidor.
+        if(window.arenaFirebase.buscarCompetidor && jogadorId){
+            const dadosServidor =
+                await window.arenaFirebase.buscarCompetidor(codigo, jogadorId);
+
+            if(dadosServidor){
+                player.xp = Number(dadosServidor.xp || 0);
+                player.streak = Number(dadosServidor.sequencia ?? dadosServidor.streak ?? 0);
+                player.hits = Number(dadosServidor.acertos ?? dadosServidor.hits ?? 0);
+                player.estrelas = Number(dadosServidor.estrelas || 0);
+            }
+        }
+
+        salvar();
+
         document.getElementById("login").style.display = "none";
         document.getElementById("arena").style.display = "block";
 
-        document.getElementById("playerName").textContent =
-            player.name;
+        document.getElementById("playerName").textContent = player.name;
+        document.getElementById("roomName").textContent = "Arena " + player.room;
 
-        document.getElementById("roomName").textContent =
-            "Arena " + player.room;
-
-        adicionarFeed(
-            "⚡ " + player.name + " entrou na Arena."
-        );
+        adicionarFeed("⚡ " + player.name + " entrou na Arena.");
 
         renderQuestion();
         atualizarPainel();
 
+        // Conecta os recursos em tempo real somente após a entrada ser confirmada.
+        rankingConectado = false;
+        eventosConectados = false;
+        conectarArenaReal();
+        rankingReal();
+        conectarEventosReal();
+
         console.log(
-            "✅ Estudante registrado na Arena:",
+            "✅ Estudante registrado e sincronizado:",
             jogadorId,
             nome,
             codigo
@@ -1393,7 +1414,7 @@ function finalizarArena(){
 
   document.getElementById("question").innerHTML =
     "🏆 <strong>ARENA CONCLUÍDA!</strong><br><br>"+
-    "Você terminou as 20 questões regulares.";
+    "Você terminou as "+TOTAL_QUESTIONS+" questões regulares.";
 
   document.getElementById("options").innerHTML="";
 
@@ -1407,7 +1428,7 @@ function finalizarArena(){
     "100%";
 
   document.getElementById("qcount").textContent =
-    "20/20";
+    TOTAL_QUESTIONS+"/"+TOTAL_QUESTIONS;
 
   mostrarEvento(
     "👑 BOSS FINAL",
@@ -1424,6 +1445,9 @@ function finalizarArena(){
 ===================================================== */
 
 let rankingConectado = false;
+let pararRankingReal = null;
+let pararEventosReal = null;
+let pararArenaReal = null;
 
 function rankingReal(){
 
@@ -1432,50 +1456,46 @@ function rankingReal(){
     !window.arenaFirebase.observarCompetidores ||
     !player.room
   ){
-    setTimeout(rankingReal, 300);
     return;
   }
 
   if (rankingConectado) return;
   rankingConectado = true;
 
-  window.arenaFirebase.observarCompetidores(
+  if (typeof pararRankingReal === "function") {
+    pararRankingReal();
+  }
+
+  pararRankingReal = window.arenaFirebase.observarCompetidores(
     player.room,
     (competidores) => {
 
-      const ranking =
-        document.getElementById("ranking");
-
+      const ranking = document.getElementById("ranking");
       if (!ranking) return;
 
-     const classificados = Object.values(competidores || {})
-  .sort((a,b) => {
-    const xpA = Number(a.xp || 0);
-    const xpB = Number(b.xp || 0);
+      const classificados = Object.values(competidores || {})
+        .sort((a,b) => {
+          const xpA = Number(a.xp || 0);
+          const xpB = Number(b.xp || 0);
+          if (xpB !== xpA) return xpB - xpA;
+          return Number(b.acertos || 0) - Number(a.acertos || 0);
+        });
 
-    if (xpB !== xpA) return xpB - xpA;
+      const lista = classificados.slice(0,3);
 
-    return Number(b.acertos || 0) -
-           Number(a.acertos || 0);
-  });
+      const minhaPosicao = classificados.findIndex(
+        competidor =>
+          competidor.id === player.id ||
+          competidor.jogadorId === player.id
+      );
 
-const lista = classificados.slice(0,3);
-
-const minhaPosicao = classificados.findIndex(
-  competidor =>
-    competidor.id === player.id ||
-    competidor.jogadorId === player.id
-);
-
-const campoPosicao = document.getElementById("position");
-
-if (campoPosicao) {
-  campoPosicao.textContent =
-    minhaPosicao >= 0 ? (minhaPosicao + 1) + "º" : "—";
-}
+      const campoPosicao = document.getElementById("position");
+      if (campoPosicao) {
+        campoPosicao.textContent =
+          minhaPosicao >= 0 ? (minhaPosicao + 1) + "º" : "—";
+      }
 
       ranking.innerHTML = "";
-
       const medalhas = ["🥇","🥈","🥉"];
 
       if (lista.length === 0){
@@ -1490,7 +1510,6 @@ if (campoPosicao) {
       }
 
       lista.forEach((competidor, indice) => {
-
         const item = document.createElement("div");
         item.className = "rankItem";
 
@@ -1500,27 +1519,67 @@ if (campoPosicao) {
 
         const nome = document.createElement("div");
         nome.className = "rankName";
-        nome.textContent =
-          competidor.nome || "Competidor";
+        nome.textContent = competidor.nome || "Competidor";
 
         const xp = document.createElement("div");
         xp.className = "rankXP";
-        xp.textContent =
-          Number(competidor.xp || 0) + " XP";
+        xp.textContent = Number(competidor.xp || 0) + " XP";
 
         item.appendChild(pos);
         item.appendChild(nome);
         item.appendChild(xp);
-
         ranking.appendChild(item);
       });
     }
   );
 }
-// ========================================
-// EVENTOS EM TEMPO REAL DO PROFESSOR
-// ========================================
+
+// =====================================================
+// STATUS DA ARENA EM TEMPO REAL
+// =====================================================
+function conectarArenaReal(){
+  if (
+    !window.arenaFirebase ||
+    !window.arenaFirebase.observarArena ||
+    !player.room
+  ) return;
+
+  if (typeof pararArenaReal === "function") {
+    pararArenaReal();
+  }
+
+  pararArenaReal = window.arenaFirebase.observarArena(
+    player.room,
+    (arena) => {
+      if (!arena) return;
+
+      TOTAL_QUESTIONS = Math.max(1, Number(arena.quantidade || TOTAL_QUESTIONS || 20));
+      atualizarPainel();
+
+      if (arena.status === "pausada") {
+        pausarArena();
+      } else if (arena.status === "continuada" || arena.status === "iniciada") {
+        continuarArena();
+      } else if (arena.status === "encerrada") {
+        finalizarArena();
+      }
+    }
+  );
+}
+
+// =====================================================
+// EVENTOS ESPECIAIS EM TEMPO REAL
+// =====================================================
 let eventosConectados = false;
+
+const textosEventosArena = {
+  "QUESTÃO RELÂMPAGO": "🔥 Questão Relâmpago ativada! Prepare-se para um desafio especial com pontuação extra.",
+  "DUELO MATEMÁTICO": "⚔️ Duelo Matemático ativado! Aguarde a definição dos competidores do duelo.",
+  "BÔNUS PAEBES": "💎 Bônus PAEBES ativado! A próxima ação especial poderá render XP adicional.",
+  "DESAFIO DO DESCRITOR": "🎯 Desafio do Descritor ativado! O professor lançou uma disputa focada em uma habilidade.",
+  "CAÇADA AO LÍDER": "👑 Caçada ao Líder ativada! É hora de tentar reduzir a diferença para o primeiro colocado.",
+  "ESCUDO MATEMÁTICO": "🛡️ Escudo Matemático liberado! Fique atento às regras da rodada especial."
+};
 
 function conectarEventosReal() {
 
@@ -1528,50 +1587,71 @@ function conectarEventosReal() {
     !window.arenaFirebase ||
     !window.arenaFirebase.observarEventos ||
     !player.room
-  ) {
-    setTimeout(conectarEventosReal, 300);
-    return;
-  }
+  ) return;
 
   if (eventosConectados) return;
   eventosConectados = true;
 
-  window.arenaFirebase.observarEventos(
+  if (typeof pararEventosReal === "function") {
+    pararEventosReal();
+  }
+
+  let primeiraLeitura = true;
+  let ultimaChaveEvento = null;
+
+  pararEventosReal = window.arenaFirebase.observarEventos(
     player.room,
     (eventos) => {
 
-      if (!eventos) return;
+      const entradas = Object.entries(eventos || {});
+      if (entradas.length === 0) return;
 
-      const lista = Object.values(eventos);
-      if (lista.length === 0) return;
+      entradas.sort(([,a],[,b]) => {
+        const ta = Number(a?.criadoEm || Date.parse(a?.momento || 0) || 0);
+        const tb = Number(b?.criadoEm || Date.parse(b?.momento || 0) || 0);
+        return ta - tb;
+      });
 
-      const ultimo = lista[lista.length - 1];
-
+      const [chave, ultimo] = entradas[entradas.length - 1];
       if (!ultimo || !ultimo.nome) return;
 
-      const chave = ultimo.criadoEm || ultimo.momento || ultimo.nome;
-
-      if (sessionStorage.getItem("ultimoEventoArena") === String(chave)) {
+      // Na primeira leitura apenas memoriza o último evento antigo.
+      if (primeiraLeitura) {
+        primeiraLeitura = false;
+        ultimaChaveEvento = chave;
         return;
       }
 
-      sessionStorage.setItem("ultimoEventoArena", String(chave));
+      if (chave === ultimaChaveEvento) return;
+      ultimaChaveEvento = chave;
 
-      alert("⚡ EVENTO DA ARENA ⚡\n\n" + ultimo.nome);
+      const nome = String(ultimo.nome).trim();
+      const texto = textosEventosArena[nome] ||
+        "⚡ O professor ativou um novo Evento Especial na Arena.";
+
+      mostrarEvento("⚡ " + nome, texto);
+
+      const card = document.getElementById("eventCard");
+      if(card){
+        card.animate(
+          [
+            { transform:"scale(1)", boxShadow:"0 0 0 rgba(237,61,157,0)" },
+            { transform:"scale(1.02)", boxShadow:"0 0 30px rgba(237,61,157,.65)" },
+            { transform:"scale(1)", boxShadow:"0 0 0 rgba(237,61,157,0)" }
+          ],
+          { duration:900, iterations:1 }
+        );
+      }
     }
   );
 }
-
-
-
-  conectarEventosReal();
-  rankingReal();
 
 </script>
 <script type="module">
 import {
     iniciarFirebase,
     buscarArena,
+    buscarCompetidor,
     entrarNaArena,
     atualizarCompetidor,
     observarArena,
@@ -1583,6 +1663,7 @@ iniciarFirebase();
 
 window.arenaFirebase = {
     buscarArena,
+    buscarCompetidor,
     entrarNaArena,
   atualizarCompetidor,
     observarArena,
