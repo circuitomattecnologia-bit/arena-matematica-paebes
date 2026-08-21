@@ -20,7 +20,8 @@ import {
   remove,
   push,
   onValue,
-  serverTimestamp
+  serverTimestamp,
+  runTransaction
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
 let app = null;
@@ -407,6 +408,148 @@ export function observarEventos(codigo, callback) {
     ref(database, `${RAIZ}/arenas/${arenaId}/eventos`),
     snapshot => {
       callback(snapshot.exists() ? snapshot.val() : {});
+    }
+  );
+}
+
+
+// ======================================================
+// DUELO MATEMÁTICO
+// ======================================================
+
+export async function criarDuelo(codigo, duelo = {}) {
+  const database = banco();
+  const arenaId = caminhoSeguro(codigo);
+  const dueloId = duelo.id || criarId("duelo");
+
+  const dados = {
+    ...duelo,
+    id: dueloId,
+    status: "ativo",
+    vencedorId: null,
+    vencedorNome: null,
+    respostas: {},
+    criadoEm: serverTimestamp(),
+    atualizadoEm: serverTimestamp()
+  };
+
+  await set(
+    ref(database, `${RAIZ}/arenas/${arenaId}/dueloAtual`),
+    dados
+  );
+
+  return dueloId;
+}
+
+export function observarDueloAtual(codigo, callback) {
+  const database = banco();
+  const arenaId = caminhoSeguro(codigo);
+
+  return onValue(
+    ref(database, `${RAIZ}/arenas/${arenaId}/dueloAtual`),
+    snapshot => callback(snapshot.exists() ? snapshot.val() : null)
+  );
+}
+
+export async function responderDuelo(
+  codigo,
+  jogadorId,
+  resposta
+) {
+  const database = banco();
+  const arenaId = caminhoSeguro(codigo);
+  const dueloRef = ref(database, `${RAIZ}/arenas/${arenaId}/dueloAtual`);
+  const snap = await get(dueloRef);
+
+  if (!snap.exists()) {
+    throw new Error("Não há duelo ativo.");
+  }
+
+  const duelo = snap.val();
+
+  if (duelo.status !== "ativo") {
+    return { correta:false, vencedor:false, encerrado:true };
+  }
+
+  const participantes = [duelo.competidor1Id, duelo.competidor2Id];
+  if (!participantes.includes(jogadorId)) {
+    throw new Error("Este competidor não participa do duelo atual.");
+  }
+
+  if (duelo.respostas && duelo.respostas[jogadorId]) {
+    return {
+      correta: Boolean(duelo.respostas[jogadorId].correta),
+      vencedor: duelo.vencedorId === jogadorId,
+      jaRespondido: true
+    };
+  }
+
+  const correta = Number(resposta) === Number(duelo.correta);
+  const competidorSnap = await get(
+    ref(database, `${RAIZ}/arenas/${arenaId}/competidores/${jogadorId}`)
+  );
+  const competidor = competidorSnap.exists() ? competidorSnap.val() : {};
+
+  await set(
+    ref(database, `${RAIZ}/arenas/${arenaId}/dueloAtual/respostas/${jogadorId}`),
+    {
+      resposta: Number(resposta),
+      correta,
+      nome: competidor.nome || "Competidor",
+      respondidoEm: serverTimestamp()
+    }
+  );
+
+  let vencedor = false;
+
+  if (correta) {
+    const vencedorRef = ref(
+      database,
+      `${RAIZ}/arenas/${arenaId}/dueloAtual/vencedorId`
+    );
+
+    const resultado = await runTransaction(vencedorRef, atual => {
+      if (atual) return;
+      return jogadorId;
+    });
+
+    vencedor = resultado.committed && resultado.snapshot.val() === jogadorId;
+
+    if (vencedor) {
+      const bonusXP = Number(duelo.bonusXP || 200);
+      const xpAtual = Number(competidor.xp || 0);
+
+      await update(
+        ref(database, `${RAIZ}/arenas/${arenaId}/competidores/${jogadorId}`),
+        {
+          xp: xpAtual + bonusXP,
+          atualizadoEm: serverTimestamp()
+        }
+      );
+
+      await update(dueloRef, {
+        status: "encerrado",
+        vencedorId: jogadorId,
+        vencedorNome: competidor.nome || "Competidor",
+        encerradoEm: serverTimestamp(),
+        atualizadoEm: serverTimestamp()
+      });
+    }
+  }
+
+  return { correta, vencedor, bonusXP: Number(duelo.bonusXP || 200) };
+}
+
+export async function encerrarDuelo(codigo, motivo = "encerrado") {
+  const database = banco();
+  const arenaId = caminhoSeguro(codigo);
+
+  await update(
+    ref(database, `${RAIZ}/arenas/${arenaId}/dueloAtual`),
+    {
+      status: motivo,
+      encerradoEm: serverTimestamp(),
+      atualizadoEm: serverTimestamp()
     }
   );
 }
