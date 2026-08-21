@@ -515,6 +515,32 @@ input:focus{
     grid-template-columns:1fr;
   }
 }
+
+
+/* DUELO MATEMÁTICO */
+.dueloPergunta{
+  margin:14px 0;
+  padding:15px;
+  border-radius:13px;
+  background:#102441;
+  border:1px solid #8b5cf6;
+  font-size:18px;
+  font-weight:800;
+}
+.dueloOpcoes{display:grid;gap:9px;margin-top:12px;}
+.dueloOpcao{
+  width:100%;
+  padding:12px 14px;
+  border:1px solid #365b87;
+  border-radius:11px;
+  background:#0d2748;
+  color:white;
+  text-align:left;
+  font-weight:800;
+}
+.dueloOpcao:hover{border-color:var(--yellow);}
+.dueloOpcao:disabled{opacity:.55;cursor:not-allowed;}
+
 </style>
 </head>
 
@@ -1000,6 +1026,7 @@ async function entrar(){
         conectarArenaReal();
         rankingReal();
         conectarEventosReal();
+        conectarDueloReal();
 
         console.log(
             "✅ Estudante registrado e sincronizado:",
@@ -1448,6 +1475,8 @@ let rankingConectado = false;
 let pararRankingReal = null;
 let pararEventosReal = null;
 let pararArenaReal = null;
+let pararDueloReal = null;
+let dueloAtualLocal = null;
 
 function rankingReal(){
 
@@ -1567,6 +1596,114 @@ function conectarArenaReal(){
   );
 }
 
+
+// =====================================================
+// DUELO MATEMÁTICO EM TEMPO REAL
+// =====================================================
+function conectarDueloReal(){
+  if (
+    !window.arenaFirebase ||
+    !window.arenaFirebase.observarDueloAtual ||
+    !player.room
+  ) return;
+
+  if (typeof pararDueloReal === "function") {
+    pararDueloReal();
+  }
+
+  pararDueloReal = window.arenaFirebase.observarDueloAtual(
+    player.room,
+    duelo => {
+      dueloAtualLocal = duelo;
+      if (!duelo) return;
+      renderDueloEstudante(duelo);
+    }
+  );
+}
+
+function renderDueloEstudante(duelo){
+  const sou1 = player.id === duelo.competidor1Id;
+  const sou2 = player.id === duelo.competidor2Id;
+  const participo = sou1 || sou2;
+  const adversario = sou1 ? duelo.competidor2Nome : duelo.competidor1Nome;
+
+  if (duelo.status === "ativo") {
+    if (!participo) {
+      mostrarEvento(
+        "⚔️ DUELO EM ANDAMENTO",
+        `${duelo.competidor1Nome} × ${duelo.competidor2Nome}. A Arena acompanha a disputa ao vivo.`
+      );
+      return;
+    }
+
+    document.getElementById("eventName").textContent = "⚔️ VOCÊ ESTÁ NO DUELO!";
+    document.getElementById("eventText").innerHTML = `
+      <div><strong>${player.name}</strong> × <strong>${adversario}</strong></div>
+      <div class="dueloPergunta">${duelo.descritor || "DESAFIO"} — ${duelo.pergunta}</div>
+      <div class="dueloOpcoes">
+        ${(duelo.opcoes || []).map((opcao,i) => `
+          <button class="dueloOpcao" onclick="responderDueloAtual(${i})">
+            ${String.fromCharCode(65+i)}) ${opcao}
+          </button>
+        `).join("")}
+      </div>
+      <div style="margin-top:12px;color:#ffd45a;font-weight:900">🏆 Primeiro acerto: +${Number(duelo.bonusXP || 200)} XP</div>
+    `;
+    adicionarFeed(`⚔️ ${player.name} foi convocado para um Duelo Matemático contra ${adversario}.`);
+    return;
+  }
+
+  if (duelo.status === "encerrado") {
+    if (duelo.vencedorId === player.id) {
+      mostrarEvento(
+        "🏆 VOCÊ VENCEU O DUELO!",
+        `Parabéns! Você foi o primeiro a acertar e ganhou +${Number(duelo.bonusXP || 200)} XP.`
+      );
+    } else if (participo) {
+      mostrarEvento(
+        "⚔️ DUELO ENCERRADO",
+        `${duelo.vencedorNome || "Seu adversário"} venceu o duelo. Continue na disputa!`
+      );
+    } else {
+      mostrarEvento(
+        "🏆 DUELO ENCERRADO",
+        `${duelo.vencedorNome || "Competidor"} venceu o Duelo Matemático.`
+      );
+    }
+  }
+}
+
+window.responderDueloAtual = async function(indice){
+  if (!dueloAtualLocal || dueloAtualLocal.status !== "ativo") return;
+
+  document.querySelectorAll(".dueloOpcao").forEach(b => b.disabled = true);
+
+  try {
+    const resultado = await window.arenaFirebase.responderDuelo(
+      player.room,
+      player.id,
+      indice
+    );
+
+    if (resultado.vencedor) {
+      const dados = await window.arenaFirebase.buscarCompetidor(player.room, player.id);
+      if (dados) {
+        player.xp = Number(dados.xp || player.xp || 0);
+        salvar();
+        atualizarPainel();
+      }
+      mostrarEvento("🏆 ACERTO VENCEDOR!", `Você venceu o duelo e recebeu +${Number(resultado.bonusXP || 200)} XP!`);
+    } else if (resultado.correta) {
+      mostrarEvento("✅ RESPOSTA CORRETA", "Você acertou, mas outro competidor respondeu corretamente primeiro.");
+    } else {
+      mostrarEvento("❌ RESPOSTA INCORRETA", "Não foi dessa vez. Aguarde o encerramento do duelo.");
+    }
+  } catch (erro) {
+    console.error(erro);
+    mostrarEvento("⚠️ DUELO", erro?.message || "Não foi possível registrar sua resposta.");
+  }
+};
+
 // =====================================================
 // EVENTOS ESPECIAIS EM TEMPO REAL
 // =====================================================
@@ -1656,7 +1793,9 @@ import {
     atualizarCompetidor,
     observarArena,
    observarCompetidores,
-observarEventos
+observarEventos,
+    observarDueloAtual,
+    responderDuelo
 } from "./js/firebase-service.js";
 
 iniciarFirebase();
@@ -1668,7 +1807,9 @@ window.arenaFirebase = {
   atualizarCompetidor,
     observarArena,
     observarCompetidores,
-observarEventos};
+observarEventos,
+    observarDueloAtual,
+    responderDuelo};
 
 console.log("🔥 Portal do estudante conectado ao Firebase.");
 </script>
