@@ -1517,8 +1517,55 @@ if (campoPosicao) {
     }
   );
 }
+// ========================================
+// EVENTOS EM TEMPO REAL DO PROFESSOR
+// ========================================
+let eventosConectados = false;
 
-rankingReal();
+function conectarEventosReal() {
+
+  if (
+    !window.arenaFirebase ||
+    !window.arenaFirebase.observarEventos ||
+    !player.room
+  ) {
+    setTimeout(conectarEventosReal, 300);
+    return;
+  }
+
+  if (eventosConectados) return;
+  eventosConectados = true;
+
+  window.arenaFirebase.observarEventos(
+    player.room,
+    (eventos) => {
+
+      if (!eventos) return;
+
+      const lista = Object.values(eventos);
+      if (lista.length === 0) return;
+
+      const ultimo = lista[lista.length - 1];
+
+      if (!ultimo || !ultimo.nome) return;
+
+      const chave = ultimo.criadoEm || ultimo.momento || ultimo.nome;
+
+      if (sessionStorage.getItem("ultimoEventoArena") === String(chave)) {
+        return;
+      }
+
+      sessionStorage.setItem("ultimoEventoArena", String(chave));
+
+      alert("⚡ EVENTO DA ARENA ⚡\n\n" + ultimo.nome);
+    }
+  );
+}
+
+
+
+  conectarEventosReal();
+  rankingReal();
 
 </script>
 <script type="module">
