@@ -554,6 +554,109 @@ export async function encerrarDuelo(codigo, motivo = "encerrado") {
   );
 }
 
+
+// ======================================================
+// BOSS FINAL
+// ======================================================
+
+export async function liberarBossFinal(codigo, boss = {}) {
+  const database = banco();
+  const arenaId = caminhoSeguro(codigo);
+
+  const dados = {
+    status: "liberado",
+    titulo: boss.titulo || "BOSS FINAL",
+    descriptor: boss.descriptor || "DESAFIO FINAL",
+    level: boss.level || "BOSS",
+    text: boss.text || "Uma escola realizou uma atividade com 40 estudantes. 75% participaram e, entre os participantes, 1/3 acertou o desafio final. Quantos estudantes acertaram?",
+    options: boss.options || ["8 estudantes","10 estudantes","12 estudantes","15 estudantes","30 estudantes"],
+    correct: Number(boss.correct ?? 1),
+    bonusXP: Number(boss.bonusXP || 300),
+    liberadoEm: serverTimestamp(),
+    atualizadoEm: serverTimestamp()
+  };
+
+  await set(ref(database, `${RAIZ}/arenas/${arenaId}/bossFinal`), dados);
+
+  await registrarEvento(codigo, {
+    nome: "BOSS FINAL",
+    tipo: "boss_final",
+    texto: "👑 BOSS FINAL liberado! O desafio final já está disponível."
+  });
+
+  return dados;
+}
+
+export async function responderBossFinal(codigo, jogadorId, resposta) {
+  const database = banco();
+  const arenaId = caminhoSeguro(codigo);
+
+  const bossRef = ref(database, `${RAIZ}/arenas/${arenaId}/bossFinal`);
+  const bossSnap = await get(bossRef);
+  if (!bossSnap.exists()) throw new Error("Boss Final ainda não foi liberado.");
+
+  const boss = bossSnap.val();
+  if (boss.status !== "liberado") throw new Error("Boss Final não está ativo.");
+
+  const respostaRef = ref(
+    database,
+    `${RAIZ}/arenas/${arenaId}/bossFinal/respostas/${jogadorId}`
+  );
+  const respostaSnap = await get(respostaRef);
+
+  if (respostaSnap.exists()) {
+    return { ...respostaSnap.val(), jaRespondido: true };
+  }
+
+  const correta = Number(resposta) === Number(boss.correct);
+  const bonusXP = correta ? Number(boss.bonusXP || 300) : 0;
+
+  const competidorRef = ref(
+    database,
+    `${RAIZ}/arenas/${arenaId}/competidores/${jogadorId}`
+  );
+  const competidorSnap = await get(competidorRef);
+  const competidor = competidorSnap.exists() ? competidorSnap.val() : {};
+
+  if (correta && bonusXP > 0) {
+    await update(competidorRef, {
+      xp: Number(competidor.xp || 0) + bonusXP,
+      bossFinalConcluido: true,
+      bossFinalAcertou: true,
+      atualizadoEm: serverTimestamp()
+    });
+  } else {
+    await update(competidorRef, {
+      bossFinalConcluido: true,
+      bossFinalAcertou: false,
+      atualizadoEm: serverTimestamp()
+    });
+  }
+
+  const resultado = {
+    jogadorId,
+    nome: competidor.nome || "Competidor",
+    resposta: Number(resposta),
+    correta,
+    bonusXP,
+    respondidoEm: serverTimestamp()
+  };
+
+  await set(respostaRef, resultado);
+  return resultado;
+}
+
+export function observarBossFinal(codigo, callback) {
+  const database = banco();
+  const arenaId = caminhoSeguro(codigo);
+
+  return onValue(
+    ref(database, `${RAIZ}/arenas/${arenaId}/bossFinal`),
+    snapshot => callback(snapshot.exists() ? snapshot.val() : null)
+  );
+}
+
+
 // ======================================================
 // CONTROLE
 // ======================================================
