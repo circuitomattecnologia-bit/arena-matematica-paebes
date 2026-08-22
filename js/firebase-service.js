@@ -149,46 +149,51 @@ export async function entrarNaArena(codigo, competidor = {}) {
   }
 
   const arena = arenaSnapshot.val();
-
-  if (
-    arena.entradaLiberada === false ||
-    arena.aceitaNovos === false
-  ) {
-    throw new Error("A entrada de estudantes está bloqueada.");
-  }
-
   const competidoresExistentes = arena.competidores || {};
 
   const nomeRecebido = String(
-    competidor.nome ||
-    competidor.name ||
-    ""
+    competidor.nome || competidor.name || ""
   ).trim().toLowerCase();
 
   const encontrados = Object.entries(competidoresExistentes)
-    .filter(([id, dados]) =>
-      String(dados?.nome || "")
-        .trim()
-        .toLowerCase() === nomeRecebido
+    .filter(([, dados]) =>
+      String(dados?.nome || "").trim().toLowerCase() === nomeRecebido
     )
-    .sort(([, a], [, b]) =>
-      Number(b?.xp || 0) - Number(a?.xp || 0)
-    );
+    .sort(([, a], [, b]) => Number(b?.xp || 0) - Number(a?.xp || 0));
 
   const registroExistente =
     encontrados.length > 0 ? encontrados[0] : null;
 
   const idInformado =
-    competidor.id ||
-    competidor.jogadorId ||
-    competidor.uid ||
-    null;
+    competidor.id || competidor.jogadorId || competidor.uid || null;
 
-  const idInformadoExiste =
-    Boolean(
-      idInformado &&
-      competidoresExistentes[idInformado]
-    );
+  const idInformadoExiste = Boolean(
+    idInformado && competidoresExistentes[idInformado]
+  );
+
+  const ehReentrada = Boolean(idInformadoExiste || registroExistente);
+
+  const dadosRegistroExistente =
+    idInformadoExiste
+      ? competidoresExistentes[idInformado]
+      : (registroExistente ? registroExistente[1] : null);
+
+  if (dadosRegistroExistente?.bloqueado === true) {
+    throw new Error("Seu acesso a esta Arena está bloqueado pelo professor.");
+  }
+
+  if (!ehReentrada) {
+    if (arena.entradaLiberada === false || arena.aceitaNovos === false) {
+      throw new Error("A entrada de estudantes está bloqueada.");
+    }
+
+    const limite = Math.max(1, Number(arena.limite || 60));
+    const totalAtual = Object.keys(competidoresExistentes).length;
+
+    if (totalAtual >= limite) {
+      throw new Error("O limite de participantes desta Arena foi atingido.");
+    }
+  }
 
   const jogadorId =
     (idInformadoExiste ? idInformado : null) ||
@@ -203,66 +208,43 @@ export async function entrarNaArena(codigo, competidor = {}) {
   const dadosCompetidor = {
     ...dadosAnteriores,
     ...competidor,
-
     id: jogadorId,
     jogadorId,
-
-    nome:
-      competidor.nome ||
-      competidor.name ||
-      dadosAnteriores.nome ||
-      "Competidor",
-
+    nome: competidor.nome || competidor.name || dadosAnteriores.nome || "Competidor",
     xp: Number(dadosAnteriores.xp ?? competidor.xp ?? 0),
-
     sequencia: Number(
-      dadosAnteriores.sequencia ??
-      dadosAnteriores.streak ??
-      competidor.sequencia ??
-      competidor.streak ??
-      0
+      dadosAnteriores.sequencia ?? dadosAnteriores.streak ??
+      competidor.sequencia ?? competidor.streak ?? 0
     ),
-
     acertos: Number(
-      dadosAnteriores.acertos ??
-      dadosAnteriores.hits ??
-      competidor.acertos ??
-      competidor.hits ??
-      0
+      dadosAnteriores.acertos ?? dadosAnteriores.hits ??
+      competidor.acertos ?? competidor.hits ?? 0
     ),
-
-    estrelas: Number(
-      dadosAnteriores.estrelas ??
-      competidor.estrelas ??
-      0
+    estrelas: Number(dadosAnteriores.estrelas ?? competidor.estrelas ?? 0),
+    questaoAtual: Number(
+      dadosAnteriores.questaoAtual ?? dadosAnteriores.questionIndex ??
+      competidor.questaoAtual ?? competidor.questionIndex ?? 0
     ),
-
-    bloqueado: Boolean(
-      dadosAnteriores.bloqueado ??
-      competidor.bloqueado ??
-      false
+    regularConcluida: Boolean(
+      dadosAnteriores.regularConcluida ?? competidor.regularConcluida ?? false
     ),
-
+    bossFinalConcluido: Boolean(
+      dadosAnteriores.bossFinalConcluido ?? competidor.bossFinalConcluido ?? false
+    ),
+    bossFinalAcertou: Boolean(
+      dadosAnteriores.bossFinalAcertou ?? competidor.bossFinalAcertou ?? false
+    ),
+    bloqueado: Boolean(dadosAnteriores.bloqueado ?? competidor.bloqueado ?? false),
     jaFoiBloqueado: Boolean(
-      dadosAnteriores.jaFoiBloqueado ??
-      competidor.jaFoiBloqueado ??
-      false
+      dadosAnteriores.jaFoiBloqueado ?? competidor.jaFoiBloqueado ?? false
     ),
-
     online: true,
-
-    entrouEm:
-      dadosAnteriores.entrouEm ||
-      serverTimestamp(),
-
+    entrouEm: dadosAnteriores.entrouEm || serverTimestamp(),
     atualizadoEm: serverTimestamp()
   };
 
   await set(
-    ref(
-      database,
-      `${RAIZ}/arenas/${arenaId}/competidores/${jogadorId}`
-    ),
+    ref(database, `${RAIZ}/arenas/${arenaId}/competidores/${jogadorId}`),
     dadosCompetidor
   );
 
@@ -654,6 +636,153 @@ export function observarBossFinal(codigo, callback) {
     ref(database, `${RAIZ}/arenas/${arenaId}/bossFinal`),
     snapshot => callback(snapshot.exists() ? snapshot.val() : null)
   );
+}
+
+
+
+// ======================================================
+// EVENTOS ESPECIAIS JOGÁVEIS
+// ======================================================
+
+export async function criarEventoEspecial(codigo, evento = {}) {
+  const database = banco();
+  const arenaId = caminhoSeguro(codigo);
+  const eventoId = evento.id || criarId("especial");
+
+  const dados = {
+    ...evento,
+    id: eventoId,
+    status: "ativo",
+    respostas: {},
+    criadoEm: serverTimestamp(),
+    atualizadoEm: serverTimestamp()
+  };
+
+  await set(
+    ref(database, `${RAIZ}/arenas/${arenaId}/eventoEspecialAtual`),
+    dados
+  );
+
+  await registrarEvento(codigo, {
+    nome: evento.nome || "EVENTO ESPECIAL",
+    tipo: "evento_especial",
+    eventoId,
+    momento: new Date().toISOString()
+  });
+
+  return eventoId;
+}
+
+export function observarEventoEspecial(codigo, callback) {
+  const database = banco();
+  const arenaId = caminhoSeguro(codigo);
+
+  return onValue(
+    ref(database, `${RAIZ}/arenas/${arenaId}/eventoEspecialAtual`),
+    snapshot => callback(snapshot.exists() ? snapshot.val() : null)
+  );
+}
+
+export async function responderEventoEspecial(
+  codigo,
+  jogadorId,
+  resposta
+) {
+  const database = banco();
+  const arenaId = caminhoSeguro(codigo);
+
+  const eventoRef = ref(
+    database,
+    `${RAIZ}/arenas/${arenaId}/eventoEspecialAtual`
+  );
+
+  const eventoSnap = await get(eventoRef);
+
+  if (!eventoSnap.exists()) {
+    throw new Error("Não há Evento Especial ativo.");
+  }
+
+  const evento = eventoSnap.val();
+
+  if (evento.status !== "ativo") {
+    throw new Error("Este Evento Especial já foi encerrado.");
+  }
+
+  if (
+    evento.tipo === "cacada" &&
+    evento.liderId &&
+    evento.liderId === jogadorId
+  ) {
+    throw new Error("O líder acompanha a Caçada como alvo da rodada.");
+  }
+
+  const respostaRef = ref(
+    database,
+    `${RAIZ}/arenas/${arenaId}/eventoEspecialAtual/respostas/${jogadorId}`
+  );
+
+  const respostaAnterior = await get(respostaRef);
+
+  if (respostaAnterior.exists()) {
+    return {
+      ...respostaAnterior.val(),
+      jaRespondido: true
+    };
+  }
+
+  const correta =
+    Number(resposta) === Number(evento.correta);
+
+  const competidorRef = ref(
+    database,
+    `${RAIZ}/arenas/${arenaId}/competidores/${jogadorId}`
+  );
+
+  const competidorSnap = await get(competidorRef);
+  const competidor = competidorSnap.exists()
+    ? competidorSnap.val()
+    : {};
+
+  let xpNovo = Number(competidor.xp || 0);
+  let shieldNovo = Number(
+    competidor.shield ??
+    competidor.escudo ??
+    0
+  );
+
+  const bonusXP = correta
+    ? Number(evento.bonusXP || 0)
+    : 0;
+
+  if (correta) {
+    xpNovo += bonusXP;
+
+    if (evento.tipo === "escudo") {
+      shieldNovo += 1;
+    }
+  }
+
+  const atualizacao = {
+    xp: xpNovo,
+    shield: shieldNovo,
+    atualizadoEm: serverTimestamp()
+  };
+
+  await update(competidorRef, atualizacao);
+
+  const resultado = {
+    jogadorId,
+    nome: competidor.nome || "Competidor",
+    resposta: Number(resposta),
+    correta,
+    bonusXP,
+    shield: shieldNovo,
+    respondidoEm: serverTimestamp()
+  };
+
+  await set(respostaRef, resultado);
+
+  return resultado;
 }
 
 
