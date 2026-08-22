@@ -547,7 +547,43 @@ O professor poderá reutilizar esta Arena futuramente apenas alterando
 os descritores selecionados.
 </p>
 
-<div class="descritores" id="descritores"></div>
+<div class="descritores" id="descritores">
+<label class="desc"><input type="checkbox" value="D001_M"><span>D001_M</span></label>
+<label class="desc"><input type="checkbox" value="D002_M"><span>D002_M</span></label>
+<label class="desc"><input type="checkbox" value="D003_M"><span>D003_M</span></label>
+<label class="desc"><input type="checkbox" value="D004_M"><span>D004_M</span></label>
+<label class="desc"><input type="checkbox" value="D005_M"><span>D005_M</span></label>
+<label class="desc"><input type="checkbox" value="D006_M"><span>D006_M</span></label>
+<label class="desc"><input type="checkbox" value="D007_M"><span>D007_M</span></label>
+<label class="desc"><input type="checkbox" value="D008_M"><span>D008_M</span></label>
+<label class="desc"><input type="checkbox" value="D009_M"><span>D009_M</span></label>
+<label class="desc"><input type="checkbox" value="D010_M"><span>D010_M</span></label>
+<label class="desc"><input type="checkbox" value="D011_M"><span>D011_M</span></label>
+<label class="desc"><input type="checkbox" value="D012_M"><span>D012_M</span></label>
+<label class="desc"><input type="checkbox" value="D013_M"><span>D013_M</span></label>
+<label class="desc"><input type="checkbox" value="D014_M"><span>D014_M</span></label>
+<label class="desc"><input type="checkbox" value="D015_M"><span>D015_M</span></label>
+<label class="desc"><input type="checkbox" value="D016_M"><span>D016_M</span></label>
+<label class="desc"><input type="checkbox" value="D017_M"><span>D017_M</span></label>
+<label class="desc"><input type="checkbox" value="D018_M"><span>D018_M</span></label>
+<label class="desc"><input type="checkbox" value="D019_M"><span>D019_M</span></label>
+<label class="desc"><input type="checkbox" value="D020_M"><span>D020_M</span></label>
+<label class="desc"><input type="checkbox" value="D021_M"><span>D021_M</span></label>
+<label class="desc"><input type="checkbox" value="D022_M"><span>D022_M</span></label>
+<label class="desc"><input type="checkbox" value="D023_M"><span>D023_M</span></label>
+<label class="desc"><input type="checkbox" value="D024_M"><span>D024_M</span></label>
+<label class="desc"><input type="checkbox" value="D025_M"><span>D025_M</span></label>
+<label class="desc"><input type="checkbox" value="D026_M"><span>D026_M</span></label>
+<label class="desc"><input type="checkbox" value="D027_M"><span>D027_M</span></label>
+<label class="desc"><input type="checkbox" value="D028_M"><span>D028_M</span></label>
+<label class="desc"><input type="checkbox" value="D029_M"><span>D029_M</span></label>
+<label class="desc"><input type="checkbox" value="D030_M"><span>D030_M</span></label>
+<label class="desc"><input type="checkbox" value="D074_M"><span>D074_M</span></label>
+<label class="desc"><input type="checkbox" value="D088_M"><span>D088_M</span></label>
+<label class="desc"><input type="checkbox" value="D097_M"><span>D097_M</span></label>
+<label class="desc destaque"><input type="checkbox" value="D111_M"><span>D111_M</span></label>
+<label class="desc"><input type="checkbox" value="D125_M"><span>D125_M</span></label>
+</div>
 
 <div class="status">
 ⭐ <strong>D111_M</strong> poderá receber peso maior na geração das questões,
@@ -556,7 +592,7 @@ permitindo reforçar conteúdos de nível abaixo do básico/básico.
 
 <div class="actions">
 <button class="primary" onclick="criarArena()">⚔️ CRIAR ARENA</button>
-<button class="gray" onclick="marcarPrincipais()">✓ Selecionar estreia</button>
+<button class="gray" onclick="marcarPrincipais()">✓ Selecionar principais</button>
 <button class="gray" onclick="limpar()">Limpar seleção</button>
 </div>
 
@@ -780,20 +816,20 @@ const listaDescritores = [
 
 const area = document.getElementById("descritores");
 
-area.innerHTML = "";
+if (area && area.querySelectorAll(".desc input").length === 0) {
+  listaDescritores.forEach(d => {
+    const box = document.createElement("label");
 
-listaDescritores.forEach(d => {
-  const box = document.createElement("label");
+    box.className =
+      "desc" + (d === "D111_M" ? " destaque" : "");
 
-  box.className =
-    "desc" + (d === "D111_M" ? " destaque" : "");
+    box.innerHTML =
+      `<input type="checkbox" value="${d}">
+       <span>${d}</span>`;
 
-  box.innerHTML =
-    `<input type="checkbox" value="${d}">
-     <span>${d}</span>`;
-
-  area.appendChild(box);
-});
+    area.appendChild(box);
+  });
+}
 
 let pararArena = null;
 let pararCompetidores = null;
