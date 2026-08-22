@@ -463,6 +463,24 @@ button:active{
   filter:brightness(1.12);
 }
 
+
+button:disabled,
+select:disabled{
+  opacity:.42;
+  cursor:not-allowed !important;
+  filter:grayscale(.35);
+  transform:none !important;
+}
+.arenaEncerradaAviso{
+  margin-top:12px;
+  padding:14px 16px;
+  border-radius:14px;
+  border:1px solid #facc15;
+  background:#151d35;
+  color:#fff3b0;
+  font-weight:800;
+}
+
 </style>
 </head>
 
@@ -637,6 +655,7 @@ permitindo reforçar conteúdos de nível abaixo do básico/básico.
 <button class="blue" onclick="acao('continuada')">▶ CONTINUAR</button>
 <button class="primary" onclick="liberarBoss()">👑 LIBERAR BOSS FINAL</button>
 <button class="red" onclick="acao('encerrada')">■ ENCERRAR</button>
+<button id="btnReutilizarArena" class="primary" onclick="reutilizarArena()" style="display:none">♻️ REUTILIZAR ARENA</button>
 </div>
 
 <div class="status" id="mensagem">
@@ -912,6 +931,131 @@ function salvarLocal(arena) {
   );
 }
 
+function atualizarControlesPosEncerramento(encerrada) {
+
+  const seletores = [
+    `button[onclick="acao('iniciada')"]`,
+    `button[onclick="acao('pausada')"]`,
+    `button[onclick="acao('continuada')"]`,
+    `button[onclick="acao('encerrada')"]`,
+    `button[onclick="liberarBoss()"]`,
+    `button[onclick="liberar()"]`,
+    `button[onclick="bloquear()"]`,
+    `button[onclick="abrirGerenciamentoIndividual()"]`,
+    `.eventos button`,
+    `#descritorEspecial`
+  ];
+
+  document
+    .querySelectorAll(seletores.join(","))
+    .forEach(el => {
+      el.disabled = Boolean(encerrada);
+    });
+
+  const btnReutilizar =
+    document.getElementById("btnReutilizarArena");
+
+  if (btnReutilizar) {
+    btnReutilizar.style.display =
+      encerrada ? "inline-flex" : "none";
+    btnReutilizar.disabled = false;
+  }
+
+  const painelGerenciamento =
+    document.getElementById("managePanel");
+
+  if (encerrada && painelGerenciamento) {
+    painelGerenciamento.classList.remove("ativo");
+  }
+}
+
+window.reutilizarArena = function() {
+
+  const arena = arenaLocal();
+
+  if (!arena?.codigo) {
+    alert("Não há Arena encerrada para reutilizar.");
+    return;
+  }
+
+  if (
+    String(arena.status || "").toLowerCase() !== "encerrada"
+  ) {
+    alert("Encerre a Arena atual antes de preparar uma nova disputa.");
+    return;
+  }
+
+  const manterConfiguracao = {
+    nome: arena.nome || "Arena Matemática",
+    turma: arena.turma || "",
+    quantidade: Number(arena.quantidade || 15),
+    limite: Number(arena.limite || 60),
+    descritores: Array.isArray(arena.descritores)
+      ? arena.descritores
+      : []
+  };
+
+  /*
+    O resultado antigo permanece salvo no Firebase com o código anterior.
+    Apenas removemos a Arena ativa deste navegador para preparar uma nova.
+  */
+  localStorage.removeItem("arenaPAEBES");
+  sessionStorage.setItem(
+    "arenaConfigReuso",
+    JSON.stringify(manterConfiguracao)
+  );
+
+  location.reload();
+};
+
+function restaurarConfiguracaoReuso() {
+  try {
+    const bruto =
+      sessionStorage.getItem("arenaConfigReuso");
+
+    if (!bruto) return;
+
+    const config = JSON.parse(bruto);
+
+    if (config.nome) {
+      document.getElementById("nomeArena").value =
+        config.nome;
+    }
+
+    if (config.turma) {
+      document.getElementById("turma").value =
+        config.turma;
+    }
+
+    document.getElementById("qtd").value =
+      Number(config.quantidade || 15);
+
+    document.getElementById("limite").value =
+      Number(config.limite || 60);
+
+    if (Array.isArray(config.descritores)) {
+      document
+        .querySelectorAll(".desc input")
+        .forEach(x => {
+          x.checked =
+            config.descritores.includes(x.value);
+        });
+    }
+
+    sessionStorage.removeItem("arenaConfigReuso");
+
+    document.getElementById("mensagem").innerHTML =
+      "♻️ Configuração reaproveitada. Ajuste o que desejar e clique em <strong>CRIAR ARENA</strong>. Um novo código será gerado.";
+
+  } catch (erro) {
+    console.error(
+      "Não foi possível restaurar a configuração para reutilização:",
+      erro
+    );
+    sessionStorage.removeItem("arenaConfigReuso");
+  }
+}
+
 
 /* =========================================
    DESCRITORES
@@ -1105,6 +1249,10 @@ function restaurar(arena = arenaLocal()) {
       arena.status ||
       "Preparação";
 
+  atualizarControlesPosEncerramento(
+    String(arena.status || "").toLowerCase() === "encerrada"
+  );
+
   document.getElementById("questaoAtual")
     .textContent =
       `${Number(arena.questaoAtual || 0)}/${Number(arena.quantidade || 15)}`;
@@ -1264,6 +1412,7 @@ window.criarArena = async function() {
     salvarLocal(dados);
 
     restaurar(dados);
+    atualizarControlesPosEncerramento(false);
 
     conectarArena(codigo);
 
@@ -1421,6 +1570,10 @@ window.acao = async function(tipo) {
       .getElementById("mensagem")
       .innerHTML =
       `⚡ Arena <strong>${nomes[tipo]}</strong>.`;
+
+    atualizarControlesPosEncerramento(
+      tipo === "encerrada"
+    );
 
   } catch (erro) {
 
@@ -1863,6 +2016,8 @@ window.evento = async function(nome) {
 /* =========================================
    INICIALIZAÇÃO
 ========================================= */
+
+restaurarConfiguracaoReuso();
 
 const salva = arenaLocal();
 
