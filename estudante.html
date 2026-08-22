@@ -885,6 +885,7 @@ let bossRespondido = false;
 
 function mostrarBossFinal(boss) {
   if (!boss || boss.status !== "liberado" || bossRespondido) return;
+  if (player.questionIndex < TOTAL_QUESTIONS) return;
 
   bossAtual = boss;
   player.selected = null;
@@ -914,21 +915,29 @@ function mostrarBossFinal(boss) {
     area.appendChild(botao);
   });
 
+  document.getElementById("confirmButton").style.display = "";
   document.getElementById("confirmButton").disabled = true;
 }
 
 async function confirmarBossFinal() {
   if (!bossAtual || bossRespondido || player.selected === null) return false;
-  if (!window.arenaFirebase?.responderBossFinal || !window.__arenaJogadorId) return false;
+  if (!window.arenaFirebase?.responderBossFinal || !player.id) return false;
 
   const resultado = await window.arenaFirebase.responderBossFinal(
     player.room,
-    window.__arenaJogadorId,
+    player.id,
     player.selected
   );
 
   bossRespondido = true;
   bossAtual = null;
+
+  if (resultado.correta && !resultado.jaRespondido) {
+    player.xp += Number(resultado.bonusXP || 0);
+  }
+
+  salvar();
+  atualizarPainel();
 
   const feedback = document.getElementById("feedback");
   feedback.className = "feedback " + (resultado.correta ? "ok" : "no");
@@ -936,11 +945,15 @@ async function confirmarBossFinal() {
     ? "👑 BOSS FINAL CONCLUÍDO! +" + Number(resultado.bonusXP || 0) + " XP."
     : "👑 BOSS FINAL CONCLUÍDO. Resultado registrado.";
 
-  document.getElementById("confirmButton").disabled = true;
+  document.getElementById("options").innerHTML = "";
+  document.getElementById("confirmButton").style.display = "none";
   document.getElementById("status").textContent = "● BOSS FINAL CONCLUÍDO";
+  document.getElementById("question").innerHTML =
+    "👑 <strong>BOSS FINAL CONCLUÍDO!</strong><br><br>" +
+    "Seu resultado final foi registrado. Aguarde o professor encerrar a Arena.";
+
   return true;
 }
-
 
 /* =====================================================
    BANCO TEMPORÁRIO
@@ -1035,116 +1048,134 @@ const demoQuestions = [
 
 async function entrar(){
 
-    const codigo =
-        document.getElementById("codigo").value.trim().toUpperCase();
+  const codigo = document.getElementById("codigo").value.trim().toUpperCase();
+  const nome = document.getElementById("nome").value.trim();
 
-    const nome =
-        document.getElementById("nome").value.trim();
+  if(!codigo || !nome){
+    alert("Digite o código da Arena e seu nome.");
+    return;
+  }
 
-    if(!codigo || !nome){
-        alert("Digite o código da Arena e seu nome.");
-        return;
+  if(!window.arenaFirebase){
+    alert("A conexão com a Arena ainda está carregando. Aguarde alguns segundos e tente novamente.");
+    return;
+  }
+
+  try {
+    player.room = codigo;
+    player.name = nome;
+    recuperar();
+
+    const arenaAtual = await window.arenaFirebase.buscarArena(codigo);
+    if(!arenaAtual) throw new Error("Arena não encontrada.");
+
+    TOTAL_QUESTIONS = Math.max(1, Number(arenaAtual.quantidade || 20));
+
+    const chaveId =
+      "arena_competidor_id_" + codigo + "_" +
+      nome.toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]/g, "_");
+
+    const idAnterior = localStorage.getItem(chaveId);
+
+    const jogadorId = await window.arenaFirebase.entrarNaArena(
+      codigo,
+      {
+        id: idAnterior || undefined,
+        nome,
+        xp: Number(player.xp || 0),
+        sequencia: Number(player.streak || 0),
+        acertos: Number(player.hits || 0),
+        estrelas: Number(player.estrelas || 0)
+      }
+    );
+
+    if(jogadorId){
+      localStorage.setItem(chaveId, jogadorId);
+      player.id = jogadorId;
     }
 
-    if(!window.arenaFirebase){
-        alert("A conexão com a Arena ainda está carregando. Aguarde alguns segundos e tente novamente.");
-        return;
+    const dadosServidor =
+      jogadorId && window.arenaFirebase.buscarCompetidor
+        ? await window.arenaFirebase.buscarCompetidor(codigo, jogadorId)
+        : null;
+
+    if(dadosServidor){
+      player.xp = Number(dadosServidor.xp || 0);
+      player.streak = Number(dadosServidor.sequencia ?? dadosServidor.streak ?? 0);
+      player.hits = Number(dadosServidor.acertos ?? dadosServidor.hits ?? 0);
+      player.estrelas = Number(dadosServidor.estrelas || 0);
+      player.shield = Number(dadosServidor.shield ?? dadosServidor.escudo ?? player.shield ?? 0);
+
+      const progressoServidor = Number(
+        dadosServidor.questaoAtual ??
+        dadosServidor.questionIndex ??
+        player.questionIndex ??
+        0
+      );
+
+      player.questionIndex = Math.max(
+        0,
+        Math.min(progressoServidor, TOTAL_QUESTIONS)
+      );
+
+      if(dadosServidor.regularConcluida){
+        player.questionIndex = TOTAL_QUESTIONS;
+      }
+
+      bossRespondido = Boolean(dadosServidor.bossFinalConcluido);
     }
 
-    try {
+    salvar();
 
-        // Define a identidade ANTES de recuperar o progresso local.
-        player.room = codigo;
-        player.name = nome;
-        recuperar();
+    document.getElementById("login").style.display = "none";
+    document.getElementById("arena").style.display = "block";
+    document.getElementById("playerName").textContent = player.name;
+    document.getElementById("roomName").textContent = "Arena " + player.room;
 
-        // Lê a configuração real da Arena (quantidade, status etc.).
-        const arenaAtual = await window.arenaFirebase.buscarArena(codigo);
-        if(!arenaAtual){
-            throw new Error("Arena não encontrada.");
-        }
+    rankingConectado = false;
+    eventosConectados = false;
 
-        TOTAL_QUESTIONS = Math.max(1, Number(arenaAtual.quantidade || 20));
+    conectarArenaReal();
+    rankingReal();
+    conectarEventosReal();
+    conectarDueloReal();
+    conectarBossFinalReal();
+    conectarEventoEspecialReal();
 
-        const chaveId =
-            "arena_competidor_id_" +
-            codigo + "_" +
-            nome.toLowerCase()
-                .normalize("NFD")
-                .replace(/[\u0300-\u036f]/g, "")
-                .replace(/[^a-z0-9]/g, "_");
+    atualizarPainel();
 
-        const idAnterior = localStorage.getItem(chaveId);
+    const estadoArena = String(arenaAtual.status || "").toLowerCase();
 
-        // Registra/reconecta usando o mesmo competidor quando ele já existir.
-        const jogadorId =
-            await window.arenaFirebase.entrarNaArena(
-                codigo,
-                {
-                    id: idAnterior || undefined,
-                    nome: nome,
-                    xp: Number(player.xp || 0),
-                    sequencia: Number(player.streak || 0),
-                    acertos: Number(player.hits || 0),
-                    estrelas: Number(player.estrelas || 0)
-                }
-            );
-
-        if(jogadorId){
-            localStorage.setItem(chaveId, jogadorId);
-            player.id = jogadorId;
-        }
-
-        // Recupera do Firebase o progresso oficial do competidor.
-        if(window.arenaFirebase.buscarCompetidor && jogadorId){
-            const dadosServidor =
-                await window.arenaFirebase.buscarCompetidor(codigo, jogadorId);
-
-            if(dadosServidor){
-                player.xp = Number(dadosServidor.xp || 0);
-                player.streak = Number(dadosServidor.sequencia ?? dadosServidor.streak ?? 0);
-                player.hits = Number(dadosServidor.acertos ?? dadosServidor.hits ?? 0);
-                player.estrelas = Number(dadosServidor.estrelas || 0);
-            }
-        }
-
-        salvar();
-
-        document.getElementById("login").style.display = "none";
-        document.getElementById("arena").style.display = "block";
-
-        document.getElementById("playerName").textContent = player.name;
-        document.getElementById("roomName").textContent = "Arena " + player.room;
-
-        adicionarFeed("⚡ " + player.name + " entrou na Arena.");
-
-        renderQuestion();
-        atualizarPainel();
-
-        // Conecta os recursos em tempo real somente após a entrada ser confirmada.
-        rankingConectado = false;
-        eventosConectados = false;
-        conectarArenaReal();
-        rankingReal();
-        conectarEventosReal();
-        conectarDueloReal();
-
-        console.log(
-            "✅ Estudante registrado e sincronizado:",
-            jogadorId,
-            nome,
-            codigo
-        );
-
-    } catch(erro) {
-
-        console.error("ERRO AO ENTRAR NA ARENA:", erro);
-
-        alert(
-            erro?.message ||
-            "Não foi possível entrar na Arena."
-        );
+    if(estadoArena === "encerrada"){
+      mostrarArenaEncerrada();
+      return;
     }
+
+    if(bossRespondido){
+      mostrarBossFinalConcluido(dadosServidor?.bossFinalAcertou);
+      return;
+    }
+
+    if(arenaAtual.bossFinal?.status === "liberado"){
+      mostrarBossFinal(arenaAtual.bossFinal);
+      return;
+    }
+
+    if(player.questionIndex >= TOTAL_QUESTIONS){
+      finalizarArena(false);
+      return;
+    }
+
+    renderQuestion();
+    adicionarFeed("⚡ " + player.name + " entrou na Arena.");
+
+  } catch(erro) {
+    console.error("ERRO AO ENTRAR NA ARENA:", erro);
+    alert(erro?.message || "Não foi possível entrar na Arena.");
+  }
 }
 
 /* =====================================================
@@ -1217,29 +1248,30 @@ function selecionar(index,button){
    RESPOSTA
 ===================================================== */
 
-function confirmarResposta(){
+async function confirmarResposta(){
+
+  if (bossAtual && !bossRespondido) {
+    await confirmarBossFinal();
+    return;
+  }
+
+  if (eventoEspecialAtual) {
+    await confirmarEventoEspecialAtual();
+    return;
+  }
 
   if(player.selected===null) return;
 
-  const index =
-    player.questionIndex % demoQuestions.length;
-
-  const q =
-    demoQuestions[index];
-
-  const feedback =
-    document.getElementById("feedback");
+  const index = player.questionIndex % demoQuestions.length;
+  const q = demoQuestions[index];
+  const feedback = document.getElementById("feedback");
 
   if(player.selected===q.correct){
-
     player.hits++;
     player.streak++;
 
-    let bonus =
-      Math.min(player.streak*10,50);
-
-    let ganho =
-      q.baseXP + bonus;
+    let bonus = Math.min(player.streak*10,50);
+    let ganho = q.baseXP + bonus;
 
     if(player.multiplier>0){
       ganho*=2;
@@ -1247,82 +1279,62 @@ function confirmarResposta(){
     }
 
     player.xp+=ganho;
-if (window.arenaFirebase && player.room && player.id) {
-    window.arenaFirebase.atualizarCompetidor(
-        player.room,
-        player.id,
-        {
-            xp: Number(player.xp || 0),
-            acertos: Number(player.hits || 0),
-            sequencia: Number(player.streak || 0),
-            estrelas: Number(player.estrelas || 0)
-        }
-    ).catch((erro) => {
-      const estadoAtual = String(arenaAtual?.status || arenaAtual?.estado || "").toLowerCase();
-
-      if (estadoAtual === "encerrada") {
-        document.getElementById("pauseOverlay").style.display = "none";
-        document.getElementById("endOverlay").style.display = "flex";
-        document.getElementById("status").textContent = "■ ARENA ENCERRADA";
-        return;
-      } else {
-        document.getElementById("endOverlay").style.display = "none";
-      }
-
-        console.error("Erro ao atualizar competidor no Firebase:", erro);
-    });
-}
     feedback.className="feedback ok";
-
-    feedback.innerHTML=
-      "✅ RESPOSTA CORRETA! +"+
-      ganho+
-      " XP";
+    feedback.innerHTML="✅ RESPOSTA CORRETA! +"+ganho+" XP";
 
     adicionarFeed(
-      "🔥 "+player.name+
-      " alcançou "+player.streak+
-      " acerto(s) consecutivo(s)!"
+      "🔥 "+player.name+" alcançou "+player.streak+" acerto(s) consecutivo(s)!"
     );
-
   }else{
-
-    player.streak=0;
-
-    feedback.className="feedback no";
-
-    feedback.innerHTML=
-      "❌ Não foi dessa vez. Continue na disputa!";
-
+    if(player.shield > 0){
+      player.shield--;
+      feedback.className="feedback no";
+      feedback.innerHTML="🛡️ RESPOSTA INCORRETA, mas seu Escudo protegeu a sequência!";
+    }else{
+      player.streak=0;
+      feedback.className="feedback no";
+      feedback.innerHTML="❌ Não foi dessa vez. Continue na disputa!";
+    }
   }
 
-  document.querySelectorAll(".option")
-  .forEach(x=>x.disabled=true);
-
+  document.querySelectorAll(".option").forEach(x=>x.disabled=true);
   document.getElementById("confirmButton").disabled=true;
 
   player.questionIndex++;
+  const concluiuRegulares = player.questionIndex >= TOTAL_QUESTIONS;
 
   salvar();
   atualizarPainel();
 
-  setTimeout(()=>{
-
-    if(player.questionIndex>=TOTAL_QUESTIONS){
-
-      finalizarArena();
-
-    }else{
-
-      eventoAutomatico();
-
-      renderQuestion();
-
+  if (window.arenaFirebase && player.room && player.id) {
+    try {
+      await window.arenaFirebase.atualizarCompetidor(
+        player.room,
+        player.id,
+        {
+          xp: Number(player.xp || 0),
+          acertos: Number(player.hits || 0),
+          sequencia: Number(player.streak || 0),
+          estrelas: Number(player.estrelas || 0),
+          shield: Number(player.shield || 0),
+          questaoAtual: Number(player.questionIndex || 0),
+          regularConcluida: concluiuRegulares
+        }
+      );
+    } catch (erro) {
+      console.error("Erro ao salvar progresso no Firebase:", erro);
     }
+  }
 
+  setTimeout(()=>{
+    if(concluiuRegulares){
+      finalizarArena(false);
+    }else{
+      eventoAutomatico();
+      renderQuestion();
+    }
   },1300);
 }
-
 
 /* =====================================================
    PAINEL
@@ -1547,35 +1559,42 @@ function continuarArena(){
    FINAL
 ===================================================== */
 
-function finalizarArena(){
+function finalizarArena(registrarServidor = true){
 
+  player.questionIndex = Math.max(player.questionIndex, TOTAL_QUESTIONS);
   salvar();
+
+  if(registrarServidor && window.arenaFirebase && player.room && player.id){
+    window.arenaFirebase.atualizarCompetidor(
+      player.room,
+      player.id,
+      {
+        questaoAtual: TOTAL_QUESTIONS,
+        regularConcluida: true,
+        xp: Number(player.xp || 0),
+        acertos: Number(player.hits || 0),
+        sequencia: Number(player.streak || 0)
+      }
+    ).catch(erro =>
+      console.error("Erro ao registrar conclusão regular:", erro)
+    );
+  }
 
   document.getElementById("question").innerHTML =
     "🏆 <strong>ARENA CONCLUÍDA!</strong><br><br>"+
     "Você terminou as "+TOTAL_QUESTIONS+" questões regulares.";
 
   document.getElementById("options").innerHTML="";
-
-  document.getElementById("confirmButton").style.display =
-    "none";
-
-  document.getElementById("progressBar").style.width =
-    "100%";
-
-  document.getElementById("progressLabel").textContent =
-    "100%";
-
-  document.getElementById("qcount").textContent =
-    TOTAL_QUESTIONS+"/"+TOTAL_QUESTIONS;
+  document.getElementById("confirmButton").style.display="none";
+  document.getElementById("progressBar").style.width="100%";
+  document.getElementById("progressLabel").textContent="100%";
+  document.getElementById("qcount").textContent=TOTAL_QUESTIONS+"/"+TOTAL_QUESTIONS;
 
   mostrarEvento(
     "👑 BOSS FINAL",
     "As questões regulares terminaram. Aguarde o professor liberar o desafio final da Arena."
   );
-
 }
-
 
 /* =====================================================
    DEMONSTRAÇÃO DE RANKING
@@ -1685,27 +1704,299 @@ function conectarArenaReal(){
     !player.room
   ) return;
 
-  if (typeof pararArenaReal === "function") {
-    pararArenaReal();
-  }
+  if (typeof pararArenaReal === "function") pararArenaReal();
 
   pararArenaReal = window.arenaFirebase.observarArena(
     player.room,
-    (arena) => {
+    arena => {
       if (!arena) return;
 
-      TOTAL_QUESTIONS = Math.max(1, Number(arena.quantidade || TOTAL_QUESTIONS || 20));
-      atualizarPainel();
+      TOTAL_QUESTIONS = Math.max(
+        1,
+        Number(arena.quantidade || TOTAL_QUESTIONS || 20)
+      );
 
-      if (arena.status === "pausada") {
-        pausarArena();
-      } else if (arena.status === "continuada" || arena.status === "iniciada") {
-        continuarArena();
-      } else if (arena.status === "encerrada") {
-        finalizarArena();
+      const estado = String(arena.status || "").toLowerCase();
+
+      if (estado === "encerrada") {
+        mostrarArenaEncerrada();
+        return;
+      }
+
+      if (estado === "pausada") pausarArena();
+      else continuarArena();
+
+      if (
+        arena.bossFinal?.status === "liberado" &&
+        !bossRespondido &&
+        player.questionIndex >= TOTAL_QUESTIONS
+      ) {
+        mostrarBossFinal(arena.bossFinal);
+      } else if (
+        player.questionIndex >= TOTAL_QUESTIONS &&
+        !bossRespondido &&
+        arena.bossFinal?.status !== "liberado"
+      ) {
+        finalizarArena(false);
+      }
+
+      atualizarPainel();
+    }
+  );
+}
+
+function mostrarArenaEncerrada(){
+  salvar();
+  document.getElementById("pauseOverlay").style.display = "none";
+  document.getElementById("endOverlay").style.display = "flex";
+  document.getElementById("status").textContent = "■ ARENA ENCERRADA";
+  document.getElementById("status").style.color = "#ffd45a";
+}
+
+function mostrarBossFinalConcluido(acertou){
+  document.getElementById("pauseOverlay").style.display = "none";
+  document.getElementById("endOverlay").style.display = "none";
+  document.getElementById("question").innerHTML =
+    "👑 <strong>BOSS FINAL CONCLUÍDO!</strong><br><br>" +
+    (acertou ? "Desafio final acertado. Resultado salvo." :
+               "Desafio final concluído. Resultado salvo.");
+  document.getElementById("options").innerHTML = "";
+  document.getElementById("confirmButton").style.display = "none";
+  document.getElementById("status").textContent = "● BOSS FINAL CONCLUÍDO";
+  mostrarEvento(
+    "👑 BOSS FINAL CONCLUÍDO",
+    "Seu resultado final está registrado. Aguarde o professor encerrar a Arena."
+  );
+}
+
+let pararBossReal = null;
+
+function conectarBossFinalReal(){
+  if (
+    !window.arenaFirebase ||
+    !window.arenaFirebase.observarBossFinal ||
+    !player.room
+  ) return;
+
+  if (typeof pararBossReal === "function") pararBossReal();
+
+  pararBossReal = window.arenaFirebase.observarBossFinal(
+    player.room,
+    boss => {
+      if (!boss) return;
+
+      const minhaResposta =
+        boss.respostas && player.id && boss.respostas[player.id];
+
+      if (minhaResposta) {
+        bossRespondido = true;
+        mostrarBossFinalConcluido(Boolean(minhaResposta.correta));
+        return;
+      }
+
+      if (
+        boss.status === "liberado" &&
+        !bossRespondido &&
+        player.questionIndex >= TOTAL_QUESTIONS
+      ) {
+        mostrarBossFinal(boss);
       }
     }
   );
+}
+
+
+// =====================================================
+// EVENTOS ESPECIAIS JOGÁVEIS EM TEMPO REAL
+// =====================================================
+
+let eventoEspecialAtual = null;
+let pararEventoEspecialReal = null;
+
+function voltarAoFluxoPrincipal(){
+  if(bossRespondido){
+    mostrarBossFinalConcluido();
+    return;
+  }
+
+  if(player.questionIndex >= TOTAL_QUESTIONS){
+    finalizarArena(false);
+    return;
+  }
+
+  document.getElementById("confirmButton").style.display = "";
+  renderQuestion();
+  atualizarPainel();
+}
+
+function mostrarEventoEspecialJogavel(evento){
+  if(!evento || evento.status !== "ativo") return;
+
+  const minhaResposta =
+    evento.respostas &&
+    player.id &&
+    evento.respostas[player.id];
+
+  if(minhaResposta){
+    return;
+  }
+
+  if(
+    evento.tipo === "cacada" &&
+    evento.liderId === player.id
+  ){
+    eventoEspecialAtual = null;
+    mostrarEvento(
+      "👑 VOCÊ É O LÍDER!",
+      `A Caçada ao Líder está ativa. Os demais competidores tentarão reduzir a diferença para ${evento.liderNome || player.name}.`
+    );
+    return;
+  }
+
+  eventoEspecialAtual = evento;
+  player.selected = null;
+
+  document.getElementById("descriptor").textContent =
+    evento.descritor || "EVENTO";
+
+  document.getElementById("level").textContent =
+    "EVENTO ESPECIAL";
+
+  document.getElementById("question").textContent =
+    evento.pergunta || "Desafio especial";
+
+  document.getElementById("eventName").textContent =
+    "⚡ " + (evento.nome || "EVENTO ESPECIAL");
+
+  let detalhe =
+    `Responda o desafio especial. Acerto: +${Number(evento.bonusXP || 0)} XP.`;
+
+  if(evento.tipo === "escudo"){
+    detalhe += " Você também conquista 1 Escudo Matemático.";
+  }
+
+  document.getElementById("eventText").textContent = detalhe;
+
+  const area = document.getElementById("options");
+  area.innerHTML = "";
+
+  (evento.opcoes || []).forEach((texto,i)=>{
+    const botao = document.createElement("button");
+    botao.className = "option";
+    botao.innerHTML =
+      `<strong>${String.fromCharCode(65+i)})</strong> ${texto}`;
+
+    botao.onclick = ()=>{
+      document.querySelectorAll("#options .option")
+        .forEach(b=>b.classList.remove("selected"));
+      botao.classList.add("selected");
+      player.selected = i;
+      document.getElementById("confirmButton").disabled = false;
+    };
+
+    area.appendChild(botao);
+  });
+
+  document.getElementById("confirmButton").style.display = "";
+  document.getElementById("confirmButton").disabled = true;
+}
+
+async function confirmarEventoEspecialAtual(){
+  if(!eventoEspecialAtual || player.selected === null) return;
+
+  try{
+    const resultado =
+      await window.arenaFirebase.responderEventoEspecial(
+        player.room,
+        player.id,
+        player.selected
+      );
+
+    player.xp = Number(
+      resultado.correta
+        ? player.xp + Number(resultado.bonusXP || 0)
+        : player.xp
+    );
+
+    player.shield = Number(
+      resultado.shield ?? player.shield ?? 0
+    );
+
+    salvar();
+    atualizarPainel();
+
+    const feedback = document.getElementById("feedback");
+
+    if(resultado.correta){
+      feedback.className = "feedback ok";
+      feedback.textContent =
+        eventoEspecialAtual.tipo === "escudo"
+          ? `🛡️ ACERTO! +${Number(resultado.bonusXP||0)} XP e +1 Escudo.`
+          : `⚡ ACERTO NO EVENTO! +${Number(resultado.bonusXP||0)} XP.`;
+    }else{
+      feedback.className = "feedback no";
+      feedback.textContent =
+        "❌ Evento Especial concluído. Não houve bônus nesta tentativa.";
+    }
+
+    document.querySelectorAll("#options .option")
+      .forEach(b=>b.disabled=true);
+
+    document.getElementById("confirmButton").disabled = true;
+
+    eventoEspecialAtual = null;
+    player.selected = null;
+
+    setTimeout(()=>{
+      feedback.className = "feedback";
+      feedback.textContent = "";
+      voltarAoFluxoPrincipal();
+    },1300);
+
+  }catch(erro){
+    console.error(erro);
+    mostrarEvento(
+      "⚠️ EVENTO ESPECIAL",
+      erro?.message || "Não foi possível registrar a resposta."
+    );
+  }
+}
+
+function conectarEventoEspecialReal(){
+  if(
+    !window.arenaFirebase ||
+    !window.arenaFirebase.observarEventoEspecial ||
+    !player.room
+  ) return;
+
+  if(typeof pararEventoEspecialReal === "function"){
+    pararEventoEspecialReal();
+  }
+
+  pararEventoEspecialReal =
+    window.arenaFirebase.observarEventoEspecial(
+      player.room,
+      evento=>{
+        if(!evento) return;
+
+        const minhaResposta =
+          evento.respostas &&
+          player.id &&
+          evento.respostas[player.id];
+
+        if(minhaResposta){
+          if(
+            eventoEspecialAtual &&
+            eventoEspecialAtual.id === evento.id
+          ){
+            eventoEspecialAtual = null;
+          }
+          return;
+        }
+
+        mostrarEventoEspecialJogavel(evento);
+      }
+    );
 }
 
 
@@ -1733,7 +2024,15 @@ function conectarDueloReal(){
   );
 }
 
+let ultimoDueloVisual = null;
+
 function renderDueloEstudante(duelo){
+  const chaveVisual =
+    `${duelo.id || "duelo"}:${duelo.status || ""}:${duelo.vencedorId || ""}`;
+
+  if(chaveVisual === ultimoDueloVisual) return;
+  ultimoDueloVisual = chaveVisual;
+
   const sou1 = player.id === duelo.competidor1Id;
   const sou2 = player.id === duelo.competidor2Id;
   const participo = sou1 || sou2;
@@ -1874,6 +2173,8 @@ function conectarEventosReal() {
       if (chave === ultimaChaveEvento) return;
       ultimaChaveEvento = chave;
 
+      if (ultimo.tipo === "evento_especial") return;
+
       const nome = String(ultimo.nome).trim();
       const texto = textosEventosArena[nome] ||
         "⚡ O professor ativou um novo Evento Especial na Arena.";
@@ -1898,37 +2199,42 @@ function conectarEventosReal() {
 </script>
 <script type="module">
 import {
-    iniciarFirebase,
-    buscarArena,
-    buscarCompetidor,
-    entrarNaArena,
-    atualizarCompetidor,
-    observarArena,
-   observarCompetidores,
-observarEventos,
-    observarDueloAtual,
-    responderDuelo,
+  iniciarFirebase,
+  buscarArena,
+  buscarCompetidor,
+  entrarNaArena,
+  atualizarCompetidor,
+  observarArena,
+  observarCompetidores,
+  observarEventos,
+  observarDueloAtual,
+  responderDuelo,
   responderBossFinal,
-  observarBossFinal
+  observarBossFinal,
+  observarEventoEspecial,
+  responderEventoEspecial
 } from "./js/firebase-service.js";
 
 iniciarFirebase();
 
 window.arenaFirebase = {
-    buscarArena,
-    buscarCompetidor,
-    entrarNaArena,
+  buscarArena,
+  buscarCompetidor,
+  entrarNaArena,
   atualizarCompetidor,
-    observarArena,
-    observarCompetidores,
-observarEventos,
-    observarDueloAtual,
-    responderDuelo,
+  observarArena,
+  observarCompetidores,
+  observarEventos,
+  observarDueloAtual,
+  responderDuelo,
   responderBossFinal,
-  observarBossFinal
+  observarBossFinal,
+  observarEventoEspecial,
+  responderEventoEspecial
 };
 
 console.log("🔥 Portal do estudante conectado ao Firebase.");
+</script>
 </script>
 </body>
 </html>
