@@ -440,6 +440,29 @@ button{
   .dueloVs{text-align:center;padding:0;}
 }
 
+
+.especialStatus{
+  margin-top:16px;
+  padding:14px;
+  border-radius:13px;
+  border:1px solid #7c3aed;
+  background:#101c38;
+  color:#e9e3ff;
+}
+.managePanel{
+  display:none;
+  margin-top:16px;
+  padding:18px;
+  border:1px solid #294b70;
+  border-radius:15px;
+  background:#07182d;
+}
+.managePanel.ativo{display:block;}
+button:active{
+  transform:scale(.96);
+  filter:brightness(1.12);
+}
+
 </style>
 </head>
 
@@ -590,7 +613,20 @@ Arena criada. Aguardando início da competição.
 <div class="actions">
 <button class="green" onclick="liberar()">🔓 Liberar estudantes</button>
 <button class="red" onclick="bloquear()">🔒 Bloquear novas entradas</button>
-<button class="gray">👤 Gerenciar individualmente</button>
+<button class="gray" onclick="abrirGerenciamentoIndividual()">👤 Gerenciar individualmente</button>
+</div>
+
+<div id="managePanel" class="managePanel">
+  <h3 style="margin-top:0">👤 Gerenciamento individual</h3>
+  <label>Competidor</label>
+  <select id="manageCompetidor"></select>
+  <div class="actions">
+    <button class="red" onclick="bloquearCompetidorSelecionado()">🔒 BLOQUEAR</button>
+    <button class="green" onclick="liberarCompetidorSelecionado()">🔓 LIBERAR</button>
+  </div>
+  <div id="manageStatus" class="status">
+    Selecione um competidor.
+  </div>
 </div>
 
 </section>
@@ -609,7 +645,7 @@ aumentar a interação entre os estudantes.
 <div class="evento">
 <strong>🔥 Questão Relâmpago</strong>
 <p>Uma questão especial poderá valer pontuação extra.</p>
-<button class="gold" onclick="evento('QUESTÃO RELÂMPAGO')">DISPARAR</button>
+<button class="gold" onclick="lancarEventoEspecial('relampago', this)">DISPARAR</button>
 </div>
 
 <div class="evento">
@@ -621,28 +657,37 @@ aumentar a interação entre os estudantes.
 <div class="evento">
 <strong>💎 Bônus PAEBES</strong>
 <p>Rodada surpresa com bônus de XP para resposta correta.</p>
-<button class="blue" onclick="evento('BÔNUS PAEBES')">LIBERAR BÔNUS</button>
+<button class="blue" onclick="lancarEventoEspecial('bonus', this)">LIBERAR BÔNUS</button>
 </div>
 
 <div class="evento">
 <strong>🎯 Desafio do Descritor</strong>
 <p>O professor escolhe um descritor para uma disputa especial.</p>
-<button class="green" onclick="evento('DESAFIO DO DESCRITOR')">LANÇAR</button>
+<select id="descritorEspecial" style="margin:8px 0 10px">
+<option value="D074_M">D074_M</option>
+<option value="D088_M">D088_M</option>
+<option value="D097_M">D097_M</option>
+<option value="D111_M" selected>D111_M</option>
+<option value="D125_M">D125_M</option>
+</select>
+<button class="green" onclick="lancarEventoEspecial('descritor', this)">LANÇAR</button>
 </div>
 
 <div class="evento">
 <strong>👑 Caçada ao Líder</strong>
 <p>Os estudantes recebem um desafio para tentar alcançar o primeiro colocado.</p>
-<button class="red" onclick="evento('CAÇADA AO LÍDER')">ATIVAR</button>
+<button class="red" onclick="lancarEventoEspecial('cacada', this)">ATIVAR</button>
 </div>
 
 <div class="evento">
 <strong>🛡️ Escudo Matemático</strong>
 <p>O competidor pode conquistar proteção de pontuação em uma rodada.</p>
-<button class="gray" onclick="evento('ESCUDO MATEMÁTICO')">LIBERAR</button>
+<button class="gray" onclick="lancarEventoEspecial('escudo', this)">LIBERAR</button>
 </div>
 
 </div>
+
+<div id="eventoEspecialStatusProfessor" class="especialStatus">⚡ Nenhum Evento Especial jogável ativo.</div>
 
 <div id="dueloPanel" class="dueloPanel">
   <h3 style="margin-top:0">⚔️ Configurar Duelo Matemático</h3>
@@ -715,7 +760,10 @@ import {
   criarDuelo,
   observarDueloAtual,
   liberarBossFinal,
-  observarBossFinal
+  observarBossFinal,
+  criarEventoEspecial,
+  observarEventoEspecial,
+  atualizarCompetidor
 } from "./js/firebase-service.js";
 
 iniciarFirebase();
@@ -1090,6 +1138,9 @@ function conectarArena(codigo) {
     codigo,
     duelo => renderDueloProfessor(duelo)
   );
+
+  acompanharBoss(codigo);
+  acompanharEventoEspecial(codigo);
 }
 
 
@@ -1481,6 +1532,227 @@ function renderDueloProfessor(duelo) {
       `🏆 Duelo encerrado. Vencedor: <strong>${duelo.vencedorNome || "Competidor"}</strong>.`;
   }
 }
+
+
+/* =========================================
+   EVENTOS ESPECIAIS JOGÁVEIS
+========================================= */
+
+const bancoEventosEspeciais = {
+  relampago:{
+    nome:"QUESTÃO RELÂMPAGO",
+    tipo:"relampago",
+    descritor:"D097_M",
+    pergunta:"Se 3x + 6 = 30, qual é o valor de x?",
+    opcoes:["6","7","8","9","12"],
+    correta:2,
+    bonusXP:200
+  },
+  bonus:{
+    nome:"BÔNUS PAEBES",
+    tipo:"bonus",
+    descritor:"D074_M",
+    pergunta:"Um produto de R$ 200,00 recebeu desconto de 25%. Qual é o valor do desconto?",
+    opcoes:["R$ 25,00","R$ 40,00","R$ 50,00","R$ 75,00","R$ 150,00"],
+    correta:2,
+    bonusXP:150
+  },
+  cacada:{
+    nome:"CAÇADA AO LÍDER",
+    tipo:"cacada",
+    descritor:"D125_M",
+    pergunta:"Em uma atividade, 18 de 24 estudantes acertaram a questão. Qual percentual acertou?",
+    opcoes:["60%","65%","70%","75%","80%"],
+    correta:3,
+    bonusXP:250
+  },
+  escudo:{
+    nome:"ESCUDO MATEMÁTICO",
+    tipo:"escudo",
+    descritor:"D111_M",
+    pergunta:"Um prisma triangular possui quantas faces ao todo?",
+    opcoes:["4","5","6","7","8"],
+    correta:1,
+    bonusXP:50
+  }
+};
+
+const questoesPorDescritorEspecial = {
+  "D074_M":{
+    descritor:"D074_M",
+    pergunta:"Uma camiseta de R$ 80,00 teve aumento de 15%. Qual foi o valor do aumento?",
+    opcoes:["R$ 8,00","R$ 10,00","R$ 12,00","R$ 15,00","R$ 18,00"],
+    correta:2
+  },
+  "D088_M":{
+    descritor:"D088_M",
+    pergunta:"Na sequência 5, 10, 15, 20, __, qual é o próximo termo?",
+    opcoes:["21","22","24","25","30"],
+    correta:3
+  },
+  "D097_M":{
+    descritor:"D097_M",
+    pergunta:"Se 2x - 4 = 18, qual é o valor de x?",
+    opcoes:["7","9","10","11","14"],
+    correta:3
+  },
+  "D111_M":{
+    descritor:"D111_M",
+    pergunta:"Qual sólido possui duas bases circulares paralelas e uma superfície lateral curva?",
+    opcoes:["Cone","Cilindro","Cubo","Pirâmide","Prisma triangular"],
+    correta:1
+  },
+  "D125_M":{
+    descritor:"D125_M",
+    pergunta:"Em uma turma de 50 estudantes, 35 entregaram a atividade. Qual percentual entregou?",
+    opcoes:["50%","60%","65%","70%","75%"],
+    correta:3
+  }
+};
+
+function piscarBotaoAcionado(botao){
+  if(!botao) return;
+  const original = botao.dataset.original || botao.innerHTML;
+  botao.dataset.original = original;
+  botao.disabled = true;
+  botao.innerHTML = "✅ ACIONADO!";
+  botao.style.boxShadow = "0 0 18px rgba(34,197,94,.8)";
+  setTimeout(()=>{
+    botao.disabled = false;
+    botao.innerHTML = original;
+    botao.style.boxShadow = "";
+  },1400);
+}
+
+window.lancarEventoEspecial = async function(tipo, botao){
+  const arena = arenaLocal();
+  if(!arena?.codigo){
+    alert("Crie uma Arena primeiro.");
+    return;
+  }
+
+  let evento;
+
+  if(tipo === "descritor"){
+    const descritor =
+      document.getElementById("descritorEspecial").value;
+
+    const q = questoesPorDescritorEspecial[descritor];
+
+    if(!q){
+      alert("Não há questão especial cadastrada para este descritor.");
+      return;
+    }
+
+    evento = {
+      nome:"DESAFIO DO DESCRITOR",
+      tipo:"descritor",
+      descritor:q.descritor,
+      pergunta:q.pergunta,
+      opcoes:q.opcoes,
+      correta:q.correta,
+      bonusXP:180
+    };
+  }else{
+    evento = {...bancoEventosEspeciais[tipo]};
+  }
+
+  if(tipo === "cacada"){
+    const lista = Object.values(arena.competidores || {})
+      .sort((a,b)=>Number(b.xp||0)-Number(a.xp||0));
+
+    if(lista.length === 0){
+      alert("A Caçada ao Líder exige pelo menos um competidor.");
+      return;
+    }
+
+    evento.liderId = lista[0].id || lista[0].jogadorId;
+    evento.liderNome = lista[0].nome || "Líder";
+  }
+
+  try{
+    await criarEventoEspecial(arena.codigo, evento);
+    piscarBotaoAcionado(botao);
+
+    document.getElementById("mensagem").innerHTML =
+      `⚡ Evento Especial iniciado: <strong>${evento.nome}</strong>.`;
+  }catch(erro){
+    console.error(erro);
+    alert("Não foi possível iniciar o Evento Especial.");
+  }
+};
+
+function acompanharEventoEspecial(codigo){
+  observarEventoEspecial(codigo, evento=>{
+    const box = document.getElementById("eventoEspecialStatusProfessor");
+    if(!box) return;
+
+    if(!evento){
+      box.innerHTML = "⚡ Nenhum Evento Especial jogável ativo.";
+      return;
+    }
+
+    const respostas = Object.values(evento.respostas || {});
+    const acertos = respostas.filter(r=>r.correta).length;
+
+    box.innerHTML =
+      `⚡ <strong>${evento.nome || "EVENTO ESPECIAL"}</strong> — `+
+      `${respostas.length} resposta(s), ${acertos} acerto(s)`+
+      (evento.tipo === "cacada"
+        ? ` • líder/alvo: ${evento.liderNome || "—"}`
+        : "")+
+      ` • bônus: ${Number(evento.bonusXP || 0)} XP`;
+  });
+}
+
+/* =========================================
+   GERENCIAMENTO INDIVIDUAL
+========================================= */
+
+window.abrirGerenciamentoIndividual = function(){
+  const arena = arenaLocal();
+  const lista = Object.values(arena?.competidores || {});
+
+  if(lista.length === 0){
+    alert("Ainda não há competidores para gerenciar.");
+    return;
+  }
+
+  const select = document.getElementById("manageCompetidor");
+  select.innerHTML = lista.map(c=>{
+    const id = c.id || c.jogadorId;
+    return `<option value="${id}">${c.nome || "Competidor"} — ${Number(c.xp||0)} XP</option>`;
+  }).join("");
+
+  document.getElementById("managePanel").classList.add("ativo");
+  document.getElementById("manageStatus").textContent =
+    "Selecione o estudante e escolha BLOQUEAR ou LIBERAR.";
+};
+
+async function alterarBloqueioCompetidor(bloqueado){
+  const arena = arenaLocal();
+  const id = document.getElementById("manageCompetidor").value;
+  if(!arena?.codigo || !id) return;
+
+  await atualizarCompetidor(arena.codigo, id, {bloqueado});
+
+  const competidor = Object.values(arena.competidores || {})
+    .find(c => (c.id || c.jogadorId) === id);
+
+  document.getElementById("manageStatus").innerHTML =
+    bloqueado
+      ? `🔒 <strong>${competidor?.nome || "Competidor"}</strong> bloqueado individualmente.`
+      : `🔓 <strong>${competidor?.nome || "Competidor"}</strong> liberado novamente.`;
+}
+
+window.bloquearCompetidorSelecionado = function(){
+  alterarBloqueioCompetidor(true).catch(console.error);
+};
+
+window.liberarCompetidorSelecionado = function(){
+  alterarBloqueioCompetidor(false).catch(console.error);
+};
+
 
 /* =========================================
    EVENTOS
