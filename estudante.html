@@ -1233,10 +1233,15 @@ async function confirmarResposta(){
     let bonus = Math.min(player.streak*10,50);
     let ganho = q.baseXP + bonus;
 
-    if(player.multiplier>0){
-      ganho*=2;
-      player.multiplier--;
-    }
+ if(player.multiplier>0){
+  ganho*=2;
+  player.multiplier--;
+
+  mostrarEvento(
+    "⚡ MULTIPLICADOR 2× UTILIZADO!",
+    "Seu bônus foi aplicado neste acerto e o Multiplicador foi consumido."
+  );
+}
 
     player.xp+=ganho;
     feedback.className="feedback ok";
@@ -1246,8 +1251,16 @@ async function confirmarResposta(){
       "🔥 "+player.name+" alcançou "+player.streak+" acerto(s) consecutivo(s)!"
     );
   }else{
-    if(player.recovery > 0){
-      player.recovery--;
+   if(player.recovery > 0){
+
+  player.recovery--;
+
+  mostrarEvento(
+    "💚 RECUPERAÇÃO UTILIZADA!",
+    "Você recebeu uma segunda tentativa nesta questão. O poder de Recuperação foi consumido."
+  );
+
+  // restante do código que já existe aqui continua normalmente
       player.selected=null;
       feedback.className="feedback no";
       feedback.innerHTML="💚 RECUPERAÇÃO USADA! Você ganhou uma segunda tentativa nesta questão.";
@@ -1266,11 +1279,18 @@ async function confirmarResposta(){
       return;
     }
 
-    if(player.shield > 0){
-      player.shield--;
-      feedback.className="feedback no";
-      feedback.innerHTML="🛡️ RESPOSTA INCORRETA, mas seu Escudo protegeu a sequência!";
-    }else{
+  if(player.shield > 0){
+  player.shield--;
+
+  feedback.className="feedback no";
+  feedback.innerHTML=
+    "🛡️ ESCUDO ATIVADO! A resposta estava incorreta, mas sua sequência foi preservada.";
+
+  mostrarEvento(
+    "🛡️ ESCUDO MATEMÁTICO UTILIZADO!",
+    "O Escudo protegeu sua sequência após a resposta incorreta e foi consumido."
+  );
+}else{
       player.streak=0;
       feedback.className="feedback no";
       feedback.innerHTML="❌ Não foi dessa vez. Continue na disputa!";
@@ -1378,7 +1398,7 @@ function eventoAutomatico(){
 
     mostrarEvento(
       "⚡ DESAFIO RELÂMPAGO",
-      "A Arena entrou em zona de bônus. A próxima sequência de acertos pode mudar o ranking."
+   "Momento de aceleração! Mantenha sua sequência de acertos para aumentar sua pontuação."
     );
 
   }
@@ -1409,7 +1429,7 @@ function eventoAutomatico(){
 
     mostrarEvento(
       "🔥 CAÇA AO LÍDER",
-      "A reta final começou. As próximas questões podem provocar grandes mudanças na classificação."
+      "A reta final começou. Mantenha seus acertos e sua sequência para disputar as primeiras posições."
     );
 
   }
@@ -1419,15 +1439,38 @@ function eventoAutomatico(){
 }
 
 
-function mostrarEvento(nome,texto){
+let timerEventoUI = null;
 
+function voltarEventoNeutro(){
   document.getElementById("eventName").textContent =
-    nome;
+    "⚡ ARENA EM ANDAMENTO";
 
   document.getElementById("eventText").textContent =
-    texto;
+    "Continue avançando. Novos desafios e eventos podem surgir a qualquer momento.";
+}
+
+function mostrarEvento(nome,texto,tempo=5000){
+
+  document.getElementById("eventName").textContent = nome;
+  document.getElementById("eventText").textContent = texto;
 
   adicionarFeed(nome+" — "+texto);
+
+  if(timerEventoUI){
+    clearTimeout(timerEventoUI);
+  }
+
+  // Boss Final e encerramento precisam permanecer visíveis.
+  if(
+    String(nome).includes("BOSS FINAL") ||
+    String(nome).includes("ARENA ENCERRADA")
+  ){
+    return;
+  }
+
+  timerEventoUI = setTimeout(()=>{
+    voltarEventoNeutro();
+  },tempo);
 }
 
 
