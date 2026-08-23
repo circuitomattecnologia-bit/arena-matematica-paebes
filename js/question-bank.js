@@ -215,7 +215,7 @@ function graficoTrig(tipo="sen"){
  <polyline points="${pts.join(" ")}" fill="none" stroke="#ff6fab" stroke-width="4"/>`,"Gráfico trigonométrico");
 }
 
-function gerarPorDescritor(d,level,s){
+function gerarPorDescritor(d,level,s,variante=0){
   const k=nidx(level);
   const v=s%6;
 
@@ -334,10 +334,30 @@ function gerarPorDescritor(d,level,s){
 
     case "D074_M":{
       const base=pick([2,3,4],s);
-      if(k===0) return {text:`Qual expressão representa uma função exponencial de base ${base} e valor inicial 1?`,...alternativas(`f(x) = ${base}^x`,[`f(x) = ${base}x`,`f(x) = x^${base}`,`f(x) = x + ${base}`,`f(x) = ${base}/x`],s)};
-      if(k===1) return {text:`Observe o gráfico de uma função exponencial crescente que passa por (0,1) e (1,${base}). Qual expressão corresponde a ele?`,...alternativas(`f(x) = ${base}^x`,[`f(x) = x + ${base}`,`f(x) = ${base}x`,`f(x) = x^${base}`,`f(x) = (1/${base})^x`],s),visual:planoCartesiano({expo:{base,c:1}})};
-      if(k===2) return {text:`Uma função exponencial satisfaz f(0)=1 e f(2)=${base**2}. Qual lei é compatível com esses valores?`,...alternativas(`f(x) = ${base}^x`,[`f(x) = ${base}x`,`f(x) = x^${base}`,`f(x) = ${base}+x`,`f(x) = ${base}^{x+1}`],s),visual:tabelaSvg(["x","f(x)"],[[0,1],[1,base],[2,base**2]])};
-      return {text:`O gráfico mostrado é decrescente, passa por (0,1) e por (1,1/${base}). Qual função o representa?`,...alternativas(`f(x) = (1/${base})^x`,[`f(x) = ${base}^x`,`f(x) = -${base}^x`,`f(x) = x/${base}`,`f(x) = ${base}^{-x+1}`],s),visual:planoCartesiano({expo:{base:1/base,c:1}})};
+      const modelosBasico=[
+        ()=>({modeloId:"D074-B1",text:`Observe o gráfico de uma função exponencial crescente que passa por (0,1) e (1,${base}). Qual expressão corresponde a ele?`,...alternativas(`f(x) = ${base}^x`,[`f(x) = x + ${base}`,`f(x) = ${base}x`,`f(x) = x^${base}`,`f(x) = (1/${base})^x`],s),visual:planoCartesiano({expo:{base,c:1}})}),
+        ()=>({modeloId:"D074-B2",text:`A tabela apresenta f(0)=1, f(1)=${base} e f(2)=${base**2}. Qual função gera esses valores?`,...alternativas(`f(x) = ${base}^x`,[`f(x) = ${base}x`,`f(x)=x+${base}`,`f(x)=x^${base}`,`f(x)=${base}^{x+1}`],s),visual:tabelaSvg(["x","f(x)"],[[0,1],[1,base],[2,base**2]])}),
+        ()=>({modeloId:"D074-B3",text:`Qual característica distingue o gráfico de f(x)=${base}^x de uma função linear crescente?`,...alternativas("A taxa de crescimento aumenta multiplicativamente",["Possui taxa aditiva constante","É uma reta","Cruza necessariamente a origem","Tem crescimento constante"],s)}),
+        ()=>({modeloId:"D074-B4",text:`Uma curva passa por (0,1), (1,${base}) e (2,${base**2}). Qual tipo de função é mais compatível?`,...alternativas("Função exponencial",["Função afim","Função quadrática","Função constante","Função inversamente proporcional"],s),visual:planoCartesiano({expo:{base,c:1}})})
+      ];
+      if(k===0) return {modeloId:"D074-ABB",text:`Qual expressão representa uma função exponencial de base ${base} e valor inicial 1?`,...alternativas(`f(x) = ${base}^x`,[`f(x) = ${base}x`,`f(x) = x^${base}`,`f(x) = x + ${base}`,`f(x) = ${base}/x`],s)};
+      if(k===1) return modelosBasico[variante%modelosBasico.length]();
+      if(k===2){
+        const mods=[
+          ()=>({modeloId:"D074-P1",text:`Uma função exponencial satisfaz f(0)=1 e f(2)=${base**2}. Qual lei é compatível com esses valores?`,...alternativas(`f(x) = ${base}^x`,[`f(x) = ${base}x`,`f(x) = x^${base}`,`f(x) = ${base}+x`,`f(x) = ${base}^{x+1}`],s),visual:tabelaSvg(["x","f(x)"],[[0,1],[1,base],[2,base**2]])}),
+          ()=>({modeloId:"D074-P2",text:`O gráfico de uma função exponencial passa por (0,1) e (2,${base**2}). Qual é sua base positiva?`,...alternativas(base,[base+1,base-1,base**2,2*base],s),visual:planoCartesiano({expo:{base,c:1}})}),
+          ()=>({modeloId:"D074-P3",text:`Compare f(x)=${base}^x e g(x)=(${base+1})^x para x>0. Qual cresce mais rapidamente?`,...alternativas("g(x)",["f(x)","Crescem igualmente","Ambas decrescem","Não é possível comparar"],s)}),
+          ()=>({modeloId:"D074-P4",text:`Uma tabela tem razões sucessivas constantes iguais a ${base}. Qual representação algébrica, com f(0)=1, é coerente?`,...alternativas(`f(x)=${base}^x`,[`f(x)=${base}x`,`f(x)=x+${base}`,`f(x)=x^${base}`,`f(x)=1/${base}x`],s)})
+        ];
+        return mods[variante%mods.length]();
+      }
+      const mods=[
+        ()=>({modeloId:"D074-A1",text:`O gráfico mostrado é decrescente, passa por (0,1) e por (1,1/${base}). Qual função o representa?`,...alternativas(`f(x) = (1/${base})^x`,[`f(x) = ${base}^x`,`f(x) = -${base}^x`,`f(x) = x/${base}`,`f(x) = ${base}^{-x+1}`],s),visual:planoCartesiano({expo:{base:1/base,c:1}})}),
+        ()=>({modeloId:"D074-A2",text:`Uma função exponencial decrescente tem f(0)=1 e f(2)=1/${base**2}. Qual é uma expressão possível?`,...alternativas(`f(x)=(1/${base})^x`,[`f(x)=${base}^x`,`f(x)=1/${base}x`,`f(x)=x/${base}`,`f(x)=${base}^{x-1}`],s)}),
+        ()=>({modeloId:"D074-A3",text:`Qual transformação leva o gráfico de y=${base}^x ao gráfico de y=${base}^{-x}?`,...alternativas("Reflexão em relação ao eixo y",["Reflexão no eixo x","Translação para cima","Translação para a direita","Rotação de 90°"],s)}),
+        ()=>({modeloId:"D074-A4",text:`Se f(x)=a·${base}^x e f(0)=5, qual é o valor de a?`,...alternativas(5,[base,1,0,5*base],s)})
+      ];
+      return mods[variante%mods.length]();
     }
 
     case "D076_M":{
@@ -395,43 +415,45 @@ function gerarPorDescritor(d,level,s){
     }
 
     case "D088_M":{
-      const base=pick([2,3],s),t=2+(s%3),ini=100*(1+(s%3)),final=ini*Math.pow(base,t);
-      if(k===0){
-        const modelos=[
-          {text:`Uma cultura começa com ${ini} bactérias e dobra a cada hora. Quantas haverá após ${t} horas?`,ans:ini*2**t},
-          {text:`Um vídeo começa com ${ini} visualizações e seu total triplica a cada rodada de divulgação. Após ${t} rodadas, quantas visualizações haverá?`,ans:ini*3**t},
-          {text:`Uma população inicial de ${ini} indivíduos multiplica-se por ${base} a cada período. Qual é o total após ${t} períodos?`,ans:final},
-          {text:`Uma sequência começa em ${ini} e cada termo é ${base} vezes o anterior. Qual é o termo após ${t} multiplicações?`,ans:final}
-        ];
-        const q=pick(modelos,s); return {text:q.text,...alternativas(q.ans,[q.ans/base,q.ans+ini,ini*base*t,q.ans-base],s)};
-      }
-      if(k===1){
-        const modelos=[
-          {text:`Um equipamento custa R$ ${ini},00 e perde 20% do valor a cada ano. Qual será aproximadamente o valor após ${t} anos?`,ans:ini*0.8**t},
-          {text:`Uma aplicação de R$ ${ini},00 cresce 10% ao mês. Qual é o valor após ${t} meses?`,ans:ini*1.1**t},
-          {text:`Uma cultura com ${ini} células cresce por fator ${base} a cada ciclo. Escreva a expressão que calcula o total após x ciclos.`,expr:`${ini}·${base}^x`}
-        ];
-        const q=pick(modelos,s);
-        if(q.expr) return {text:q.text,...alternativas(q.expr,[`${ini}+${base}x`,`${ini}x^${base}`,`${ini}·x^${base}`,`${base}·${ini}^x`],s)};
-        return {text:q.text,...alternativas(fmt(q.ans),[fmt(q.ans+ini/10),fmt(q.ans-ini/10),fmt(ini+t*10),fmt(ini*(1+t/10))],s)};
-      }
-      if(k===2){
-        const modelos=[
-          {text:`Uma população é modelada por P(t)=200·2^t. Em que instante P(t)=1600?`,ans:"t = 3"},
-          {text:`Um investimento é modelado por V(t)=500·1,2^t. Qual interpretação correta do fator 1,2?`,ans:"Aumento de 20% por período"},
-          {text:`Uma substância decai segundo M(t)=800·(1/2)^t. Qual será a massa após 3 períodos?`,ans:"100"},
-          {text:`Uma cidade tinha 10.000 habitantes e cresce 5% ao ano. Qual expressão modela a população após t anos?`,ans:"10000·1,05^t"}
-        ];
-        const q=pick(modelos,s);
-        return {text:q.text,...alternativas(q.ans,["t = 2","Aumento de 2% por período","200","10000+0,05t"],s)};
-      }
-      const modelos=[
-        {text:`Uma função exponencial satisfaz f(1)=6 e f(3)=54. Admitindo f(x)=a·b^x, qual é b?`,ans:"3"},
-        {text:`Um valor dobra a cada 4 horas. Qual fator de multiplicação corresponde a 12 horas?`,ans:"8"},
-        {text:`Uma população segue P(t)=1000·1,05^t. Aproximadamente em quantos anos ela ultrapassa 1200?`,ans:"4"},
-        {text:`Uma quantidade é reduzida 25% a cada etapa. Qual fator exponencial deve ser usado?`,ans:"0,75"}
-      ];
-      const q=pick(modelos,s); return {text:q.text,...alternativas(q.ans,["2","4","1,25","0,25"],s)};
+      const base=pick([2,3],s),t=2+(s%3),ini=100*(1+(s%3));
+      const bancos={
+        0:[
+          ()=>({modeloId:"D088-ABB1",text:`Uma cultura começa com ${ini} bactérias e dobra a cada hora. Quantas haverá após ${t} horas?`,ans:ini*2**t}),
+          ()=>({modeloId:"D088-ABB2",text:`Um vídeo começa com ${ini} visualizações e triplica a cada rodada de divulgação. Quantas terá após ${t} rodadas?`,ans:ini*3**t}),
+          ()=>({modeloId:"D088-ABB3",text:`Uma quantia de ${ini} pontos é multiplicada por ${base} em cada fase. Qual o total após ${t} fases?`,ans:ini*base**t}),
+          ()=>({modeloId:"D088-ABB4",text:`Uma sequência começa em ${ini} e cada termo é ${base} vezes o anterior. Qual valor aparece após ${t} multiplicações?`,ans:ini*base**t}),
+          ()=>({modeloId:"D088-ABB5",text:`Uma colônia possui ${ini} células e dobra em cada ciclo. Após ${t} ciclos completos, qual será a quantidade?`,ans:ini*2**t}),
+          ()=>({modeloId:"D088-ABB6",text:`Um jogo concede ${ini} moedas na fase inicial e a quantidade triplica a cada nova fase. Quantas moedas haverá após ${t} aumentos?`,ans:ini*3**t})
+        ],
+        1:[
+          ()=>({modeloId:"D088-B1",text:`Um equipamento vale R$ ${ini},00 e perde 20% do valor a cada ano. Qual será aproximadamente o valor após ${t} anos?`,ans:ini*0.8**t}),
+          ()=>({modeloId:"D088-B2",text:`Uma aplicação de R$ ${ini},00 cresce 10% ao mês. Qual é o valor aproximado após ${t} meses?`,ans:ini*1.1**t}),
+          ()=>({modeloId:"D088-B3",text:`Uma cultura com ${ini} células cresce por fator ${base} a cada ciclo. Qual expressão calcula o total após x ciclos?`,expr:`${ini}·${base}^x`}),
+          ()=>({modeloId:"D088-B4",text:`Uma população de ${ini} indivíduos cresce 50% por período. Qual fator multiplicativo deve ser usado em um modelo exponencial?`,ans:"1,5"}),
+          ()=>({modeloId:"D088-B5",text:`Um valor inicial de ${ini} decai pela metade a cada etapa. Qual expressão representa o valor após x etapas?`,expr:`${ini}·(1/2)^x`}),
+          ()=>({modeloId:"D088-B6",text:`Uma quantia aumenta 25% por período. Em um modelo exponencial, qual é o fator de crescimento?`,ans:"1,25"})
+        ],
+        2:[
+          ()=>({modeloId:"D088-P1",text:`Uma população é modelada por P(t)=200·2^t. Em que instante P(t)=1600?`,ans:"t = 3"}),
+          ()=>({modeloId:"D088-P2",text:`Um investimento é modelado por V(t)=500·1,2^t. Qual interpretação correta do fator 1,2?`,ans:"Aumento de 20% por período"}),
+          ()=>({modeloId:"D088-P3",text:`Uma substância decai segundo M(t)=800·(1/2)^t. Qual será a massa após 3 períodos?`,ans:"100"}),
+          ()=>({modeloId:"D088-P4",text:`Uma cidade tinha 10.000 habitantes e cresce 5% ao ano. Qual expressão modela a população após t anos?`,ans:"10000·1,05^t"}),
+          ()=>({modeloId:"D088-P5",text:`Em Q(t)=300·3^t, por qual fator Q aumenta quando t cresce uma unidade?`,ans:"3"}),
+          ()=>({modeloId:"D088-P6",text:`Uma função exponencial tem valor inicial 400 e dobra a cada 2 horas. Qual será o valor após 6 horas?`,ans:"3200"})
+        ],
+        3:[
+          ()=>({modeloId:"D088-A1",text:`Uma função exponencial satisfaz f(1)=6 e f(3)=54. Admitindo f(x)=a·b^x, qual é b?`,ans:"3"}),
+          ()=>({modeloId:"D088-A2",text:`Um valor dobra a cada 4 horas. Qual fator de multiplicação corresponde a 12 horas?`,ans:"8"}),
+          ()=>({modeloId:"D088-A3",text:`Uma população segue P(t)=1000·1,05^t. Aproximadamente em quantos anos ela ultrapassa 1200?`,ans:"4"}),
+          ()=>({modeloId:"D088-A4",text:`Uma quantidade é reduzida 25% a cada etapa. Qual fator exponencial deve ser usado?`,ans:"0,75"}),
+          ()=>({modeloId:"D088-A5",text:`Se f(x)=a·2^x, f(2)=20. Qual é o valor de a?`,ans:"5"}),
+          ()=>({modeloId:"D088-A6",text:`Uma grandeza cresce 44% em dois períodos com taxa constante. Qual fator aproximado por período produz esse crescimento?`,ans:"1,2"})
+        ]
+      };
+      const q=bancos[k][variante%bancos[k].length]();
+      if(q.expr) return {modeloId:q.modeloId,text:q.text,...alternativas(q.expr,[`${ini}+${base}x`,`${ini}x^${base}`,`${ini}·x^${base}`,`${base}·${ini}^x`],s)};
+      if(typeof q.ans==="number") return {modeloId:q.modeloId,text:q.text,...alternativas(fmt(q.ans),[fmt(q.ans+ini/10),fmt(Math.max(0,q.ans-ini/10)),fmt(ini+t*10),fmt(ini*(1+t/10))],s)};
+      return {modeloId:q.modeloId,text:q.text,...alternativas(q.ans,["t = 2","Aumento de 2% por período","200","10000+0,05t","2","4","1,25","0,25"],s)};
     }
 
     case "D096_M":{
@@ -451,36 +473,38 @@ function gerarPorDescritor(d,level,s){
     }
 
     case "D111_M":{
-      if(k===0){
-        const qs=[
-          {text:"Qual sólido corresponde à planificação apresentada?",ans:"Cubo",visual:planificacaoCuboSvg()},
-          {text:"Qual sólido possui duas bases circulares paralelas e superfície lateral curva?",ans:"Cilindro",visual:cilindroSvg()},
-          {text:"Qual sólido corresponde à figura apresentada?",ans:"Prisma triangular",visual:prismaTriangularSvg()}
-        ];
-        const q=pick(qs,s); return {text:q.text,...alternativas(q.ans,["Cone","Cubo","Pirâmide","Prisma triangular"].filter(x=>x!==q.ans),s),visual:q.visual};
-      }
-      if(k===1){
-        const qs=[
-          {text:"A planificação apresentada é formada por 6 quadrados congruentes. Qual sólido ela forma?",ans:"Cubo",visual:planificacaoCuboSvg()},
-          {text:"A planificação apresenta 3 retângulos e 2 triângulos. Qual sólido é formado?",ans:"Prisma triangular",visual:planificacaoPrismaTriangularSvg()},
-          {text:"Observe as vistas superior, frontal e lateral. Qual sólido é compatível com elas?",ans:"Cubo",visual:vistasSolidoSvg("cubo")}
-        ];
-        const q=pick(qs,s); return {text:q.text,...alternativas(q.ans,["Cilindro","Cone","Pirâmide quadrangular","Prisma triangular"].filter(x=>x!==q.ans),s),visual:q.visual};
-      }
-      if(k===2){
-        const qs=[
-          {text:"A planificação mostra 3 faces retangulares consecutivas e 2 faces triangulares. Qual sólido será obtido ao dobrá-la?",ans:"Prisma triangular",visual:planificacaoPrismaTriangularSvg()},
-          {text:"As vistas superior é circular e as vistas frontal e lateral são retangulares. Qual sólido é compatível com essas três vistas?",ans:"Cilindro",visual:vistasSolidoSvg("cilindro")},
-          {text:"Qual característica permite concluir que esta planificação pode formar um cubo?",ans:"Possui 6 quadrados congruentes conectados adequadamente",visual:planificacaoCuboSvg()}
-        ];
-        const q=pick(qs,s); return {text:q.text,...alternativas(q.ans,["Possui 4 triângulos e 1 quadrado","Possui 2 círculos e 1 retângulo","Possui 3 retângulos e 2 triângulos","Possui apenas 5 quadrados"],s),visual:q.visual};
-      }
-      const qs=[
-        {text:"Uma peça possui vista superior quadrada, vista frontal quadrada e vista lateral quadrada, todas com mesma medida. Qual sólido é mais compatível?",ans:"Cubo",visual:vistasSolidoSvg("cubo")},
-        {text:"Uma planificação válida contém duas bases triangulares congruentes e três faces laterais retangulares. Qual sólido e quantas faces ele possui?",ans:"Prisma triangular, 5 faces",visual:planificacaoPrismaTriangularSvg()},
-        {text:"A vista superior de um sólido é um círculo e a vista frontal é um triângulo isósceles. Qual sólido é o mais compatível?",ans:"Cone",visual:coneSvg()}
-      ];
-      const q=pick(qs,s); return {text:q.text,...alternativas(q.ans,["Cilindro, 3 faces","Cubo, 6 faces","Pirâmide quadrangular, 5 faces","Esfera"],s),visual:q.visual};
+      const bancos={
+        0:[
+          ()=>({modeloId:"D111-ABB1",text:"Qual sólido corresponde à planificação apresentada?",ans:"Cubo",visual:planificacaoCuboSvg()}),
+          ()=>({modeloId:"D111-ABB2",text:"Qual sólido possui duas bases circulares paralelas e superfície lateral curva?",ans:"Cilindro",visual:cilindroSvg()}),
+          ()=>({modeloId:"D111-ABB3",text:"Qual sólido corresponde à figura apresentada?",ans:"Prisma triangular",visual:prismaTriangularSvg()}),
+          ()=>({modeloId:"D111-ABB4",text:"Qual sólido tem uma base circular e uma superfície lateral que converge para um vértice?",ans:"Cone",visual:coneSvg()})
+        ],
+        1:[
+          ()=>({modeloId:"D111-B1",text:"A planificação apresentada é formada por 6 quadrados congruentes. Qual sólido ela forma?",ans:"Cubo",visual:planificacaoCuboSvg()}),
+          ()=>({modeloId:"D111-B2",text:"A planificação apresenta 3 retângulos e 2 triângulos. Qual sólido é formado?",ans:"Prisma triangular",visual:planificacaoPrismaTriangularSvg()}),
+          ()=>({modeloId:"D111-B3",text:"Observe as vistas superior, frontal e lateral. Qual sólido é compatível com elas?",ans:"Cubo",visual:vistasSolidoSvg("cubo")}),
+          ()=>({modeloId:"D111-B4",text:"A vista superior é circular e a vista frontal é retangular. Qual sólido é compatível?",ans:"Cilindro",visual:vistasSolidoSvg("cilindro")})
+        ],
+        2:[
+          ()=>({modeloId:"D111-P1",text:"A planificação mostra 3 faces retangulares consecutivas e 2 faces triangulares. Qual sólido será obtido ao dobrá-la?",ans:"Prisma triangular",visual:planificacaoPrismaTriangularSvg()}),
+          ()=>({modeloId:"D111-P2",text:"As vistas superior é circular e as vistas frontal e lateral são retangulares. Qual sólido é compatível com essas três vistas?",ans:"Cilindro",visual:vistasSolidoSvg("cilindro")}),
+          ()=>({modeloId:"D111-P3",text:"Qual característica permite concluir que esta planificação pode formar um cubo?",ans:"Possui 6 quadrados congruentes conectados adequadamente",visual:planificacaoCuboSvg()}),
+          ()=>({modeloId:"D111-P4",text:"Uma peça apresenta vista superior quadrada, vista frontal retangular e vista lateral retangular. Qual família de sólido é mais compatível?",ans:"Prisma retangular",visual:vistasSolidoSvg("cubo")}),
+          ()=>({modeloId:"D111-P5",text:"Duas planificações têm 6 quadrados congruentes, mas apenas uma fecha sem sobreposição. O que deve ser verificado?",ans:"A disposição e conectividade das faces",visual:planificacaoCuboSvg()}),
+          ()=>({modeloId:"D111-P6",text:"Uma planificação contém duas bases triangulares congruentes e três faces laterais retangulares. Que sólido ela representa?",ans:"Prisma triangular",visual:planificacaoPrismaTriangularSvg()})
+        ],
+        3:[
+          ()=>({modeloId:"D111-A1",text:"Uma peça possui vista superior quadrada, vista frontal quadrada e vista lateral quadrada, todas com mesma medida. Qual sólido é mais compatível?",ans:"Cubo",visual:vistasSolidoSvg("cubo")}),
+          ()=>({modeloId:"D111-A2",text:"Uma planificação válida contém duas bases triangulares congruentes e três faces laterais retangulares. Qual sólido e quantas faces ele possui?",ans:"Prisma triangular, 5 faces",visual:planificacaoPrismaTriangularSvg()}),
+          ()=>({modeloId:"D111-A3",text:"A vista superior de um sólido é um círculo e a vista frontal é um triângulo isósceles. Qual sólido é o mais compatível?",ans:"Cone",visual:coneSvg()}),
+          ()=>({modeloId:"D111-A4",text:"Uma planificação possui um retângulo e dois círculos congruentes. Ao dobrá-la, qual sólido é formado?",ans:"Cilindro",visual:cilindroSvg()}),
+          ()=>({modeloId:"D111-A5",text:"Um sólido tem vista superior circular, frontal triangular e lateral triangular. Qual hipótese é mais consistente?",ans:"Cone",visual:coneSvg()}),
+          ()=>({modeloId:"D111-A6",text:"Qual informação conjunta é mais útil para distinguir um cilindro de um prisma retangular em vistas ortogonais?",ans:"A vista superior circular do cilindro",visual:vistasSolidoSvg("cilindro")})
+        ]
+      };
+      const q=bancos[k][variante%bancos[k].length]();
+      return {modeloId:q.modeloId,text:q.text,...alternativas(q.ans,["Cone","Cilindro","Cubo","Pirâmide quadrangular","Prisma triangular","Prisma retangular","A disposição e conectividade das faces","Possui 4 triângulos e 1 quadrado"].filter(x=>x!==q.ans),s),visual:q.visual};
     }
 
     case "D119_M":{
@@ -629,7 +653,7 @@ export function habilidadeDoDescritor(descritor){
 
 export function gerarQuestaoDescritor(descritor,nivel="BÁSICO",seed=1){
   if(!HABILIDADES_PAEBES[descritor]) throw new Error("Descritor não pertence à matriz PAEBES 2025 da 3ª série.");
-  const q=gerarPorDescritor(descritor,nivel,seed);
+  const q=gerarPorDescritor(descritor,nivel,seed,0);
   return {
     id:`${descritor}-especial-${Date.now().toString(36)}-${seed}`,
     descriptor:descritor,
@@ -657,6 +681,7 @@ export function gerarQuestoesArena({
   const niveis=intercalarNiveis(distribuicaoNiveis,quantidade);
   const questoes=[];
   const assinaturas=new Set();
+  const usosPorDescNivel={};
 
   for(let i=0;i<quantidade;i++){
     const descriptor=fila[i];
@@ -665,17 +690,22 @@ export function gerarQuestoesArena({
     let gerada=null;
     let tentativa=0;
     let seed=(i+1)*37 + validos.indexOf(descriptor)*101;
+    const chaveUso=`${descriptor}|${nivel}`;
+    const varianteBase=usosPorDescNivel[chaveUso]||0;
 
-    // Evita enunciado idêntico dentro da mesma Arena.
-    while(tentativa<12){
-      gerada=gerarPorDescritor(descriptor,nivel,seed+tentativa*53);
-      const sig=`${descriptor}|${nivel}|${gerada.text}`;
-      if(!assinaturas.has(sig)){
-        assinaturas.add(sig);
+    // Rotaciona modelos antes de permitir repetição e também bloqueia enunciados idênticos.
+    while(tentativa<16){
+      gerada=gerarPorDescritor(descriptor,nivel,seed+tentativa*53,varianteBase+tentativa);
+      const sigModelo=`${descriptor}|${nivel}|${gerada.modeloId||gerada.text}`;
+      const sigTexto=`${descriptor}|${nivel}|${gerada.text}`;
+      if(!assinaturas.has(sigModelo) && !assinaturas.has(sigTexto)){
+        assinaturas.add(sigModelo);
+        assinaturas.add(sigTexto);
         break;
       }
       tentativa++;
     }
+    usosPorDescNivel[chaveUso]=varianteBase+1;
 
     const peso=pesos[descriptor];
     questoes.push({
@@ -689,6 +719,7 @@ export function gerarQuestoesArena({
       visual:gerada.visual||null,
       pesoDescritor:peso,
       baseXP:Math.round((XP_NIVEL[nivel]||120)*peso),
+      modeloId:gerada.modeloId||null,
       origem:"Questão autoral alinhada à Matriz de Referência PAEBES 2025 — 3ª série"
     });
   }
