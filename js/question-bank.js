@@ -619,6 +619,37 @@ function intercalarNiveis(distribuicao,quantidade){
   return out;
 }
 
+
+// Formatação matemática para exibir potências no padrão visual correto
+// Ex.: 4^x -> 4ˣ | 3^2 -> 3² | 2^(x+1) -> 2ˣ⁺¹
+const SUPERSCRITOS = {
+  "0":"⁰","1":"¹","2":"²","3":"³","4":"⁴","5":"⁵","6":"⁶","7":"⁷","8":"⁸","9":"⁹",
+  "+":"⁺","-":"⁻","=":"⁼","(":"⁽",")":"⁾","x":"ˣ","X":"ˣ","n":"ⁿ","N":"ⁿ","i":"ⁱ"
+};
+
+function paraSobrescrito(valor){
+  return String(valor).split("").map(c=>SUPERSCRITOS[c] ?? c).join("");
+}
+
+function formatarPotencias(texto){
+  if(texto===null || texto===undefined) return texto;
+  let t=String(texto);
+  // Expoente entre parênteses: 2^(x+1)
+  t=t.replace(/\^\(([^)]+)\)/g,(_,exp)=>paraSobrescrito(exp));
+  // Expoente simples: 4^x, x^2, 10^-3
+  t=t.replace(/\^([xXnNi0-9+\-]+)/g,(_,exp)=>paraSobrescrito(exp));
+  return t;
+}
+
+function formatarQuestaoMatematica(q){
+  if(!q) return q;
+  return {
+    ...q,
+    text:formatarPotencias(q.text),
+    options:Array.isArray(q.options)?q.options.map(formatarPotencias):q.options
+  };
+}
+
 function montarFilaDescritores(validos,configuracaoDescritores,quantidade){
   const pesos=Object.fromEntries(validos.map(d=>[d,clamp(Number(configuracaoDescritores[d]?.peso||1),1,4)]));
   const cont=Object.fromEntries(validos.map(d=>[d,0]));
@@ -653,7 +684,7 @@ export function habilidadeDoDescritor(descritor){
 
 export function gerarQuestaoDescritor(descritor,nivel="BÁSICO",seed=1){
   if(!HABILIDADES_PAEBES[descritor]) throw new Error("Descritor não pertence à matriz PAEBES 2025 da 3ª série.");
-  const q=gerarPorDescritor(descritor,nivel,seed,0);
+  const q=formatarQuestaoMatematica(gerarPorDescritor(descritor,nivel,seed,0));
   return {
     id:`${descritor}-especial-${Date.now().toString(36)}-${seed}`,
     descriptor:descritor,
@@ -695,7 +726,7 @@ export function gerarQuestoesArena({
 
     // Rotaciona modelos antes de permitir repetição e também bloqueia enunciados idênticos.
     while(tentativa<16){
-      gerada=gerarPorDescritor(descriptor,nivel,seed+tentativa*53,varianteBase+tentativa);
+      gerada=formatarQuestaoMatematica(gerarPorDescritor(descriptor,nivel,seed+tentativa*53,varianteBase+tentativa));
       const sigModelo=`${descriptor}|${nivel}|${gerada.modeloId||gerada.text}`;
       const sigTexto=`${descriptor}|${nivel}|${gerada.text}`;
       if(!assinaturas.has(sigModelo) && !assinaturas.has(sigTexto)){
