@@ -408,21 +408,80 @@ export function gerarQuestoesArena({
   const validos=descritores.filter(d=>HABILIDADES_PAEBES[d]);
   if(validos.length===0) throw new Error("Selecione pelo menos um descritor da matriz PAEBES 2025.");
 
-  const pool=[];
-  validos.forEach(d=>{
-    const peso=Math.max(1,Math.min(4,Number(configuracaoDescritores[d]?.peso||1)));
-    for(let i=0;i<peso;i++) pool.push(d);
-  });
+  // Distribuição equilibrada:
+  // 1) todos os descritores selecionados aparecem antes de qualquer repetição;
+  // 2) depois disso, os pesos influenciam a quantidade de ocorrências;
+  // 3) evita repetir o mesmo descritor em questões consecutivas quando houver alternativa.
+  const pesos = Object.fromEntries(
+    validos.map(d=>[
+      d,
+      Math.max(1,Math.min(4,Number(configuracaoDescritores[d]?.peso||1)))
+    ])
+  );
 
-  const niveis=construirFilaNiveis(distribuicaoNiveis,quantidade);
+  const contagem = Object.fromEntries(validos.map(d=>[d,0]));
+  const filaDescritores = [];
+
+  for(const d of validos){
+    if(filaDescritores.length < quantidade){
+      filaDescritores.push(d);
+      contagem[d]++;
+    }
+  }
+
+  while(filaDescritores.length < quantidade){
+    const ultimo = filaDescritores[filaDescritores.length-1];
+
+    const candidatos = validos
+      .map(d=>({
+        d,
+        peso:pesos[d],
+        contagem:contagem[d],
+        indice:contagem[d] / pesos[d]
+      }))
+      .sort((a,b)=>{
+        if(a.indice !== b.indice) return a.indice - b.indice;
+        if(a.contagem !== b.contagem) return a.contagem - b.contagem;
+        return validos.indexOf(a.d) - validos.indexOf(b.d);
+      });
+
+    const escolhido = candidatos.find(c=>c.d !== ultimo)?.d || candidatos[0].d;
+    filaDescritores.push(escolhido);
+    contagem[escolhido]++;
+  }
+
+  const niveisBase=construirFilaNiveis(distribuicaoNiveis,quantidade);
+  const niveis=[];
+  const porNivel={};
+  for(const n of niveisBase){
+    (porNivel[n] ||= []).push(n);
+  }
+  const ordemNivel=["ABAIXO DO BÁSICO","BÁSICO","PROFICIENTE","AVANÇADO"];
+  while(niveis.length<quantidade){
+    let adicionou=false;
+    for(const n of ordemNivel){
+      if(porNivel[n]?.length){
+        niveis.push(porNivel[n].pop());
+        adicionou=true;
+        if(niveis.length>=quantidade) break;
+      }
+    }
+    if(!adicionou) break;
+  }
+
   const questoes=[];
 
   for(let i=0;i<quantidade;i++){
-    const descriptor=pool[i%pool.length];
+    const descriptor=filaDescritores[i];
     const cfg=configuracaoDescritores[descriptor]||{};
-    const nivel=cfg.nivel && cfg.nivel!=="MISTO" ? cfg.nivel : niveis[i];
-    const gerada=gerarPorDescritor(descriptor,nivel,i+1+Math.floor(i/pool.length)*13);
-    const peso=Math.max(1,Math.min(4,Number(cfg.peso||1)));
+    const nivel=cfg.nivel && cfg.nivel!=="MISTO"
+      ? cfg.nivel
+      : (niveis[i] || "BÁSICO");
+
+    const seed=(i+1)*17 + validos.indexOf(descriptor)*31 + contagem[descriptor]*7;
+    const gerada=gerarPorDescritor(descriptor,nivel,seed);
+    const peso=pesos[descriptor];
+
     questoes.push({
       id:`${descriptor}-${i+1}-${Date.now().toString(36)}`,
       descriptor,
