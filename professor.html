@@ -481,6 +481,13 @@ select:disabled{
   font-weight:800;
 }
 
+
+.configDescritores{display:grid;gap:10px;margin:15px 0;}
+.configLinha{display:grid;grid-template-columns:1fr 160px 220px;gap:10px;align-items:center;padding:12px;border:1px solid #294b70;border-radius:12px;background:#07182d;}
+.configLinha strong{color:#dcecff;}
+.nivelGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px;}
+.nivelGrid label{margin:0;}
+@media(max-width:900px){.configLinha{grid-template-columns:1fr}.nivelGrid{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 
@@ -511,7 +518,7 @@ select:disabled{
 
   <div class="badges">
     <div class="badge">👥 Até 60 competidores</div>
-    <div class="badge">❓ 15 questões</div>
+    <div class="badge">❓ 5 a 40 questões</div>
     <div class="badge">🏆 Ranking ao vivo</div>
     <div class="badge">💾 Progresso salvo</div>
     <div class="badge">⚡ Eventos surpresa</div>
@@ -548,7 +555,7 @@ select:disabled{
 
 <div>
 <label>Quantidade de questões</label>
-<input id="qtd" type="number" value="15" min="5" max="30">
+<input id="qtd" type="number" value="15" min="5" max="40">
 </div>
 
 <div>
@@ -561,8 +568,8 @@ select:disabled{
 <h3>📚 Selecione os descritores</h3>
 
 <p class="small">
-O professor poderá reutilizar esta Arena futuramente apenas alterando
-os descritores selecionados.
+O professor poderá reutilizar esta Arena futuramente alterando os descritores selecionados.
+O banco gerador atual possui questões para D074_M, D088_M, D097_M, D111_M e D125_M; a estrutura já está preparada para receber os demais descritores sem alterar o funcionamento da Arena.
 </p>
 
 <div class="descritores" id="descritores">
@@ -599,13 +606,25 @@ os descritores selecionados.
 <label class="desc"><input type="checkbox" value="D074_M"><span>D074_M</span></label>
 <label class="desc"><input type="checkbox" value="D088_M"><span>D088_M</span></label>
 <label class="desc"><input type="checkbox" value="D097_M"><span>D097_M</span></label>
-<label class="desc destaque"><input type="checkbox" value="D111_M"><span>D111_M</span></label>
+<label class="desc"><input type="checkbox" value="D111_M"><span>D111_M</span></label>
 <label class="desc"><input type="checkbox" value="D125_M"><span>D125_M</span></label>
 </div>
 
 <div class="status">
-⭐ <strong>D111_M</strong> poderá receber peso maior na geração das questões,
-permitindo reforçar conteúdos de nível abaixo do básico/básico.
+🎯 <strong>Prioridade configurável:</strong> selecione os descritores e defina abaixo o peso de pontuação e o nível preferencial de cada um. Nenhum descritor fica prioritário de forma fixa.
+</div>
+
+<div id="configDescritores" class="configDescritores"></div>
+
+<div class="status">
+<strong>Distribuição dos níveis quando o descritor estiver em “Misto”</strong>
+<div class="nivelGrid">
+  <label>Abaixo do Básico (%)<input id="pctAbb" type="number" min="0" max="100" value="40"></label>
+  <label>Básico (%)<input id="pctBasico" type="number" min="0" max="100" value="30"></label>
+  <label>Proficiente (%)<input id="pctProficiente" type="number" min="0" max="100" value="20"></label>
+  <label>Avançado (%)<input id="pctAvancado" type="number" min="0" max="100" value="10"></label>
+</div>
+<div class="small">A soma deve ser 100%. O nível escolhido individualmente para um descritor prevalece sobre esta distribuição.</div>
 </div>
 
 <div class="actions">
@@ -821,6 +840,11 @@ import {
   atualizarCompetidor
 } from "./js/firebase-service.js";
 
+import {
+  gerarQuestoesArena,
+  descritoresSemBanco
+} from "./js/question-bank.js";
+
 iniciarFirebase();
 
 const listaDescritores = [
@@ -839,8 +863,7 @@ if (area && area.querySelectorAll(".desc input").length === 0) {
   listaDescritores.forEach(d => {
     const box = document.createElement("label");
 
-    box.className =
-      "desc" + (d === "D111_M" ? " destaque" : "");
+    box.className = "desc";
 
     box.innerHTML =
       `<input type="checkbox" value="${d}">
@@ -849,6 +872,80 @@ if (area && area.querySelectorAll(".desc input").length === 0) {
     area.appendChild(box);
   });
 }
+
+let configuracaoRascunho={};
+
+function capturarConfiguracaoVisivel(){
+  document.querySelectorAll(".configLinha").forEach(linha=>{
+    const d=linha.dataset.desc;
+    configuracaoRascunho[d]={
+      peso:Number(linha.querySelector(".pesoDesc")?.value||1),
+      nivel:linha.querySelector(".nivelDesc")?.value||"MISTO"
+    };
+  });
+}
+
+function renderConfiguracaoDescritores(configExistente = null){
+  capturarConfiguracaoVisivel();
+  if(configExistente){
+    configuracaoRascunho={...configuracaoRascunho,...configExistente};
+  }
+
+  const areaConfig = document.getElementById("configDescritores");
+  if(!areaConfig) return;
+
+  const selecionados=[...document.querySelectorAll(".desc input:checked")].map(x=>x.value);
+  if(selecionados.length===0){
+    areaConfig.innerHTML='<div class="small">Selecione um ou mais descritores para configurar peso e nível.</div>';
+    return;
+  }
+
+  areaConfig.innerHTML=selecionados.map(d=>{
+    const cfg=configuracaoRascunho[d]||{};
+    const peso=Number(cfg.peso||1);
+    const nivel=cfg.nivel||"MISTO";
+    return `<div class="configLinha" data-desc="${d}">
+      <strong>${d}</strong>
+      <select class="pesoDesc">
+        <option value="1" ${peso===1?"selected":""}>Peso normal — 1×</option>
+        <option value="2" ${peso===2?"selected":""}>Prioridade média — 2×</option>
+        <option value="3" ${peso===3?"selected":""}>Prioridade alta — 3×</option>
+        <option value="4" ${peso===4?"selected":""}>Prioridade máxima — 4×</option>
+      </select>
+      <select class="nivelDesc">
+        ${["MISTO","ABAIXO DO BÁSICO","BÁSICO","PROFICIENTE","AVANÇADO"].map(n =>
+          `<option value="${n}" ${nivel===n?"selected":""}>${n}</option>`
+        ).join("")}
+      </select>
+    </div>`;
+  }).join("");
+}
+
+document.querySelectorAll(".desc input").forEach(x=>{
+  x.addEventListener("change",()=>renderConfiguracaoDescritores());
+});
+renderConfiguracaoDescritores();
+
+
+function lerConfiguracaoDescritores(){
+  capturarConfiguracaoVisivel();
+  const selecionados=[...document.querySelectorAll(".desc input:checked")].map(x=>x.value);
+  const cfg={};
+  selecionados.forEach(d=>{
+    cfg[d]=configuracaoRascunho[d]||{peso:1,nivel:"MISTO"};
+  });
+  return cfg;
+}
+
+function lerDistribuicaoNiveis(){
+  return {
+    abb:Number(document.getElementById("pctAbb")?.value||0),
+    basico:Number(document.getElementById("pctBasico")?.value||0),
+    proficiente:Number(document.getElementById("pctProficiente")?.value||0),
+    avancado:Number(document.getElementById("pctAvancado")?.value||0)
+  };
+}
+
 
 let pararArena = null;
 let pararCompetidores = null;
@@ -872,8 +969,19 @@ window.liberarBoss = async function() {
     return;
   }
 
+  const competidores = Object.values(arena.competidores || {});
+  if (competidores.length === 0) {
+    alert("Ainda não há competidores nesta Arena.");
+    return;
+  }
+  const pendentes = competidores.filter(c => !c.regularConcluida);
+  if (pendentes.length > 0) {
+    alert(`O Boss Final só pode ser liberado após as questões regulares. Ainda faltam ${pendentes.length} competidor(es) concluir(em).`);
+    return;
+  }
+
   const confirmar = confirm(
-    "Liberar o BOSS FINAL para todos os competidores agora? O desafio valerá +300 XP para quem acertar."
+    "Liberar o BOSS FINAL agora? O desafio valerá +300 XP para quem acertar."
   );
   if (!confirmar) return;
 
@@ -992,7 +1100,9 @@ window.reutilizarArena = function() {
     limite: Number(arena.limite || 60),
     descritores: Array.isArray(arena.descritores)
       ? arena.descritores
-      : []
+      : [],
+    configuracaoDescritores: arena.configuracaoDescritores || {},
+    distribuicaoNiveis: arena.distribuicaoNiveis || {abb:40,basico:30,proficiente:20,avancado:10}
   };
 
   /*
@@ -1037,10 +1147,16 @@ function restaurarConfiguracaoReuso() {
       document
         .querySelectorAll(".desc input")
         .forEach(x => {
-          x.checked =
-            config.descritores.includes(x.value);
+          x.checked = config.descritores.includes(x.value);
         });
     }
+
+    const dist=config.distribuicaoNiveis||{};
+    if(document.getElementById("pctAbb")) document.getElementById("pctAbb").value=Number(dist.abb??40);
+    if(document.getElementById("pctBasico")) document.getElementById("pctBasico").value=Number(dist.basico??30);
+    if(document.getElementById("pctProficiente")) document.getElementById("pctProficiente").value=Number(dist.proficiente??20);
+    if(document.getElementById("pctAvancado")) document.getElementById("pctAvancado").value=Number(dist.avancado??10);
+    renderConfiguracaoDescritores(config.configuracaoDescritores||{});
 
     sessionStorage.removeItem("arenaConfigReuso");
 
@@ -1076,6 +1192,7 @@ window.marcarPrincipais = function() {
     .forEach(x => {
       x.checked = principais.includes(x.value);
     });
+  renderConfiguracaoDescritores();
 };
 
 window.limpar = function() {
@@ -1083,6 +1200,7 @@ window.limpar = function() {
   document
     .querySelectorAll(".desc input")
     .forEach(x => x.checked = false);
+  renderConfiguracaoDescritores();
 };
 
 
@@ -1102,8 +1220,15 @@ function atualizarRanking(competidores = {}) {
     ) || 60;
 
   document.getElementById("competidores")
-    .textContent =
-      lista.length + "/" + limite;
+    .textContent = lista.length + "/" + limite;
+
+  const arenaAtual = arenaLocal();
+  const qtdArena = Number(arenaAtual?.quantidade || document.getElementById("qtd").value || 15);
+  const maiorQuestao = lista.length
+    ? Math.max(...lista.map(j=>Number(j.questaoAtual ?? j.questionIndex ?? 0)))
+    : 0;
+  document.getElementById("questaoAtual").textContent =
+    `${Math.min(maiorQuestao,qtdArena)}/${qtdArena}`;
 
   const ranking = [...lista].sort(
     (a, b) =>
@@ -1226,14 +1351,19 @@ function restaurar(arena = arenaLocal()) {
   }
 
   if (Array.isArray(arena.descritores)) {
-
     document
       .querySelectorAll(".desc input")
       .forEach(x => {
-        x.checked =
-          arena.descritores.includes(x.value);
+        x.checked = arena.descritores.includes(x.value);
       });
   }
+
+  const dist=arena.distribuicaoNiveis||{};
+  if(document.getElementById("pctAbb")) document.getElementById("pctAbb").value=Number(dist.abb??40);
+  if(document.getElementById("pctBasico")) document.getElementById("pctBasico").value=Number(dist.basico??30);
+  if(document.getElementById("pctProficiente")) document.getElementById("pctProficiente").value=Number(dist.proficiente??20);
+  if(document.getElementById("pctAvancado")) document.getElementById("pctAvancado").value=Number(dist.avancado??10);
+  renderConfiguracaoDescritores(arena.configuracaoDescritores||{});
 
   const nomesStatus = {
     preparacao: "Preparação",
@@ -1349,6 +1479,40 @@ window.criarArena = async function() {
     return;
   }
 
+  const quantidade = Math.max(5, Math.min(40, Number(document.getElementById("qtd").value) || 15));
+  document.getElementById("qtd").value = quantidade;
+
+  const distribuicaoNiveis = lerDistribuicaoNiveis();
+  const somaNiveis = Object.values(distribuicaoNiveis).reduce((a,b)=>a+Number(b||0),0);
+  if(somaNiveis !== 100){
+    alert("A distribuição dos níveis deve somar exatamente 100%.");
+    return;
+  }
+
+  const configuracaoDescritores = lerConfiguracaoDescritores();
+  const semBanco = descritoresSemBanco(selecionados);
+  if(semBanco.length){
+    const seguir = confirm(
+      "Estes descritores ainda não possuem questões cadastradas no banco atual: " +
+      semBanco.join(", ") +
+      ". Eles ficarão selecionados para configuração, mas a geração usará somente os descritores com banco disponível. Continuar?"
+    );
+    if(!seguir) return;
+  }
+
+  let questoes;
+  try{
+    questoes = gerarQuestoesArena({
+      quantidade,
+      descritores: selecionados,
+      configuracaoDescritores,
+      distribuicaoNiveis
+    });
+  }catch(erro){
+    alert(erro.message || "Não foi possível gerar as questões da Arena.");
+    return;
+  }
+
   const codigo = gerarCodigo();
 
   const dados = {
@@ -1366,12 +1530,10 @@ window.criarArena = async function() {
         .getElementById("turma")
         .value,
 
-    quantidade:
-      Number(
-        document
-          .getElementById("qtd")
-          .value
-      ) || 15,
+    quantidade,
+    configuracaoDescritores,
+    distribuicaoNiveis,
+    questoes,
 
     limite:
       Number(
@@ -1899,6 +2061,12 @@ function acompanharEventoEspecial(codigo){
 ========================================= */
 
 window.abrirGerenciamentoIndividual = function(){
+  const painel=document.getElementById("managePanel");
+  if(painel.classList.contains("ativo")){
+    painel.classList.remove("ativo");
+    return;
+  }
+
   const arena = arenaLocal();
   const lista = Object.values(arena?.competidores || {});
 
@@ -1913,7 +2081,7 @@ window.abrirGerenciamentoIndividual = function(){
     return `<option value="${id}">${c.nome || "Competidor"} — ${Number(c.xp||0)} XP</option>`;
   }).join("");
 
-  document.getElementById("managePanel").classList.add("ativo");
+  painel.classList.add("ativo");
   document.getElementById("manageStatus").textContent =
     "Selecione o estudante e escolha BLOQUEAR ou LIBERAR.";
 };
