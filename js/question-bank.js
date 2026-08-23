@@ -416,14 +416,21 @@ function gerarPorDescritor(d,level,s,variante=0){
 
     case "D088_M":{
       const base=pick([2,3],s),t=2+(s%3),ini=100*(1+(s%3));
+
+      // D088: variedade de RACIOCÍNIO, não apenas troca de contexto/valores.
+      // Cada nível possui modelos diferentes e a Arena rotaciona modeloId antes de repetir.
       const bancos={
         0:[
-          ()=>({modeloId:"D088-ABB1",text:`Uma cultura começa com ${ini} bactérias e dobra a cada hora. Quantas haverá após ${t} horas?`,ans:ini*2**t}),
-          ()=>({modeloId:"D088-ABB2",text:`Um vídeo começa com ${ini} visualizações e triplica a cada rodada de divulgação. Quantas terá após ${t} rodadas?`,ans:ini*3**t}),
-          ()=>({modeloId:"D088-ABB3",text:`Uma quantia de ${ini} pontos é multiplicada por ${base} em cada fase. Qual o total após ${t} fases?`,ans:ini*base**t}),
-          ()=>({modeloId:"D088-ABB4",text:`Uma sequência começa em ${ini} e cada termo é ${base} vezes o anterior. Qual valor aparece após ${t} multiplicações?`,ans:ini*base**t}),
-          ()=>({modeloId:"D088-ABB5",text:`Uma colônia possui ${ini} células e dobra em cada ciclo. Após ${t} ciclos completos, qual será a quantidade?`,ans:ini*2**t}),
-          ()=>({modeloId:"D088-ABB6",text:`Um jogo concede ${ini} moedas na fase inicial e a quantidade triplica a cada nova fase. Quantas moedas haverá após ${t} aumentos?`,ans:ini*3**t})
+          ()=>({modeloId:"D088-ABB1",text:`A sequência 5, 10, 20, 40, ... cresce multiplicando cada termo por qual número?`,ans:"2"}),
+          ()=>({modeloId:"D088-ABB2",text:`Uma quantidade começa em 50 e dobra a cada etapa. Qual é o valor depois de 3 etapas?`,ans:400}),
+          ()=>({modeloId:"D088-ABB3",text:`Observe a tabela. Qual é o próximo valor da sequência exponencial?`,ans:80,visual:tabelaSvg(["Etapa","Valor"],[[0,5],[1,10],[2,20],[3,40],[4,"?"]])}),
+          ()=>({modeloId:"D088-ABB4",text:`Uma quantidade passa de 100 para 300 em uma etapa e mantém o mesmo fator de crescimento. Qual será o valor na etapa seguinte?`,ans:900}),
+          ()=>({modeloId:"D088-ABB5",text:`Qual expressão representa uma quantidade que começa em 200 e dobra a cada período?`,expr:`200·2^t`}),
+          ()=>({modeloId:"D088-ABB6",text:`Uma substância tem 800 g e fica com a metade da quantidade a cada período. Quanto restará após 2 períodos?`,ans:200}),
+          ()=>({modeloId:"D088-ABB7",text:`Observe a tabela. Qual fator multiplicativo relaciona uma linha à seguinte?`,ans:"3",visual:tabelaSvg(["Período","Quantidade"],[[0,10],[1,30],[2,90],[3,270]])}),
+          ()=>({modeloId:"D088-ABB8",text:`Em Q(t)=100·2^t, qual é o valor de Q(2)?`,ans:400}),
+          ()=>({modeloId:"D088-ABB9",text:`Uma quantidade dobra a cada hora. Se agora há 40 unidades, quantas haverá daqui a 1 hora?`,ans:80}),
+          ()=>({modeloId:"D088-ABB10",text:`Qual situação descreve crescimento exponencial?`,ans:"Uma quantidade que dobra a cada período"})
         ],
         1:[
           ()=>({modeloId:"D088-B1",text:`Um equipamento vale R$ ${ini},00 e perde 20% do valor a cada ano. Qual será aproximadamente o valor após ${t} anos?`,ans:ini*0.8**t}),
@@ -431,7 +438,9 @@ function gerarPorDescritor(d,level,s,variante=0){
           ()=>({modeloId:"D088-B3",text:`Uma cultura com ${ini} células cresce por fator ${base} a cada ciclo. Qual expressão calcula o total após x ciclos?`,expr:`${ini}·${base}^x`}),
           ()=>({modeloId:"D088-B4",text:`Uma população de ${ini} indivíduos cresce 50% por período. Qual fator multiplicativo deve ser usado em um modelo exponencial?`,ans:"1,5"}),
           ()=>({modeloId:"D088-B5",text:`Um valor inicial de ${ini} decai pela metade a cada etapa. Qual expressão representa o valor após x etapas?`,expr:`${ini}·(1/2)^x`}),
-          ()=>({modeloId:"D088-B6",text:`Uma quantia aumenta 25% por período. Em um modelo exponencial, qual é o fator de crescimento?`,ans:"1,25"})
+          ()=>({modeloId:"D088-B6",text:`Uma quantia aumenta 25% por período. Em um modelo exponencial, qual é o fator de crescimento?`,ans:"1,25"}),
+          ()=>({modeloId:"D088-B7",text:`Observe a tabela. Qual função representa melhor os dados?`,ans:"Q(t)=50·2^t",visual:tabelaSvg(["t","Q(t)"],[[0,50],[1,100],[2,200],[3,400]])}),
+          ()=>({modeloId:"D088-B8",text:`Uma quantidade é reduzida 10% a cada etapa. Qual fator deve multiplicar o valor anterior?`,ans:"0,9"})
         ],
         2:[
           ()=>({modeloId:"D088-P1",text:`Uma população é modelada por P(t)=200·2^t. Em que instante P(t)=1600?`,ans:"t = 3"}),
@@ -439,21 +448,67 @@ function gerarPorDescritor(d,level,s,variante=0){
           ()=>({modeloId:"D088-P3",text:`Uma substância decai segundo M(t)=800·(1/2)^t. Qual será a massa após 3 períodos?`,ans:"100"}),
           ()=>({modeloId:"D088-P4",text:`Uma cidade tinha 10.000 habitantes e cresce 5% ao ano. Qual expressão modela a população após t anos?`,ans:"10000·1,05^t"}),
           ()=>({modeloId:"D088-P5",text:`Em Q(t)=300·3^t, por qual fator Q aumenta quando t cresce uma unidade?`,ans:"3"}),
-          ()=>({modeloId:"D088-P6",text:`Uma função exponencial tem valor inicial 400 e dobra a cada 2 horas. Qual será o valor após 6 horas?`,ans:"3200"})
+          ()=>({modeloId:"D088-P6",text:`Uma função exponencial tem valor inicial 400 e dobra a cada 2 horas. Qual será o valor após 6 horas?`,ans:"3200"}),
+          ()=>({modeloId:"D088-P7",text:`Observe a tabela de uma função exponencial. Qual é o valor inicial da função?`,ans:"25",visual:tabelaSvg(["t","f(t)"],[[0,25],[1,50],[2,100],[3,200]])}),
+          ()=>({modeloId:"D088-P8",text:`Dois modelos são A(t)=100·2^t e B(t)=400·(1/2)^t. Em t=2, qual afirmação é correta?`,ans:"A(2)=B(2)"})
         ],
         3:[
           ()=>({modeloId:"D088-A1",text:`Uma função exponencial satisfaz f(1)=6 e f(3)=54. Admitindo f(x)=a·b^x, qual é b?`,ans:"3"}),
           ()=>({modeloId:"D088-A2",text:`Um valor dobra a cada 4 horas. Qual fator de multiplicação corresponde a 12 horas?`,ans:"8"}),
           ()=>({modeloId:"D088-A3",text:`Uma população segue P(t)=1000·1,05^t. Aproximadamente em quantos anos ela ultrapassa 1200?`,ans:"4"}),
           ()=>({modeloId:"D088-A4",text:`Uma quantidade é reduzida 25% a cada etapa. Qual fator exponencial deve ser usado?`,ans:"0,75"}),
-          ()=>({modeloId:"D088-A5",text:`Se f(x)=a·2^x, f(2)=20. Qual é o valor de a?`,ans:"5"}),
-          ()=>({modeloId:"D088-A6",text:`Uma grandeza cresce 44% em dois períodos com taxa constante. Qual fator aproximado por período produz esse crescimento?`,ans:"1,2"})
+          ()=>({modeloId:"D088-A5",text:`Se f(x)=a·2^x e f(2)=20, qual é o valor de a?`,ans:"5"}),
+          ()=>({modeloId:"D088-A6",text:`Uma grandeza cresce 44% em dois períodos com taxa constante. Qual fator aproximado por período produz esse crescimento?`,ans:"1,2"}),
+          ()=>({modeloId:"D088-A7",text:`Os modelos A(t)=200·1,5^t e B(t)=450·(1,2)^t representam duas grandezas. Qual procedimento é adequado para descobrir quando A supera B?`,ans:"Comparar os valores dos dois modelos para os mesmos t"}),
+          ()=>({modeloId:"D088-A8",text:`Uma grandeza cai de 1600 para 200 em 3 períodos com fator constante. Qual é o fator por período?`,ans:"0,5"})
         ]
       };
+
       const q=bancos[k][variante%bancos[k].length]();
-      if(q.expr) return {modeloId:q.modeloId,text:q.text,...alternativas(q.expr,[`${ini}+${base}x`,`${ini}x^${base}`,`${ini}·x^${base}`,`${base}·${ini}^x`],s)};
-      if(typeof q.ans==="number") return {modeloId:q.modeloId,text:q.text,...alternativas(fmt(q.ans),[fmt(q.ans+ini/10),fmt(Math.max(0,q.ans-ini/10)),fmt(ini+t*10),fmt(ini*(1+t/10))],s)};
-      return {modeloId:q.modeloId,text:q.text,...alternativas(q.ans,["t = 2","Aumento de 2% por período","200","10000+0,05t","2","4","1,25","0,25"],s)};
+
+      if(q.expr){
+        return {
+          modeloId:q.modeloId,
+          text:q.text,
+          ...alternativas(q.expr,[
+            `${ini}+${base}t`,
+            `${ini}·t^${base}`,
+            `${base}·${ini}^t`,
+            `${ini}·${base}t`
+          ],s),
+          visual:q.visual||null
+        };
+      }
+
+      if(typeof q.ans==="number"){
+        return {
+          modeloId:q.modeloId,
+          text:q.text,
+          ...alternativas(fmt(q.ans),[
+            fmt(q.ans+Math.max(10,ini/10)),
+            fmt(Math.max(0,q.ans-Math.max(10,ini/10))),
+            fmt(q.ans*2),
+            fmt(q.ans/2)
+          ],s),
+          visual:q.visual||null
+        };
+      }
+
+      const distratoresD088=[
+        "t = 2","t = 4","2","4","0,5","0,75","0,9","1,25",
+        "Aumento de 2% por período","Aumento de 50% por período",
+        "Uma quantidade que aumenta sempre pela mesma soma",
+        "Uma quantidade que permanece constante",
+        "Q(t)=50+2t","Q(t)=2·50^t",
+        "A(2)>B(2)","A(2)<B(2)"
+      ];
+
+      return {
+        modeloId:q.modeloId,
+        text:q.text,
+        ...alternativas(q.ans,distratoresD088,s),
+        visual:q.visual||null
+      };
     }
 
     case "D096_M":{
@@ -488,7 +543,7 @@ function gerarPorDescritor(d,level,s,variante=0){
         ],
         2:[
           ()=>({modeloId:"D111-P1",text:"A planificação mostra 3 faces retangulares consecutivas e 2 faces triangulares. Qual sólido será obtido ao dobrá-la?",ans:"Prisma triangular",visual:planificacaoPrismaTriangularSvg()}),
-          ()=>({modeloId:"D111-P2",text:"As vistas superior é circular e as vistas frontal e lateral são retangulares. Qual sólido é compatível com essas três vistas?",ans:"Cilindro",visual:vistasSolidoSvg("cilindro")}),
+          ()=>({modeloId:"D111-P2",text:"A vista superior é circular, e as vistas frontal e lateral são retangulares. Qual sólido é compatível com essas três vistas?",ans:"Cilindro",visual:vistasSolidoSvg("cilindro")}),
           ()=>({modeloId:"D111-P3",text:"Qual característica permite concluir que esta planificação pode formar um cubo?",ans:"Possui 6 quadrados congruentes conectados adequadamente",visual:planificacaoCuboSvg()}),
           ()=>({modeloId:"D111-P4",text:"Uma peça apresenta vista superior quadrada, vista frontal retangular e vista lateral retangular. Qual família de sólido é mais compatível?",ans:"Prisma retangular",visual:vistasSolidoSvg("cubo")}),
           ()=>({modeloId:"D111-P5",text:"Duas planificações têm 6 quadrados congruentes, mas apenas uma fecha sem sobreposição. O que deve ser verificado?",ans:"A disposição e conectividade das faces",visual:planificacaoCuboSvg()}),
@@ -650,6 +705,53 @@ function formatarQuestaoMatematica(q){
   };
 }
 
+
+function visualFallback(descriptor,nivel,gerada){
+  // Questões que dependem de leitura visual nunca devem chegar ao estudante sem imagem.
+  switch(descriptor){
+    case "D043_M": return planoCartesiano({pontos:[{x:2,y:2,label:"P"}]});
+    case "D049_M":
+    case "D051_M": return trianguloSvg("a","b","c");
+    case "D063_M":
+    case "D064_M": return graficoBarras([12,18,10,22],["A","B","C","D"],"Dados para análise");
+    case "D071_M":
+    case "D078_M":
+    case "D085_M":
+    case "D124_M":
+    case "D145_M": return planoCartesiano({reta:{m:2,b:1}});
+    case "D074_M": return planoCartesiano({expo:{base:2,c:1}});
+    case "D082_M": return planoCartesiano({parabola:{a:-0.5,h:0,k:4}});
+    case "D086_M": return tabelaSvg(["x","y"],[[0,1],[1,3],[2,5],[3,7]]);
+    case "D111_M": return planificacaoCuboSvg();
+    case "D125_M":
+    case "D129_M": return cuboSvg();
+    case "D126_M": return graficoTrig("sen");
+    case "D127_M": return planoCartesiano({pontos:[{x:2,y:3,label:"P"}]});
+    case "D133_M": return planoCartesiano({parabola:{a:1,h:2,k:1}});
+    default: return null;
+  }
+}
+
+function prepararVisual(descriptor,nivel,gerada){
+  let visual=gerada?.visual||null;
+  const texto=String(gerada?.text||"").toLowerCase();
+  const exigePorTexto=/observe|gráfico|grafico|planificação|planificacao|vista |vistas |figura|sólido apresentado|solido apresentado|tabela/.test(texto);
+  const descritoresVisuaisObrigatorios=new Set([
+    "D043_M","D049_M","D051_M","D063_M","D064_M","D071_M","D074_M",
+    "D078_M","D082_M","D085_M","D086_M","D111_M","D124_M","D126_M",
+    "D127_M","D129_M","D133_M","D145_M"
+  ]);
+
+  if(!visual && (exigePorTexto || descritoresVisuaisObrigatorios.has(descriptor))){
+    visual=visualFallback(descriptor,nivel,gerada);
+  }
+
+  // estudante.html espera visual.svg; os geradores internos produzem a string SVG.
+  if(typeof visual==="string") return {svg:visual};
+  if(visual?.svg) return visual;
+  return null;
+}
+
 function montarFilaDescritores(validos,configuracaoDescritores,quantidade){
   const pesos=Object.fromEntries(validos.map(d=>[d,clamp(Number(configuracaoDescritores[d]?.peso||1),1,4)]));
   const cont=Object.fromEntries(validos.map(d=>[d,0]));
@@ -693,7 +795,7 @@ export function gerarQuestaoDescritor(descritor,nivel="BÁSICO",seed=1){
     text:q.text,
     options:q.options,
     correct:q.correct,
-    visual:q.visual||null,
+    visual:prepararVisual(descritor,nivel,q),
     baseXP:XP_NIVEL[nivel]||120
   };
 }
@@ -747,7 +849,7 @@ export function gerarQuestoesArena({
       text:gerada.text,
       options:gerada.options,
       correct:gerada.correct,
-      visual:gerada.visual||null,
+      visual:prepararVisual(descriptor,nivel,gerada),
       pesoDescritor:peso,
       baseXP:Math.round((XP_NIVEL[nivel]||120)*peso),
       modeloId:gerada.modeloId||null,
