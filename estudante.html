@@ -564,6 +564,12 @@ input:focus{
 .dueloOpcao:hover{border-color:var(--yellow);}
 .dueloOpcao:disabled{opacity:.55;cursor:not-allowed;}
 
+
+.questionVisual{display:none;margin:0 0 20px;padding:12px;border:1px solid #294b70;border-radius:16px;background:#07182d;}
+.questionVisual svg{display:block;width:100%;max-height:300px}
+.blockOverlay{display:none;position:fixed;inset:0;background:rgba(2,7,17,.96);z-index:60;align-items:center;justify-content:center;padding:20px}
+.blockBox{width:min(600px,100%);text-align:center;padding:36px;border-radius:24px;border:1px solid var(--red);background:#0d1b34}
+.blockBox h2{font-size:32px;margin:10px 0}.blockBox p{color:var(--muted);line-height:1.5}
 </style>
 </head>
 
@@ -704,6 +710,8 @@ possa continuar em outra aula.
 Aguardando a primeira questão da Arena...
 </div>
 
+<div id="questionVisual" class="questionVisual"></div>
+
 <div id="options" class="options"></div>
 
 <div class="answer">
@@ -840,6 +848,16 @@ do ponto em que parou.
 </div>
 
 
+<!-- BLOQUEIO INDIVIDUAL -->
+<div id="blockOverlay" class="blockOverlay">
+  <div class="blockBox">
+    <div style="font-size:58px">🔒</div>
+    <h2>Acesso temporariamente bloqueado</h2>
+    <p>O professor bloqueou temporariamente sua participação nesta Arena. Seu progresso foi preservado. Quando o professor liberar, você volta exatamente do ponto em que parou.</p>
+    <div class="badge">💾 PROGRESSO PRESERVADO</div>
+  </div>
+</div>
+
 <!-- ENCERRAMENTO -->
 <div id="endOverlay" class="endOverlay">
   <div class="endBox">
@@ -893,6 +911,7 @@ function mostrarBossFinal(boss) {
   document.getElementById("descriptor").textContent = boss.descriptor || "BOSS_FINAL";
   document.getElementById("level").textContent = boss.level || "BOSS";
   document.getElementById("question").textContent = boss.text || "Desafio final";
+  renderVisual(boss.visual || null);
   document.getElementById("eventName").textContent = "👑 BOSS FINAL";
   document.getElementById("eventText").textContent =
     "O professor liberou o desafio final. Vale +" +
@@ -962,84 +981,20 @@ async function confirmarBossFinal() {
    O banco pedagógico definitivo será conectado depois.
 ===================================================== */
 
-const demoQuestions = [
+let questoesArena = [];
 
-{
- descriptor:"D111_M",
- level:"BÁSICO",
- text:"Um cubo possui quantas faces?",
- options:[
-   "4 faces",
-   "5 faces",
-   "6 faces",
-   "8 faces",
-   "12 faces"
- ],
- correct:2,
- baseXP:120
-},
-
-{
- descriptor:"D074_M",
- level:"BÁSICO",
- text:"Uma loja concedeu desconto de 20% em um produto de R$ 100,00. Qual é o valor do desconto?",
- options:[
-   "R$ 10,00",
-   "R$ 20,00",
-   "R$ 25,00",
-   "R$ 40,00",
-   "R$ 80,00"
- ],
- correct:1,
- baseXP:120
-},
-
-{
- descriptor:"D088_M",
- level:"ABAIXO DO BÁSICO",
- text:"Observe a sequência: 2, 4, 6, 8, __. Qual número completa a sequência?",
- options:[
-   "9",
-   "10",
-   "11",
-   "12",
-   "14"
- ],
- correct:1,
- baseXP:100
-},
-
-{
- descriptor:"D097_M",
- level:"BÁSICO",
- text:"Se x + 5 = 12, qual é o valor de x?",
- options:[
-   "5",
-   "6",
-   "7",
-   "8",
-   "17"
- ],
- correct:2,
- baseXP:120
-},
-
-{
- descriptor:"D125_M",
- level:"PROFICIENTE",
- text:"Uma turma possui 40 estudantes e 30 deles participaram de uma atividade. Qual percentual da turma participou?",
- options:[
-   "25%",
-   "40%",
-   "60%",
-   "75%",
-   "80%"
- ],
- correct:3,
- baseXP:180
+function renderVisual(visual){
+  const area=document.getElementById("questionVisual");
+  if(!area) return;
+  if(visual?.svg){
+    area.innerHTML=visual.svg;
+    area.style.display="block";
+  }else{
+    area.innerHTML="";
+    area.style.display="none";
+  }
 }
 
-];
 
 
 /* =====================================================
@@ -1069,7 +1024,11 @@ async function entrar(){
     const arenaAtual = await window.arenaFirebase.buscarArena(codigo);
     if(!arenaAtual) throw new Error("Arena não encontrada.");
 
-    TOTAL_QUESTIONS = Math.max(1, Number(arenaAtual.quantidade || 20));
+    questoesArena = Array.isArray(arenaAtual.questoes) ? arenaAtual.questoes : [];
+    if(questoesArena.length === 0){
+      throw new Error("Esta Arena não possui um conjunto de questões gerado. Peça ao professor para criar uma nova Arena na versão atual.");
+    }
+    TOTAL_QUESTIONS = questoesArena.length;
 
     const chaveId =
       "arena_competidor_id_" + codigo + "_" +
@@ -1108,6 +1067,9 @@ async function entrar(){
       player.hits = Number(dadosServidor.acertos ?? dadosServidor.hits ?? 0);
       player.estrelas = Number(dadosServidor.estrelas || 0);
       player.shield = Number(dadosServidor.shield ?? dadosServidor.escudo ?? player.shield ?? 0);
+      player.multiplier = Number(dadosServidor.multiplier ?? player.multiplier ?? 0);
+      player.recovery = Number(dadosServidor.recovery ?? player.recovery ?? 0);
+      player.secret = Number(dadosServidor.secret ?? player.secret ?? 0);
 
       const progressoServidor = Number(
         dadosServidor.questaoAtual ??
@@ -1184,20 +1146,16 @@ async function entrar(){
 
 function renderQuestion(){
 
-  const index =
-    player.questionIndex % demoQuestions.length;
+  const q = questoesArena[player.questionIndex];
+  if(!q){
+    finalizarArena(false);
+    return;
+  }
 
-  const q =
-    demoQuestions[index];
-
-  document.getElementById("descriptor").textContent =
-    q.descriptor;
-
-  document.getElementById("level").textContent =
-    q.level;
-
-  document.getElementById("question").textContent =
-    q.text;
+  document.getElementById("descriptor").textContent = q.descriptor;
+  document.getElementById("level").textContent = q.level;
+  document.getElementById("question").textContent = q.text;
+  renderVisual(q.visual);
 
   const options =
     document.getElementById("options");
@@ -1262,8 +1220,8 @@ async function confirmarResposta(){
 
   if(player.selected===null) return;
 
-  const index = player.questionIndex % demoQuestions.length;
-  const q = demoQuestions[index];
+  const q = questoesArena[player.questionIndex];
+  if(!q) return;
   const feedback = document.getElementById("feedback");
 
   if(player.selected===q.correct){
@@ -1286,6 +1244,26 @@ async function confirmarResposta(){
       "🔥 "+player.name+" alcançou "+player.streak+" acerto(s) consecutivo(s)!"
     );
   }else{
+    if(player.recovery > 0){
+      player.recovery--;
+      player.selected=null;
+      feedback.className="feedback no";
+      feedback.innerHTML="💚 RECUPERAÇÃO USADA! Você ganhou uma segunda tentativa nesta questão.";
+      document.querySelectorAll(".option").forEach(x=>{
+        x.disabled=false;
+        x.classList.remove("selected");
+      });
+      document.getElementById("confirmButton").disabled=true;
+      salvar();
+      atualizarPainel();
+      if(window.arenaFirebase && player.room && player.id){
+        await window.arenaFirebase.atualizarCompetidor(player.room,player.id,{
+          recovery:Number(player.recovery||0)
+        });
+      }
+      return;
+    }
+
     if(player.shield > 0){
       player.shield--;
       feedback.className="feedback no";
@@ -1317,6 +1295,9 @@ async function confirmarResposta(){
           sequencia: Number(player.streak || 0),
           estrelas: Number(player.estrelas || 0),
           shield: Number(player.shield || 0),
+          multiplier: Number(player.multiplier || 0),
+          recovery: Number(player.recovery || 0),
+          secret: Number(player.secret || 0),
           questaoAtual: Number(player.questionIndex || 0),
           regularConcluida: concluiuRegulares
         }
@@ -1580,6 +1561,7 @@ function finalizarArena(registrarServidor = true){
     );
   }
 
+  renderVisual(null);
   document.getElementById("question").innerHTML =
     "🏆 <strong>ARENA CONCLUÍDA!</strong><br><br>"+
     "Você terminou as "+TOTAL_QUESTIONS+" questões regulares.";
@@ -1609,6 +1591,13 @@ let pararArenaReal = null;
 let pararDueloReal = null;
 let dueloAtualLocal = null;
 
+function aplicarBloqueioIndividual(bloqueado){
+  const overlay=document.getElementById("blockOverlay");
+  if(!overlay) return;
+  overlay.style.display=bloqueado ? "flex" : "none";
+  if(bloqueado) salvar();
+}
+
 function rankingReal(){
 
   if (
@@ -1632,6 +1621,11 @@ function rankingReal(){
 
       const ranking = document.getElementById("ranking");
       if (!ranking) return;
+
+      const eu = Object.values(competidores || {}).find(c =>
+        (c.id || c.jogadorId) === player.id
+      );
+      aplicarBloqueioIndividual(Boolean(eu?.bloqueado));
 
       const classificados = Object.values(competidores || {})
         .sort((a,b) => {
@@ -1711,10 +1705,10 @@ function conectarArenaReal(){
     arena => {
       if (!arena) return;
 
-      TOTAL_QUESTIONS = Math.max(
-        1,
-        Number(arena.quantidade || TOTAL_QUESTIONS || 20)
-      );
+      if(Array.isArray(arena.questoes) && arena.questoes.length){
+        questoesArena = arena.questoes;
+        TOTAL_QUESTIONS = questoesArena.length;
+      }
 
       const estado = String(arena.status || "").toLowerCase();
 
@@ -1864,6 +1858,7 @@ function mostrarEventoEspecialJogavel(evento){
 
   document.getElementById("question").textContent =
     evento.pergunta || "Desafio especial";
+  renderVisual(evento.visual || null);
 
   document.getElementById("eventName").textContent =
     "⚡ " + (evento.nome || "EVENTO ESPECIAL");
@@ -1904,6 +1899,8 @@ function mostrarEventoEspecialJogavel(evento){
 async function confirmarEventoEspecialAtual(){
   if(!eventoEspecialAtual || player.selected === null) return;
 
+  const eventoRespondido = {...eventoEspecialAtual};
+
   try{
     const resultado =
       await window.arenaFirebase.responderEventoEspecial(
@@ -1930,7 +1927,7 @@ async function confirmarEventoEspecialAtual(){
     if(resultado.correta){
       feedback.className = "feedback ok";
       feedback.textContent =
-        eventoEspecialAtual.tipo === "escudo"
+        eventoRespondido.tipo === "escudo"
           ? `🛡️ ACERTO! +${Number(resultado.bonusXP||0)} XP e +1 Escudo.`
           : `⚡ ACERTO NO EVENTO! +${Number(resultado.bonusXP||0)} XP.`;
     }else{
@@ -1985,12 +1982,6 @@ function conectarEventoEspecialReal(){
           evento.respostas[player.id];
 
         if(minhaResposta){
-          if(
-            eventoEspecialAtual &&
-            eventoEspecialAtual.id === evento.id
-          ){
-            eventoEspecialAtual = null;
-          }
           return;
         }
 
