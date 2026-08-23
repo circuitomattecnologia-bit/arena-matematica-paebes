@@ -1153,6 +1153,8 @@ function renderQuestion(){
   }
 
   document.getElementById("descriptor").textContent = q.descriptor;
+  const skillEl=document.getElementById("skillText");
+  if(skillEl) skillEl.textContent=q.habilidade ? `Habilidade: ${q.habilidade}` : "";
   document.getElementById("level").textContent = q.level;
   document.getElementById("question").textContent = q.text;
   renderVisual(q.visual);
