@@ -484,7 +484,7 @@ select:disabled{
 
 .configDescritores{display:grid;gap:10px;margin:15px 0;}
 .configLinha{display:grid;grid-template-columns:1fr 160px 220px;gap:10px;align-items:center;padding:12px;border:1px solid #294b70;border-radius:12px;background:#07182d;}
-.configLinha strong{color:#dcecff;}
+.configLinha strong{color:#dcecff;}.habilidadeLinha{grid-column:1/-1;color:#a9c0db;font-size:12px;line-height:1.4;padding-top:2px;}
 .nivelGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px;}
 .nivelGrid label{margin:0;}
 @media(max-width:900px){.configLinha{grid-template-columns:1fr}.nivelGrid{grid-template-columns:1fr 1fr}}
@@ -568,47 +568,11 @@ select:disabled{
 <h3>📚 Selecione os descritores</h3>
 
 <p class="small">
-O professor poderá reutilizar esta Arena futuramente alterando os descritores selecionados.
-O banco gerador atual possui questões para D074_M, D088_M, D097_M, D111_M e D125_M; a estrutura já está preparada para receber os demais descritores sem alterar o funcionamento da Arena.
+O professor poderá reutilizar esta Arena futuramente apenas alterando
+os descritores selecionados.
 </p>
 
-<div class="descritores" id="descritores">
-<label class="desc"><input type="checkbox" value="D001_M"><span>D001_M</span></label>
-<label class="desc"><input type="checkbox" value="D002_M"><span>D002_M</span></label>
-<label class="desc"><input type="checkbox" value="D003_M"><span>D003_M</span></label>
-<label class="desc"><input type="checkbox" value="D004_M"><span>D004_M</span></label>
-<label class="desc"><input type="checkbox" value="D005_M"><span>D005_M</span></label>
-<label class="desc"><input type="checkbox" value="D006_M"><span>D006_M</span></label>
-<label class="desc"><input type="checkbox" value="D007_M"><span>D007_M</span></label>
-<label class="desc"><input type="checkbox" value="D008_M"><span>D008_M</span></label>
-<label class="desc"><input type="checkbox" value="D009_M"><span>D009_M</span></label>
-<label class="desc"><input type="checkbox" value="D010_M"><span>D010_M</span></label>
-<label class="desc"><input type="checkbox" value="D011_M"><span>D011_M</span></label>
-<label class="desc"><input type="checkbox" value="D012_M"><span>D012_M</span></label>
-<label class="desc"><input type="checkbox" value="D013_M"><span>D013_M</span></label>
-<label class="desc"><input type="checkbox" value="D014_M"><span>D014_M</span></label>
-<label class="desc"><input type="checkbox" value="D015_M"><span>D015_M</span></label>
-<label class="desc"><input type="checkbox" value="D016_M"><span>D016_M</span></label>
-<label class="desc"><input type="checkbox" value="D017_M"><span>D017_M</span></label>
-<label class="desc"><input type="checkbox" value="D018_M"><span>D018_M</span></label>
-<label class="desc"><input type="checkbox" value="D019_M"><span>D019_M</span></label>
-<label class="desc"><input type="checkbox" value="D020_M"><span>D020_M</span></label>
-<label class="desc"><input type="checkbox" value="D021_M"><span>D021_M</span></label>
-<label class="desc"><input type="checkbox" value="D022_M"><span>D022_M</span></label>
-<label class="desc"><input type="checkbox" value="D023_M"><span>D023_M</span></label>
-<label class="desc"><input type="checkbox" value="D024_M"><span>D024_M</span></label>
-<label class="desc"><input type="checkbox" value="D025_M"><span>D025_M</span></label>
-<label class="desc"><input type="checkbox" value="D026_M"><span>D026_M</span></label>
-<label class="desc"><input type="checkbox" value="D027_M"><span>D027_M</span></label>
-<label class="desc"><input type="checkbox" value="D028_M"><span>D028_M</span></label>
-<label class="desc"><input type="checkbox" value="D029_M"><span>D029_M</span></label>
-<label class="desc"><input type="checkbox" value="D030_M"><span>D030_M</span></label>
-<label class="desc"><input type="checkbox" value="D074_M"><span>D074_M</span></label>
-<label class="desc"><input type="checkbox" value="D088_M"><span>D088_M</span></label>
-<label class="desc"><input type="checkbox" value="D097_M"><span>D097_M</span></label>
-<label class="desc"><input type="checkbox" value="D111_M"><span>D111_M</span></label>
-<label class="desc"><input type="checkbox" value="D125_M"><span>D125_M</span></label>
-</div>
+<div class="descritores" id="descritores"></div>
 
 <div class="status">
 🎯 <strong>Prioridade configurável:</strong> selecione os descritores e defina abaixo o peso de pontuação e o nível preferencial de cada um. Nenhum descritor fica prioritário de forma fixa.
@@ -738,12 +702,9 @@ aumentar a interação entre os estudantes.
 <strong>🎯 Desafio do Descritor</strong>
 <p>O professor escolhe um descritor para uma disputa especial.</p>
 <select id="descritorEspecial" style="margin:8px 0 10px">
-<option value="D074_M">D074_M</option>
-<option value="D088_M">D088_M</option>
-<option value="D097_M">D097_M</option>
-<option value="D111_M">D111_M</option>
-<option value="D125_M">D125_M</option>
+<option value="">Selecione um descritor da Arena</option>
 </select>
+<div id="habilidadeEspecial" class="small" style="margin-bottom:10px">A habilidade aparecerá aqui.</div>
 <button class="green" onclick="lancarEventoEspecial('descritor', this)">LANÇAR</button>
 </div>
 
@@ -842,55 +803,39 @@ import {
 
 import {
   gerarQuestoesArena,
-  descritoresSemBanco
+  descritoresSemBanco,
+  HABILIDADES_PAEBES,
+  habilidadeDoDescritor
 } from "./js/question-bank.js";
 
 iniciarFirebase();
 
-const listaDescritores = [
-  "D001_M","D002_M","D003_M","D004_M","D005_M",
-  "D006_M","D007_M","D008_M","D009_M","D010_M",
-  "D011_M","D012_M","D013_M","D014_M","D015_M",
-  "D016_M","D017_M","D018_M","D019_M","D020_M",
-  "D021_M","D022_M","D023_M","D024_M","D025_M",
-  "D026_M","D027_M","D028_M","D029_M","D030_M",
-  "D074_M","D088_M","D097_M","D111_M","D125_M"
-];
+const listaDescritores = Object.keys(HABILIDADES_PAEBES);
 
 const area = document.getElementById("descritores");
 
-if (area && area.querySelectorAll(".desc input").length === 0) {
-  listaDescritores.forEach(d => {
-    const box = document.createElement("label");
-
-    box.className = "desc";
-
-    box.innerHTML =
-      `<input type="checkbox" value="${d}">
-       <span>${d}</span>`;
-
+function montarMatrizDescritores(){
+  if(!area) return;
+  area.innerHTML="";
+  listaDescritores.forEach(d=>{
+    const box=document.createElement("label");
+    box.className="desc";
+    box.title=HABILIDADES_PAEBES[d];
+    box.innerHTML=`<input type="checkbox" value="${d}"><span>${d}</span>`;
     area.appendChild(box);
   });
-}
 
-let configuracaoRascunho={};
-
-function capturarConfiguracaoVisivel(){
-  document.querySelectorAll(".configLinha").forEach(linha=>{
-    const d=linha.dataset.desc;
-    configuracaoRascunho[d]={
-      peso:Number(linha.querySelector(".pesoDesc")?.value||1),
-      nivel:linha.querySelector(".nivelDesc")?.value||"MISTO"
-    };
+  area.querySelectorAll(".desc input").forEach(x=>{
+    x.addEventListener("change",()=>{
+      renderConfiguracaoDescritores();
+      atualizarDescritorEspecial();
+    });
   });
 }
 
-function renderConfiguracaoDescritores(configExistente = null){
-  capturarConfiguracaoVisivel();
-  if(configExistente){
-    configuracaoRascunho={...configuracaoRascunho,...configExistente};
-  }
+montarMatrizDescritores();
 
+function renderConfiguracaoDescritores(configExistente = null){
   const areaConfig = document.getElementById("configDescritores");
   if(!areaConfig) return;
 
@@ -900,8 +845,11 @@ function renderConfiguracaoDescritores(configExistente = null){
     return;
   }
 
+  const arena = arenaLocal();
+  const cfgBase = configExistente || arena?.configuracaoDescritores || {};
+
   areaConfig.innerHTML=selecionados.map(d=>{
-    const cfg=configuracaoRascunho[d]||{};
+    const cfg=cfgBase[d]||{};
     const peso=Number(cfg.peso||1);
     const nivel=cfg.nivel||"MISTO";
     return `<div class="configLinha" data-desc="${d}">
@@ -917,22 +865,49 @@ function renderConfiguracaoDescritores(configExistente = null){
           `<option value="${n}" ${nivel===n?"selected":""}>${n}</option>`
         ).join("")}
       </select>
+      <div class="habilidadeLinha">📘 ${HABILIDADES_PAEBES[d] || ""}</div>
     </div>`;
   }).join("");
 }
 
-document.querySelectorAll(".desc input").forEach(x=>{
-  x.addEventListener("change",()=>renderConfiguracaoDescritores());
-});
 renderConfiguracaoDescritores();
 
 
-function lerConfiguracaoDescritores(){
-  capturarConfiguracaoVisivel();
+function atualizarDescritorEspecial(){
+  const select=document.getElementById("descritorEspecial");
+  const habilidade=document.getElementById("habilidadeEspecial");
+  if(!select) return;
+
   const selecionados=[...document.querySelectorAll(".desc input:checked")].map(x=>x.value);
+  const anterior=select.value;
+
+  select.innerHTML='<option value="">Selecione um descritor da Arena</option>' +
+    selecionados.map(d=>`<option value="${d}">${d} — ${HABILIDADES_PAEBES[d]}</option>`).join("");
+
+  if(selecionados.includes(anterior)) select.value=anterior;
+  else if(selecionados.length===1) select.value=selecionados[0];
+
+  if(habilidade){
+    habilidade.textContent=select.value
+      ? `📘 Habilidade: ${HABILIDADES_PAEBES[select.value]}`
+      : "A habilidade aparecerá aqui.";
+  }
+}
+
+document.getElementById("descritorEspecial")?.addEventListener("change",()=>{
+  const d=document.getElementById("descritorEspecial").value;
+  const h=document.getElementById("habilidadeEspecial");
+  if(h) h.textContent=d ? `📘 Habilidade: ${HABILIDADES_PAEBES[d]}` : "A habilidade aparecerá aqui.";
+});
+
+function lerConfiguracaoDescritores(){
   const cfg={};
-  selecionados.forEach(d=>{
-    cfg[d]=configuracaoRascunho[d]||{peso:1,nivel:"MISTO"};
+  document.querySelectorAll(".configLinha").forEach(linha=>{
+    const d=linha.dataset.desc;
+    cfg[d]={
+      peso:Number(linha.querySelector(".pesoDesc")?.value||1),
+      nivel:linha.querySelector(".nivelDesc")?.value||"MISTO"
+    };
   });
   return cfg;
 }
@@ -1157,6 +1132,7 @@ function restaurarConfiguracaoReuso() {
     if(document.getElementById("pctProficiente")) document.getElementById("pctProficiente").value=Number(dist.proficiente??20);
     if(document.getElementById("pctAvancado")) document.getElementById("pctAvancado").value=Number(dist.avancado??10);
     renderConfiguracaoDescritores(config.configuracaoDescritores||{});
+    atualizarDescritorEspecial();
 
     sessionStorage.removeItem("arenaConfigReuso");
 
@@ -1192,7 +1168,6 @@ window.marcarPrincipais = function() {
     .forEach(x => {
       x.checked = principais.includes(x.value);
     });
-  renderConfiguracaoDescritores();
 };
 
 window.limpar = function() {
@@ -1200,7 +1175,6 @@ window.limpar = function() {
   document
     .querySelectorAll(".desc input")
     .forEach(x => x.checked = false);
-  renderConfiguracaoDescritores();
 };
 
 
@@ -1364,6 +1338,7 @@ function restaurar(arena = arenaLocal()) {
   if(document.getElementById("pctProficiente")) document.getElementById("pctProficiente").value=Number(dist.proficiente??20);
   if(document.getElementById("pctAvancado")) document.getElementById("pctAvancado").value=Number(dist.avancado??10);
   renderConfiguracaoDescritores(arena.configuracaoDescritores||{});
+  atualizarDescritorEspecial();
 
   const nomesStatus = {
     preparacao: "Preparação",
@@ -1490,15 +1465,6 @@ window.criarArena = async function() {
   }
 
   const configuracaoDescritores = lerConfiguracaoDescritores();
-  const semBanco = descritoresSemBanco(selecionados);
-  if(semBanco.length){
-    const seguir = confirm(
-      "Estes descritores ainda não possuem questões cadastradas no banco atual: " +
-      semBanco.join(", ") +
-      ". Eles ficarão selecionados para configuração, mas a geração usará somente os descritores com banco disponível. Continuar?"
-    );
-    if(!seguir) return;
-  }
 
   let questoes;
   try{
@@ -1987,6 +1953,11 @@ window.lancarEventoEspecial = async function(tipo, botao){
   if(tipo === "descritor"){
     const descritor =
       document.getElementById("descritorEspecial").value;
+    if(!descritor){
+      alert("Selecione um descritor que faça parte desta Arena.");
+      if(btn) btn.disabled=false;
+      return;
+    }
 
     const q = questoesPorDescritorEspecial[descritor];
 
