@@ -806,54 +806,188 @@ export function gerarQuestoesArena({
   configuracaoDescritores={},
   distribuicaoNiveis={abb:40,basico:30,proficiente:20,avancado:10}
 }={}){
-  quantidade=clamp(Number(quantidade)||15,5,40);
-  const validos=descritores.filter(d=>HABILIDADES_PAEBES[d]);
-  if(validos.length===0) throw new Error("Selecione pelo menos um descritor da matriz PAEBES 2025.");
 
-  const {fila,pesos}=montarFilaDescritores(validos,configuracaoDescritores,quantidade);
-  const niveis=intercalarNiveis(distribuicaoNiveis,quantidade);
+  quantidade=clamp(Number(quantidade)||15,5,40);
+
+  const validos=descritores.filter(d=>HABILIDADES_PAEBES[d]);
+
+  if(validos.length===0){
+    throw new Error(
+      "Selecione pelo menos um descritor da matriz PAEBES 2025."
+    );
+  }
+
+  const {fila,pesos}=
+    montarFilaDescritores(
+      validos,
+      configuracaoDescritores,
+      quantidade
+    );
+
+  const niveis=
+    intercalarNiveis(
+      distribuicaoNiveis,
+      quantidade
+    );
+
   const questoes=[];
   const assinaturas=new Set();
   const usosPorDescNivel={};
 
+  // =====================================================
+  // ROTAÇÃO ENTRE NOVAS ARENAS
+  // Cada criação recebe uma base diferente de geração.
+  // Evita que uma nova Arena comece sempre pelas
+  // mesmas questões da Arena anterior.
+  // =====================================================
+
+  let rodadaArena=0;
+
+  try{
+    rodadaArena=
+      Number(
+        localStorage.getItem(
+          "arenaPAEBES_rodadaBanco"
+        ) || 0
+      );
+
+    rodadaArena++;
+
+    localStorage.setItem(
+      "arenaPAEBES_rodadaBanco",
+      String(rodadaArena)
+    );
+
+  }catch(e){
+
+    rodadaArena=
+      Math.floor(
+        Date.now()/1000
+      );
+
+  }
+
+  // Base variável para esta Arena.
+  // Mistura número da Arena + horário atual.
+  const seedArena=
+    rodadaArena*997 +
+    (Date.now()%100000);
+
   for(let i=0;i<quantidade;i++){
+
     const descriptor=fila[i];
-    const cfg=configuracaoDescritores[descriptor]||{};
-    const nivel=cfg.nivel && cfg.nivel!=="MISTO" ? cfg.nivel : (niveis[i]||"BÁSICO");
+
+    const cfg=
+      configuracaoDescritores[descriptor]||{};
+
+    const nivel=
+      cfg.nivel &&
+      cfg.nivel!=="MISTO"
+        ? cfg.nivel
+        : (niveis[i]||"BÁSICO");
+
     let gerada=null;
     let tentativa=0;
-    let seed=(i+1)*37 + validos.indexOf(descriptor)*101;
-    const chaveUso=`${descriptor}|${nivel}`;
-    const varianteBase=usosPorDescNivel[chaveUso]||0;
 
-    // Rotaciona modelos antes de permitir repetição e também bloqueia enunciados idênticos.
-    while(tentativa<16){
-      gerada=formatarQuestaoMatematica(gerarPorDescritor(descriptor,nivel,seed+tentativa*53,varianteBase+tentativa));
-      const sigModelo=`${descriptor}|${nivel}|${gerada.modeloId||gerada.text}`;
-      const sigTexto=`${descriptor}|${nivel}|${gerada.text}`;
-      if(!assinaturas.has(sigModelo) && !assinaturas.has(sigTexto)){
+    // ===================================================
+    // SEED DIFERENTE A CADA NOVA ARENA
+    // ===================================================
+
+    let seed=
+      seedArena +
+      (i+1)*37 +
+      validos.indexOf(descriptor)*101;
+
+    const chaveUso=
+      `${descriptor}|${nivel}`;
+
+    const varianteBase=
+      (usosPorDescNivel[chaveUso]||0)
+      +
+      rodadaArena;
+
+    // ===================================================
+    // ROTAÇÃO DOS MODELOS
+    // ===================================================
+
+    while(tentativa<24){
+
+      gerada=
+        formatarQuestaoMatematica(
+          gerarPorDescritor(
+            descriptor,
+            nivel,
+            seed+tentativa*53,
+            varianteBase+tentativa
+          )
+        );
+
+      const sigModelo=
+        `${descriptor}|${nivel}|${
+          gerada.modeloId||gerada.text
+        }`;
+
+      const sigTexto=
+        `${descriptor}|${nivel}|${gerada.text}`;
+
+      if(
+        !assinaturas.has(sigModelo) &&
+        !assinaturas.has(sigTexto)
+      ){
+
         assinaturas.add(sigModelo);
         assinaturas.add(sigTexto);
+
         break;
       }
+
       tentativa++;
     }
-    usosPorDescNivel[chaveUso]=varianteBase+1;
+
+    usosPorDescNivel[chaveUso]=
+      varianteBase+1;
 
     const peso=pesos[descriptor];
+
     questoes.push({
-      id:`${descriptor}-${i+1}-${Date.now().toString(36)}`,
+
+      id:
+        `${descriptor}-${i+1}-`+
+        `${rodadaArena}-`+
+        `${Date.now().toString(36)}`,
+
       descriptor,
-      habilidade:HABILIDADES_PAEBES[descriptor],
+
+      habilidade:
+        HABILIDADES_PAEBES[descriptor],
+
       level:nivel,
+
       text:gerada.text,
+
       options:gerada.options,
+
       correct:gerada.correct,
-      visual:prepararVisual(descriptor,nivel,gerada),
+
+      visual:
+        prepararVisual(
+          descriptor,
+          nivel,
+          gerada
+        ),
+
       pesoDescritor:peso,
-      baseXP:Math.round((XP_NIVEL[nivel]||120)*peso),
-      modeloId:gerada.modeloId||null,
-      origem:"Questão autoral alinhada à Matriz de Referência PAEBES 2025 — 3ª série"
+
+      baseXP:
+        Math.round(
+          (XP_NIVEL[nivel]||120)*peso
+        ),
+
+      modeloId:
+        gerada.modeloId||null,
+
+      origem:
+        "Questão autoral alinhada à Matriz de Referência PAEBES 2025 — 3ª série"
     });
   }
 
