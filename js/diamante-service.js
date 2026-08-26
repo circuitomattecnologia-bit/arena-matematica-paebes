@@ -66,48 +66,63 @@ function bloquearInteracaoLocalDuranteDiamante(){
 
     if(typeof document !== "undefined"){
 
-      document
-        .querySelectorAll("#options .option")
-        .forEach(botao => {
+      document.querySelectorAll("#options .option").forEach(botao=>{
+        botao.disabled = true;
+        botao.style.pointerEvents = "none";
+        botao.style.opacity = ".55";
+      });
 
-          botao.disabled = true;
-
-          botao.style.pointerEvents = "none";
-
-          botao.style.opacity = ".55";
-        });
-
-
-      const confirmar =
-        document.getElementById("confirmButton");
+      const confirmar = document.getElementById("confirmButton");
 
       if(confirmar){
-
         confirmar.disabled = true;
-
         confirmar.style.pointerEvents = "none";
       }
     }
 
-
-    setTimeout(() => {
+    setTimeout(()=>{
 
       if(typeof window !== "undefined"){
         window.__diamanteBloqueioAtivo = false;
       }
 
-    },2500);
+      if(typeof document !== "undefined"){
 
+        // libera as alternativas da NOVA questão
+        document.querySelectorAll("#options .option").forEach(botao=>{
+          botao.disabled = false;
+          botao.style.pointerEvents = "";
+          botao.style.opacity = "";
+        });
+
+        // libera novamente o botão para funcionar
+        // quando uma alternativa da nova questão for escolhida
+        const confirmar = document.getElementById("confirmButton");
+
+        if(confirmar){
+          confirmar.style.pointerEvents = "";
+          confirmar.disabled = true;
+        }
+
+        if(typeof player !== "undefined"){
+          player.selected = null;
+        }
+
+        document
+          .querySelectorAll("#options .option")
+          .forEach(botao=>botao.classList.remove("selected"));
+      }
+
+    },2200);
 
   }catch(e){
 
     console.error(
-      "Falha ao bloquear a interface durante o Diamante:",
+      "Falha ao processar o bloqueio do Diamante:",
       e
     );
   }
 }
-
 
 // ======================================================
 // META DO DIAMANTE
