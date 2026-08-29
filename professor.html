@@ -251,7 +251,7 @@ function atualizarMonitor(cs={}){
     monitorCorpo.innerHTML='<tr><td colspan="7">Aguardando competidores...</td></tr>';
     return;
   }
-  const ordenada=[...lista].sort((x,y)=>(x.regularConcluida===y.regularConcluida?0:x.regularConcluida?1:-1)||numeroQuestaoJogador(y)-numeroQuestaoJogador(x)||(x.nome||"").localeCompare(y.nome||""));
+  const ordenada=[...lista].sort((x,y)=>(x.nome||"").localeCompare(y.nome||"","pt-BR",{sensitivity:"base"}));
   monitorCorpo.innerHTML=ordenada.map(j=>{
     const id=String(j.id||j.jogadorId||"");
     const idx=numeroQuestaoJogador(j);
