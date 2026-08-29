@@ -5,14 +5,56 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Arena Matemática PAEBES — Professor</title>
 <style>
-*{box-sizing:border-box} :root{--bg:#04101f;--card:#0c2342;--line:#23466e;--cyan:#22d3ee;--purple:#8b5cf6;--pink:#ec4899;--gold:#facc15;--green:#22c55e;--red:#ef4444;--white:#f8fafc;--muted:#a8bdd7}
+*{box-sizing:border-box}
+:root{--bg:#04101f;--card:#0c2342;--line:#23466e;--cyan:#22d3ee;--purple:#8b5cf6;--pink:#ec4899;--gold:#facc15;--green:#22c55e;--red:#ef4444;--white:#f8fafc;--muted:#a8bdd7}
 body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--white);background:radial-gradient(circle at 20% 10%,#123b6a 0,transparent 30%),radial-gradient(circle at 85% 20%,#35145e 0,transparent 28%),linear-gradient(135deg,#020817,#07162b 55%,#020817);min-height:100vh}
-header{padding:28px 5%;border-bottom:1px solid rgba(255,255,255,.1);background:rgba(3,12,27,.75)}.top{max-width:1450px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:20px}.brand small{color:var(--cyan);font-weight:900;letter-spacing:3px}.brand h1{margin:7px 0 3px;font-size:34px}.brand p{margin:0;color:var(--muted)}.live{padding:12px 18px;border-radius:999px;border:1px solid #ef476f;color:#ff9fb3;font-weight:900;background:#351225}
-main{max-width:1450px;margin:auto;padding:28px 5% 70px}.hero,.card{background:rgba(10,31,59,.94);border:1px solid var(--line);border-radius:22px;padding:25px;box-shadow:0 15px 45px rgba(0,0,0,.20)}.hero{margin-bottom:24px;background:linear-gradient(135deg,rgba(16,43,80,.96),rgba(8,24,48,.96))}.hero h2{font-size:30px;margin:0 0 10px}.hero p,.small{color:#a9bdd5;line-height:1.55}.badges,.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}.badge{background:#07182d;border:1px solid #28517c;padding:10px 14px;border-radius:999px;font-weight:800}.grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}.full{grid-column:1/-1}.card h2{margin-top:0}.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}label{display:block;color:#a9c0db;font-size:13px;font-weight:900;margin:14px 0 7px}input,select{width:100%;padding:13px;border-radius:12px;border:1px solid #294b70;background:#06172b;color:#fff;font-size:15px}button{border:0;cursor:pointer;color:#fff;font-weight:900;border-radius:12px;padding:13px 17px}.primary{background:linear-gradient(90deg,#0ea5e9,#7c3aed,#ec4899)}.green{background:#15803d}.red{background:#b91c1c}.gold{background:#b77905}.blue{background:#155eaa}.gray{background:#243b55}button:disabled,select:disabled{opacity:.42;cursor:not-allowed}
-.descritores{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:15px}.desc{background:#071a31;border:1px solid #294c74;border-radius:12px;padding:11px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800}.desc input{width:auto}.configDescritores{display:grid;gap:10px;margin:15px 0}.configLinha{display:grid;grid-template-columns:1fr 180px 230px;gap:10px;align-items:center;padding:12px;border:1px solid #294b70;border-radius:12px;background:#07182d}.habilidadeLinha{grid-column:1/-1;color:#a9c0db;font-size:12px}.nivelGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.status{margin-top:16px;padding:14px;border-left:4px solid var(--cyan);border-radius:10px;background:#0c2b47;color:#d9ebff}.arena-code{text-align:center;border:1px dashed #f5bd42;border-radius:18px;padding:18px;margin-top:18px;background:#07182d}.arena-code strong{display:block;color:#ffd166;font-size:35px;letter-spacing:4px;margin-top:8px}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat{background:#07182d;border:1px solid #24486e;border-radius:15px;padding:16px}.stat span{display:block;color:#9db5d1;font-size:13px}.stat strong{display:block;font-size:23px;margin-top:7px}.eventos{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.evento{padding:17px;border-radius:15px;background:#07182d;border:1px solid #294b70}.evento strong{display:block;margin-bottom:7px}.evento p{color:#a9bdd5;font-size:13px;min-height:42px}.ranking{margin-top:15px}.rank{display:grid;grid-template-columns:55px 1fr 130px 120px;align-items:center;gap:12px;background:#07182d;border:1px solid #24486e;border-radius:13px;padding:13px;margin-bottom:9px}.pos{font-size:21px;font-weight:900;color:var(--gold)}.progress{height:8px;background:#132c49;border-radius:99px;overflow:hidden;margin-top:7px}.progress div{height:100%;background:linear-gradient(90deg,#22d3ee,#8b5cf6,#ec4899)}
+header{padding:28px 5%;border-bottom:1px solid rgba(255,255,255,.1);background:rgba(3,12,27,.75)}
+.top{max-width:1450px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:20px}
+.brand small{color:var(--cyan);font-weight:900;letter-spacing:3px}.brand h1{margin:7px 0 3px;font-size:34px}.brand p{margin:0;color:var(--muted)}
+.live{padding:12px 18px;border-radius:999px;border:1px solid #ef476f;color:#ff9fb3;font-weight:900;background:#351225}
+main{max-width:1450px;margin:auto;padding:28px 5% 70px}
+.hero,.card{background:rgba(10,31,59,.94);border:1px solid var(--line);border-radius:22px;padding:25px;box-shadow:0 15px 45px rgba(0,0,0,.20)}
+.hero{margin-bottom:24px;background:linear-gradient(135deg,rgba(16,43,80,.96),rgba(8,24,48,.96))}
+.hero h2{font-size:30px;margin:0 0 10px}.hero p,.small{color:#a9bdd5;line-height:1.55}
+.badges,.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}.badge{background:#07182d;border:1px solid #28517c;padding:10px 14px;border-radius:999px;font-weight:800}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}.full{grid-column:1/-1}.card h2{margin-top:0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+label{display:block;color:#a9c0db;font-size:13px;font-weight:900;margin:14px 0 7px}
+input,select{width:100%;padding:13px;border-radius:12px;border:1px solid #294b70;background:#06172b;color:#fff;font-size:15px}
+button{border:0;cursor:pointer;color:#fff;font-weight:900;border-radius:12px;padding:13px 17px}
+.primary{background:linear-gradient(90deg,#0ea5e9,#7c3aed,#ec4899)}.green{background:#15803d}.red{background:#b91c1c}.gold{background:#b77905}.blue{background:#155eaa}.gray{background:#243b55}
+button:disabled,select:disabled{opacity:.42;cursor:not-allowed}
+.descritores{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:15px}
+.desc{background:#071a31;border:1px solid #294c74;border-radius:12px;padding:11px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800}.desc input{width:auto}
+.configDescritores{display:grid;gap:10px;margin:15px 0}.configLinha{display:grid;grid-template-columns:1fr 180px 230px;gap:10px;align-items:center;padding:12px;border:1px solid #294b70;border-radius:12px;background:#07182d}.habilidadeLinha{grid-column:1/-1;color:#a9c0db;font-size:12px}
+.nivelGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.status{margin-top:16px;padding:14px;border-left:4px solid var(--cyan);border-radius:10px;background:#0c2b47;color:#d9ebff}
+.arena-code{text-align:center;border:1px dashed #f5bd42;border-radius:18px;padding:18px;margin-top:18px;background:#07182d}.arena-code strong{display:block;color:#ffd166;font-size:35px;letter-spacing:4px;margin-top:8px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat{background:#07182d;border:1px solid #24486e;border-radius:15px;padding:16px}.stat span{display:block;color:#9db5d1;font-size:13px}.stat strong{display:block;font-size:23px;margin-top:7px}
+.eventos{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.evento{padding:17px;border-radius:15px;background:#07182d;border:1px solid #294b70}.evento strong{display:block;margin-bottom:7px}.evento p{color:#a9bdd5;font-size:13px;min-height:42px}
+.ranking{margin-top:15px}.rank{display:grid;grid-template-columns:55px 1fr 130px 120px;align-items:center;gap:12px;background:#07182d;border:1px solid #24486e;border-radius:13px;padding:13px;margin-bottom:9px}.pos{font-size:21px;font-weight:900;color:var(--gold)}
+.progress{height:8px;background:#132c49;border-radius:99px;overflow:hidden;margin-top:7px}.progress div{height:100%;background:linear-gradient(90deg,#22d3ee,#8b5cf6,#ec4899)}
 .managePanel,.dueloPanel{display:none;margin-top:16px;padding:18px;border:1px solid #294b70;border-radius:15px;background:#07182d}.ativo{display:block}.dueloGrid{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:end}.dueloVs{font-size:24px;font-weight:900;color:var(--gold);padding-bottom:12px}.especialStatus{margin-top:16px;padding:14px;border-radius:13px;border:1px solid #7c3aed;background:#101c38}
-@media(max-width:950px){.grid,.two,.configLinha{grid-template-columns:1fr}.descritores{grid-template-columns:repeat(3,1fr)}.stats{grid-template-columns:1fr 1fr}.eventos{grid-template-columns:1fr}.nivelGrid{grid-template-columns:1fr 1fr}}@media(max-width:600px){.descritores{grid-template-columns:repeat(2,1fr)}.rank{grid-template-columns:45px 1fr}.top{align-items:flex-start;flex-direction:column}}
+
+/* ===== NOVO: ACOMPANHAMENTO AO VIVO DO PROFESSOR ===== */
+.monitorResumo{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:14px 0}
+.monitorResumo .mini{background:#07182d;border:1px solid #294b70;border-radius:13px;padding:13px}
+.monitorResumo .mini span{display:block;color:#9db5d1;font-size:12px}.monitorResumo .mini strong{display:block;margin-top:6px;font-size:20px}
+.monitorWrap{overflow:auto;border:1px solid #294b70;border-radius:14px;margin-top:14px}
+.monitorTable{width:100%;border-collapse:collapse;min-width:900px;background:#07182d}
+.monitorTable th,.monitorTable td{padding:12px 10px;border-bottom:1px solid #1d3b5c;text-align:left;vertical-align:middle;font-size:13px}
+.monitorTable th{position:sticky;top:0;background:#0b2442;color:#cfe8ff;z-index:1}
+.monitorTable tr:last-child td{border-bottom:0}.monitorTable tr:hover td{background:#0a2039}
+.monitorBtn{padding:8px 10px;border-radius:9px;background:#155eaa;font-size:12px}
+.situacao{font-weight:900;white-space:nowrap}.sitRespondendo{color:#86efac}.sitAguardando{color:#fde68a}.sitEvento{color:#c4b5fd}.sitBloqueado{color:#fca5a5}.sitInativo{color:#94a3b8}
+.modalProfessor{display:none;position:fixed;inset:0;background:rgba(0,0,0,.76);z-index:9999;padding:24px;align-items:center;justify-content:center}
+.modalProfessor.aberto{display:flex}.modalBox{width:min(820px,96vw);max-height:90vh;overflow:auto;background:#081a31;border:1px solid #315b87;border-radius:20px;padding:22px;box-shadow:0 25px 80px rgba(0,0,0,.45)}
+.modalTopo{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.modalTopo h3{margin:0}.fecharModal{background:#243b55;padding:9px 12px}
+.questaoBox{margin-top:15px;background:#06172b;border:1px solid #294b70;border-radius:14px;padding:16px;line-height:1.55}.metaGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}.metaItem{background:#0c2b47;border-radius:11px;padding:11px}.metaItem span{display:block;color:#9db5d1;font-size:11px}.metaItem strong{display:block;margin-top:4px}
+.opcoesProfessor{display:grid;gap:8px;margin-top:12px}.opProfessor{padding:10px 12px;background:#07182d;border:1px solid #274c74;border-radius:10px}.opProfessor.correta{border-color:#22c55e;background:#0a3526}
+#monitorBossAviso{display:none;margin-top:14px;border-left-color:#facc15}
+@media(max-width:950px){.grid,.two,.configLinha{grid-template-columns:1fr}.descritores{grid-template-columns:repeat(3,1fr)}.stats{grid-template-columns:1fr 1fr}.eventos{grid-template-columns:1fr}.nivelGrid{grid-template-columns:1fr 1fr}.monitorResumo{grid-template-columns:1fr 1fr}.metaGrid{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.descritores{grid-template-columns:repeat(2,1fr)}.rank{grid-template-columns:45px 1fr}.top{align-items:flex-start;flex-direction:column}.monitorResumo,.metaGrid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -24,12 +66,13 @@ main{max-width:1450px;margin:auto;padding:28px 5% 70px}.hero,.card{background:rg
 <h2>🎮 Criar nova Arena</h2>
 <div class="two"><div><label>Nome da Arena</label><input id="nomeArena" value="Desafio PAEBES"></div><div><label>Turma</label><select id="turma"><option>3ª M01 — Integral</option><option>3ª M01 — Técnico ADM</option><option>Unir as duas turmas</option><option>Outra turma</option></select></div></div>
 <div class="two"><div><label>Quantidade de questões</label><input id="qtd" type="number" value="40" min="5" max="40"></div><div><label>Limite de participantes</label><input id="limite" type="number" value="60" min="1" max="60"></div></div>
-<h3>📚 Selecione os descritores</h3><div class="descritores" id="descritores"></div>
+<h3>📚 Selecione os descritores <span style="color:#22d3ee;font-size:13px">— 35 disponíveis</span></h3><div class="descritores" id="descritores"><label class="desc" title="D009_M"><input type="checkbox" value="D009_M"><span>D009_M</span></label><label class="desc" title="D033_M"><input type="checkbox" value="D033_M"><span>D033_M</span></label><label class="desc" title="D038_M"><input type="checkbox" value="D038_M"><span>D038_M</span></label><label class="desc" title="D039_M"><input type="checkbox" value="D039_M"><span>D039_M</span></label><label class="desc" title="D042_M"><input type="checkbox" value="D042_M"><span>D042_M</span></label><label class="desc" title="D043_M"><input type="checkbox" value="D043_M"><span>D043_M</span></label><label class="desc" title="D049_M"><input type="checkbox" value="D049_M"><span>D049_M</span></label><label class="desc" title="D051_M"><input type="checkbox" value="D051_M"><span>D051_M</span></label><label class="desc" title="D057_M"><input type="checkbox" value="D057_M"><span>D057_M</span></label><label class="desc" title="D058_M"><input type="checkbox" value="D058_M"><span>D058_M</span></label><label class="desc" title="D063_M"><input type="checkbox" value="D063_M"><span>D063_M</span></label><label class="desc" title="D064_M"><input type="checkbox" value="D064_M"><span>D064_M</span></label><label class="desc" title="D065_M"><input type="checkbox" value="D065_M"><span>D065_M</span></label><label class="desc" title="D071_M"><input type="checkbox" value="D071_M"><span>D071_M</span></label><label class="desc" title="D074_M"><input type="checkbox" value="D074_M"><span>D074_M</span></label><label class="desc" title="D076_M"><input type="checkbox" value="D076_M"><span>D076_M</span></label><label class="desc" title="D078_M"><input type="checkbox" value="D078_M"><span>D078_M</span></label><label class="desc" title="D080_M"><input type="checkbox" value="D080_M"><span>D080_M</span></label><label class="desc" title="D082_M"><input type="checkbox" value="D082_M"><span>D082_M</span></label><label class="desc" title="D085_M"><input type="checkbox" value="D085_M"><span>D085_M</span></label><label class="desc" title="D086_M"><input type="checkbox" value="D086_M"><span>D086_M</span></label><label class="desc" title="D087_M"><input type="checkbox" value="D087_M"><span>D087_M</span></label><label class="desc" title="D088_M"><input type="checkbox" value="D088_M"><span>D088_M</span></label><label class="desc" title="D096_M"><input type="checkbox" value="D096_M"><span>D096_M</span></label><label class="desc" title="D097_M"><input type="checkbox" value="D097_M"><span>D097_M</span></label><label class="desc" title="D111_M"><input type="checkbox" value="D111_M"><span>D111_M</span></label><label class="desc" title="D119_M"><input type="checkbox" value="D119_M"><span>D119_M</span></label><label class="desc" title="D124_M"><input type="checkbox" value="D124_M"><span>D124_M</span></label><label class="desc" title="D125_M"><input type="checkbox" value="D125_M"><span>D125_M</span></label><label class="desc" title="D126_M"><input type="checkbox" value="D126_M"><span>D126_M</span></label><label class="desc" title="D127_M"><input type="checkbox" value="D127_M"><span>D127_M</span></label><label class="desc" title="D129_M"><input type="checkbox" value="D129_M"><span>D129_M</span></label><label class="desc" title="D132_M"><input type="checkbox" value="D132_M"><span>D132_M</span></label><label class="desc" title="D133_M"><input type="checkbox" value="D133_M"><span>D133_M</span></label><label class="desc" title="D145_M"><input type="checkbox" value="D145_M"><span>D145_M</span></label></div>
 <div class="status">🎯 Defina o peso e o nível de cada descritor selecionado.</div><div id="configDescritores" class="configDescritores"></div>
 <div class="status"><strong>Distribuição quando o nível estiver em “Misto”</strong><div class="nivelGrid"><label>Abaixo do Básico (%)<input id="pctAbb" type="number" value="40"></label><label>Básico (%)<input id="pctBasico" type="number" value="30"></label><label>Proficiente (%)<input id="pctProficiente" type="number" value="20"></label><label>Avançado (%)<input id="pctAvancado" type="number" value="10"></label></div></div>
 <div class="actions"><button class="primary" onclick="criarArena()">⚔️ CRIAR ARENA</button><button class="gray" onclick="marcarPrincipais()">✓ Selecionar principais</button><button class="gray" onclick="limpar()">Limpar seleção</button></div>
 <div class="arena-code"><span>CÓDIGO DE ACESSO</span><strong id="codigo">---</strong></div>
 </section>
+
 <section class="card">
 <h2>🎛️ Controle da disputa</h2>
 <div class="stats"><div class="stat"><span>Competidores</span><strong id="competidores">0/60</strong></div><div class="stat"><span>Questão atual</span><strong id="questaoAtual">0/40</strong></div><div class="stat"><span>Status</span><strong id="estado">Preparação</strong></div><div class="stat"><span>Líder</span><strong id="lider">—</strong></div></div>
@@ -38,6 +81,27 @@ main{max-width:1450px;margin:auto;padding:28px 5% 70px}.hero,.card{background:rg
 <h3>🔐 Controle de acesso</h3><div class="actions"><button class="green" onclick="liberar()">🔓 Liberar estudantes</button><button class="red" onclick="bloquear()">🔒 Bloquear novas entradas</button><button class="gray" onclick="abrirGerenciamentoIndividual()">👤 Gerenciar individualmente</button></div>
 <div id="managePanel" class="managePanel"><h3>👤 Gerenciamento individual</h3><label>Competidor</label><select id="manageCompetidor"></select><div class="actions"><button class="red" onclick="bloquearCompetidorSelecionado()">🔒 BLOQUEAR</button><button class="green" onclick="liberarCompetidorSelecionado()">🔓 LIBERAR</button></div><div id="manageStatus" class="status">Selecione um competidor.</div></div>
 </section>
+
+<!-- NOVO BLOCO: ACOMPANHAMENTO AO VIVO -->
+<section class="card full" id="monitorProfessorCard">
+<h2>📡 Acompanhamento ao vivo dos estudantes</h2>
+<p class="small">Visualização exclusiva do professor. Mostra o avanço individual sem alterar a pontuação, o ranking, os poderes ou a sequência de respostas do estudante.</p>
+<div class="monitorResumo">
+  <div class="mini"><span>👥 Participantes</span><strong id="monParticipantes">0</strong></div>
+  <div class="mini"><span>🟢 Em atividade</span><strong id="monRespondendo">0</strong></div>
+  <div class="mini"><span>⚡ Em evento</span><strong id="monEventos">0</strong></div>
+  <div class="mini"><span>🟡 Regulares concluídas</span><strong id="monConcluidos">0</strong></div>
+  <div class="mini"><span>👑 Boss</span><strong id="monBoss">Aguardando</strong></div>
+</div>
+<div id="monitorBossAviso" class="status"></div>
+<div class="monitorWrap">
+<table class="monitorTable">
+<thead><tr><th>Estudante</th><th>Progresso</th><th>Questão atual</th><th>Nível</th><th>Tempo</th><th>Situação</th><th>Detalhes</th></tr></thead>
+<tbody id="monitorCorpo"><tr><td colspan="7">Aguardando competidores...</td></tr></tbody>
+</table>
+</div>
+</section>
+
 <section class="card full"><h2>⚡ Eventos especiais da Arena</h2><div class="eventos">
 <div class="evento"><strong>🔥 Questão Relâmpago</strong><p>Questão especial com pontuação extra.</p><button class="gold" onclick="lancarEventoEspecial('relampago',this)">DISPARAR</button></div>
 <div class="evento"><strong>⚔️ Duelo Matemático</strong><p>Dois competidores recebem o mesmo desafio.</p><button class="primary" onclick="abrirDuelo()">CRIAR DUELO</button></div>
@@ -56,21 +120,49 @@ main{max-width:1450px;margin:auto;padding:28px 5% 70px}.hero,.card{background:rg
 <div id="diamanteMetaProfessor" class="status">💎 Meta da Arena: aguardando carregamento.</div>
 <div id="diamanteHistoricoProfessor" class="ranking"><div class="rank"><div class="pos">💎</div><div><strong>Nenhum uso registrado</strong></div><div>—</div><div>—</div></div></div>
 </section>
+
 <section class="card full"><h2>🏆 Ranking ao vivo</h2><div class="ranking" id="ranking"><div class="rank"><div class="pos">🥇</div><div><strong>Aguardando competidores...</strong><div class="progress"><div style="width:0"></div></div></div><div>0 acertos</div><div>0 XP</div></div></div></section>
 </div></main>
+
+<!-- MODAL EXCLUSIVO DO PROFESSOR -->
+<div id="modalQuestaoProfessor" class="modalProfessor" onclick="if(event.target===this)fecharDetalheQuestao()">
+  <div class="modalBox">
+    <div class="modalTopo"><div><h3 id="modalTitulo">👁 Detalhes da questão</h3><div id="modalSubtitulo" class="small"></div></div><button class="fecharModal" onclick="fecharDetalheQuestao()">✕ FECHAR</button></div>
+    <div id="modalMeta" class="metaGrid"></div>
+    <div id="modalQuestaoTexto" class="questaoBox"></div>
+    <div id="modalOpcoes" class="opcoesProfessor"></div>
+  </div>
+</div>
+
 <script type="module">
 import {iniciarFirebase,salvarArena,observarArena,observarCompetidores,liberarEntrada,bloquearEntrada,definirStatusArena,registrarEvento,criarDuelo,observarDueloAtual,liberarBossFinal,observarBossFinal,criarEventoEspecial,observarEventoEspecial,atualizarCompetidor} from "./js/firebase-service.js";
 import {gerarQuestoesArena,HABILIDADES_PAEBES} from "./js/question-bank.js";
 import {metaDiamante,observarHistoricoDiamante} from "./js/diamante-service.js";
 iniciarFirebase();
 
-const listaDescritores=Object.keys(HABILIDADES_PAEBES),area=document.getElementById("descritores");
+const DESCRITORES_FIXOS=['D009_M', 'D033_M', 'D038_M', 'D039_M', 'D042_M', 'D043_M', 'D049_M', 'D051_M', 'D057_M', 'D058_M', 'D063_M', 'D064_M', 'D065_M', 'D071_M', 'D074_M', 'D076_M', 'D078_M', 'D080_M', 'D082_M', 'D085_M', 'D086_M', 'D087_M', 'D088_M', 'D096_M', 'D097_M', 'D111_M', 'D119_M', 'D124_M', 'D125_M', 'D126_M', 'D127_M', 'D129_M', 'D132_M', 'D133_M', 'D145_M'];
+const listaDescritores=Object.keys(HABILIDADES_PAEBES||{}).length?Object.keys(HABILIDADES_PAEBES):DESCRITORES_FIXOS;
+const area=document.getElementById("descritores");
 let pararArena=null,pararCompetidores=null,pararDuelo=null,pararBoss=null,pararEspecial=null,pararHistoricoDiamante=null;
+let ultimoEventoEspecial=null,ultimoDuelo=null,ultimoBoss=null;
+let relogioMonitor=null;
 
 function arenaLocal(){try{return JSON.parse(localStorage.getItem("arenaPAEBES"))}catch{return null}}
 function salvarLocal(a){localStorage.setItem("arenaPAEBES",JSON.stringify(a))}
 function gerarCodigo(){return "MAT-"+Math.floor(1000+Math.random()*9000)}
-function montarMatriz(){area.innerHTML=listaDescritores.map(d=>`<label class="desc" title="${HABILIDADES_PAEBES[d]}"><input type="checkbox" value="${d}"><span>${d}</span></label>`).join("");area.querySelectorAll("input").forEach(x=>x.addEventListener("change",()=>{renderConfiguracaoDescritores();atualizarDescritorEspecial()}))}
+function montarMatriz(){
+  if(!area)return;
+  const existentes=[...area.querySelectorAll(".desc input")].map(x=>x.value);
+  if(existentes.length<DESCRITORES_FIXOS.length){
+    area.innerHTML=DESCRITORES_FIXOS.map(d=>`<label class="desc" title="${HABILIDADES_PAEBES?.[d]||d}"><input type="checkbox" value="${d}"><span>${d}</span></label>`).join("");
+  }else{
+    area.querySelectorAll(".desc").forEach(l=>{
+      const inp=l.querySelector("input");
+      if(inp)l.title=HABILIDADES_PAEBES?.[inp.value]||inp.value;
+    });
+  }
+  area.querySelectorAll(".desc input").forEach(x=>x.addEventListener("change",()=>{renderConfiguracaoDescritores();atualizarDescritorEspecial()}));
+}
 function selecionados(){return [...document.querySelectorAll(".desc input:checked")].map(x=>x.value)}
 function renderConfiguracaoDescritores(base=null){const ar=document.getElementById("configDescritores"),sel=selecionados(),cfg=base||arenaLocal()?.configuracaoDescritores||{};if(!sel.length){ar.innerHTML='<div class="small">Selecione descritores para configurar.</div>';return}ar.innerHTML=sel.map(d=>{const c=cfg[d]||{},p=Number(c.peso||1),n=c.nivel||"MISTO";return `<div class="configLinha" data-desc="${d}"><strong>${d}</strong><select class="pesoDesc">${[1,2,3,4].map(v=>`<option value="${v}" ${p===v?"selected":""}>${v===1?"Peso normal":v===2?"Prioridade média":v===3?"Prioridade alta":"Prioridade máxima"} — ${v}×</option>`).join("")}</select><select class="nivelDesc">${["MISTO","ABAIXO DO BÁSICO","BÁSICO","PROFICIENTE","AVANÇADO"].map(v=>`<option ${n===v?"selected":""}>${v}</option>`).join("")}</select><div class="habilidadeLinha">📘 ${HABILIDADES_PAEBES[d]||""}</div></div>`}).join("")}
 function lerConfiguracaoDescritores(){const c={};document.querySelectorAll(".configLinha").forEach(l=>c[l.dataset.desc]={peso:Number(l.querySelector(".pesoDesc").value||1),nivel:l.querySelector(".nivelDesc").value||"MISTO"});return c}
@@ -78,8 +170,138 @@ function lerDistribuicaoNiveis(){return{abb:Number(pctAbb.value||0),basico:Numbe
 function atualizarDescritorEspecial(){const s=document.getElementById("descritorEspecial"),ant=s.value,sel=selecionados();s.innerHTML='<option value="">Selecione</option>'+sel.map(d=>`<option value="${d}">${d}</option>`).join("");if(sel.includes(ant))s.value=ant}
 function setLive(status){const map={preparacao:"● ARENA EM PREPARAÇÃO",iniciada:"● ARENA EM DISPUTA",continuada:"● ARENA EM DISPUTA",pausada:"● ARENA PAUSADA",encerrada:"■ ARENA ENCERRADA"};document.getElementById("live").textContent=map[status]||"● ARENA EM PREPARAÇÃO"}
 function atualizarControles(enc){document.querySelectorAll(`button[onclick*="acao("],button[onclick="liberarBoss()"],button[onclick="liberar()"],button[onclick="bloquear()"],button[onclick="abrirGerenciamentoIndividual()"],.eventos button,#descritorEspecial`).forEach(e=>e.disabled=!!enc);btnReutilizarArena.style.display=enc?"inline-flex":"none";btnReutilizarArena.disabled=false}
-function restaurar(a){if(!a)return;codigo.textContent=a.codigo||"---";nomeArena.value=a.nome||nomeArena.value;turma.value=a.turma||turma.value;qtd.value=Number(a.quantidade||40);limite.value=Number(a.limite||60);document.querySelectorAll(".desc input").forEach(x=>x.checked=(a.descritores||[]).includes(x.value));const d=a.distribuicaoNiveis||{};pctAbb.value=d.abb??40;pctBasico.value=d.basico??30;pctProficiente.value=d.proficiente??20;pctAvancado.value=d.avancado??10;renderConfiguracaoDescritores(a.configuracaoDescritores||{});atualizarDescritorEspecial();const nomesStatus={preparacao:"Preparação",iniciada:"Em disputa",continuada:"Em disputa",pausada:"Pausada",encerrada:"Encerrada"};estado.textContent=nomesStatus[a.status]||"Preparação";setLive(a.status);atualizarControles(a.status==="encerrada");atualizarRanking(a.competidores||{});const mensagens={preparacao:`🎮 Arena <strong>${a.codigo||""}</strong> criada e aguardando início.`,iniciada:`⚡ Arena <strong>${a.codigo||""}</strong> em disputa.`,continuada:`▶ Arena <strong>${a.codigo||""}</strong> em disputa.`,pausada:`⏸ Arena <strong>${a.codigo||""}</strong> pausada. O progresso foi preservado.`,encerrada:`🏁 Arena <strong>${a.codigo||""}</strong> encerrada. Resultados preservados.`};mensagem.innerHTML=mensagens[a.status]||`🎮 Arena <strong>${a.codigo||""}</strong> carregada.`}
+function restaurar(a){if(!a)return;codigo.textContent=a.codigo||"---";nomeArena.value=a.nome||nomeArena.value;turma.value=a.turma||turma.value;qtd.value=Number(a.quantidade||40);limite.value=Number(a.limite||60);document.querySelectorAll(".desc input").forEach(x=>x.checked=(a.descritores||[]).includes(x.value));const d=a.distribuicaoNiveis||{};pctAbb.value=d.abb??40;pctBasico.value=d.basico??30;pctProficiente.value=d.proficiente??20;pctAvancado.value=d.avancado??10;renderConfiguracaoDescritores(a.configuracaoDescritores||{});atualizarDescritorEspecial();const nomesStatus={preparacao:"Preparação",iniciada:"Em disputa",continuada:"Em disputa",pausada:"Pausada",encerrada:"Encerrada"};estado.textContent=nomesStatus[a.status]||"Preparação";setLive(a.status);atualizarControles(a.status==="encerrada");atualizarRanking(a.competidores||{});atualizarMonitor(a.competidores||{});const mensagens={preparacao:`🎮 Arena <strong>${a.codigo||""}</strong> criada e aguardando início.`,iniciada:`⚡ Arena <strong>${a.codigo||""}</strong> em disputa.`,continuada:`▶ Arena <strong>${a.codigo||""}</strong> em disputa.`,pausada:`⏸ Arena <strong>${a.codigo||""}</strong> pausada. O progresso foi preservado.`,encerrada:`🏁 Arena <strong>${a.codigo||""}</strong> encerrada. Resultados preservados.`};mensagem.innerHTML=mensagens[a.status]||`🎮 Arena <strong>${a.codigo||""}</strong> carregada.`}
+
 function atualizarRanking(cs={}){const lista=Object.values(cs),lim=Number(limite.value||60),a=arenaLocal(),qmax=Number(a?.quantidade||qtd.value||40);competidores.textContent=lista.length+"/"+lim;const maiorQ=lista.length?Math.max(...lista.map(j=>Number(j.questaoAtual??0))):0;questaoAtual.textContent=Math.min(maiorQ,qmax)+"/"+qmax;const r=[...lista].sort((a,b)=>Number(b.xp||0)-Number(a.xp||0)||Number(b.acertos||0)-Number(a.acertos||0));lider.textContent=r[0]?.nome||"—";if(!r.length){ranking.innerHTML='<div class="rank"><div class="pos">🥇</div><div><strong>Aguardando competidores...</strong></div><div>0 acertos</div><div>0 XP</div></div>';return}const max=Math.max(...r.map(x=>Number(x.xp||0)),1);ranking.innerHTML=r.map((j,i)=>`<div class="rank"><div class="pos">${["🥇","🥈","🥉"][i]||(i+1)+"º"}</div><div><strong>${j.nome||"Competidor"}</strong><div class="progress"><div style="width:${Math.min(100,Number(j.xp||0)/max*100)}%"></div></div></div><div>${Number(j.acertos||0)} acertos<br><small>💎 ${j.diamanteUsado?"Utilizado":j.diamanteDisponivel?"Disponível":j.diamanteConquistado?"Conquistado":"—"}</small></div><div>${Number(j.xp||0)} XP</div></div>`).join("")}
+
+/* ========== NOVO: FUNÇÕES DE ACOMPANHAMENTO, SEM ALTERAR O JOGO ========== */
+function numeroQuestaoJogador(j){
+  const v=j?.questaoAtual ?? j?.questionIndex ?? j?.indiceQuestao ?? 0;
+  return Math.max(0,Number(v)||0);
+}
+function nomeNivelAtual(j,a){
+  const idx=numeroQuestaoJogador(j);
+  const q=Array.isArray(a?.questoes)?a.questoes[idx]:null;
+  return j?.nivelAtual || j?.nivel || q?.nivel || q?.level || "—";
+}
+function descritorAtual(j,a){
+  const idx=numeroQuestaoJogador(j);
+  const q=Array.isArray(a?.questoes)?a.questoes[idx]:null;
+  return j?.descritorAtual || q?.descritor || "—";
+}
+function tempoLimiteJogador(j,a){
+  const idx=numeroQuestaoJogador(j);
+  const q=Array.isArray(a?.questoes)?a.questoes[idx]:null;
+  return Number(j?.tempoQuestaoSegundos ?? j?.questionTimeLimitSec ?? j?.tempoLimiteSegundos ?? q?.tempoSegundos ?? 0);
+}
+function inicioQuestaoJogador(j){
+  const bruto=j?.questaoIniciadaEm ?? j?.questionStartedAt ?? j?.inicioQuestao ?? j?.questaoInicioEm ?? null;
+  if(bruto==null)return null;
+  if(typeof bruto==="number")return bruto<100000000000?bruto*1000:bruto;
+  if(typeof bruto==="string"){
+    const n=Number(bruto);if(Number.isFinite(n)&&n>0)return n<100000000000?n*1000:n;
+    const d=Date.parse(bruto);return Number.isFinite(d)?d:null;
+  }
+  return null;
+}
+function formatarTempoRestante(j,a){
+  const limite=tempoLimiteJogador(j,a),inicio=inicioQuestaoJogador(j);
+  if(!limite||!inicio)return "—";
+  const restante=Math.max(0,Math.ceil(limite-(Date.now()-inicio)/1000));
+  const m=Math.floor(restante/60),s=restante%60;
+  return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+}
+function detectarEventoJogador(j){
+  const tipo=String(j?.eventoAtual?.tipo||j?.eventoTipo||j?.modoAtual||"").toLowerCase();
+  if(tipo.includes("duelo"))return "⚔️ Duelo";
+  if(tipo.includes("relamp"))return "⚡ Relâmpago";
+  if(tipo.includes("bonus"))return "💎 Bônus";
+  if(tipo.includes("cacada"))return "👑 Caçada";
+  if(tipo.includes("descritor"))return "🎯 Descritor";
+  if(tipo.includes("escudo"))return "🛡️ Escudo";
+  if(j?.emEvento===true)return "⚡ Evento";
+  return null;
+}
+function situacaoJogador(j){
+  if(j?.bloqueado===true || j?.diamanteBloqueioPendente===true)return {texto:"🔴 Bloqueado",classe:"sitBloqueado"};
+  const ev=detectarEventoJogador(j);if(ev)return {texto:ev,classe:"sitEvento"};
+  if(j?.regularConcluida===true)return {texto:"🟡 Aguardando Boss",classe:"sitAguardando"};
+  if(j?.ativo===false || j?.online===false)return {texto:"⚪ Inativo",classe:"sitInativo"};
+  return {texto:"🟢 Respondendo",classe:"sitRespondendo"};
+}
+function atualizarMonitor(cs={}){
+  const a=arenaLocal()||{},lista=Object.values(cs||{}),qmax=Number(a.quantidade||qtd.value||40);
+  const concluidos=lista.filter(j=>j?.regularConcluida===true).length;
+  const emEvento=lista.filter(j=>!!detectarEventoJogador(j)).length;
+  const respondendo=lista.filter(j=>j?.regularConcluida!==true && j?.bloqueado!==true && j?.diamanteBloqueioPendente!==true && !detectarEventoJogador(j)).length;
+  monParticipantes.textContent=lista.length;
+  monRespondendo.textContent=respondendo;
+  monEventos.textContent=emEvento;
+  monConcluidos.textContent=concluidos;
+  monBoss.textContent=ultimoBoss?"Liberado":(lista.length>0&&concluidos===lista.length?"Pronto":"Aguardando");
+
+  if(lista.length>0&&concluidos===lista.length&&!ultimoBoss){
+    monitorBossAviso.style.display="block";
+    monitorBossAviso.innerHTML="👑 <strong>TODOS OS COMPETIDORES CONCLUÍRAM AS QUESTÕES REGULARES.</strong> Boss Final pronto para liberação pelo professor.";
+  }else{
+    monitorBossAviso.style.display="none";
+  }
+
+  if(!lista.length){
+    monitorCorpo.innerHTML='<tr><td colspan="7">Aguardando competidores...</td></tr>';
+    return;
+  }
+  const ordenada=[...lista].sort((x,y)=>(x.regularConcluida===y.regularConcluida?0:x.regularConcluida?1:-1)||numeroQuestaoJogador(y)-numeroQuestaoJogador(x)||(x.nome||"").localeCompare(y.nome||""));
+  monitorCorpo.innerHTML=ordenada.map(j=>{
+    const id=String(j.id||j.jogadorId||"");
+    const idx=numeroQuestaoJogador(j);
+    const concluida=j.regularConcluida===true;
+    const atual=concluida?"—":`${descritorAtual(j,a)} • Q${Math.min(idx+1,qmax)}`;
+    const prog=concluida?`${qmax}/${qmax}`:`${Math.min(idx,qmax)}/${qmax}`;
+    const sit=situacaoJogador(j);
+    const tempo=concluida?"—":formatarTempoRestante(j,a);
+    return `<tr>
+      <td><strong>${j.nome||"Competidor"}</strong><div class="small">${Number(j.xp||0)} XP • ${Number(j.acertos||0)} acerto(s)</div></td>
+      <td>${prog}</td>
+      <td>${atual}</td>
+      <td>${concluida?"—":nomeNivelAtual(j,a)}</td>
+      <td data-monitor-tempo="${id}">${tempo}</td>
+      <td><span class="situacao ${sit.classe}">${sit.texto}</span></td>
+      <td><button class="monitorBtn" onclick="verQuestaoProfessor('${id.replace(/'/g,"")}')">👁 VER QUESTÃO</button></td>
+    </tr>`;
+  }).join("");
+}
+window.verQuestaoProfessor=(id)=>{
+  const a=arenaLocal()||{},cs=a.competidores||{};
+  const j=cs[id]||Object.values(cs).find(x=>String(x?.id||x?.jogadorId||"")===String(id));
+  if(!j){alert("Não foi possível localizar este competidor.");return}
+  const idx=numeroQuestaoJogador(j),q=Array.isArray(a.questoes)?a.questoes[idx]:null;
+  const sit=situacaoJogador(j);
+  modalTitulo.textContent=`👁 ${j.nome||"Competidor"} — questão atual`;
+  modalSubtitulo.textContent=sit.texto;
+  modalMeta.innerHTML=[
+    ["Progresso",j.regularConcluida?`${a.quantidade||a.questoes?.length||0}/${a.quantidade||a.questoes?.length||0}`:`${idx+1}/${a.quantidade||a.questoes?.length||0}`],
+    ["Descritor",q?.descritor||j.descritorAtual||"—"],
+    ["Nível",q?.nivel||q?.level||j.nivelAtual||"—"],
+    ["Habilidade",q?.habilidade||"—"],
+    ["Tempo previsto",tempoLimiteJogador(j,a)?`${tempoLimiteJogador(j,a)} s`:"—"],
+    ["Tempo restante",formatarTempoRestante(j,a)]
+  ].map(([k,v])=>`<div class="metaItem"><span>${k}</span><strong>${v}</strong></div>`).join("");
+  if(j.regularConcluida){
+    modalQuestaoTexto.innerHTML="<strong>Questões regulares concluídas.</strong><br>Este estudante está aguardando a liberação do Boss Final.";
+    modalOpcoes.innerHTML="";
+  }else if(q){
+    modalQuestaoTexto.innerHTML=`<strong>Q${idx+1} — ${q.descritor||""}</strong><br>${q.texto||q.pergunta||"Questão sem texto disponível."}`;
+    const ops=q.opcoes||q.alternativas||[];
+    const correta=Number(q.correta ?? q.correct ?? -1);
+    modalOpcoes.innerHTML=ops.map((op,i)=>`<div class="opProfessor ${i===correta?"correta":""}"><strong>${String.fromCharCode(65+i)}.</strong> ${typeof op==="object"?(op.texto||op.valor||JSON.stringify(op)):op}${i===correta?' <small>✓ gabarito</small>':""}</div>`).join("");
+  }else{
+    modalQuestaoTexto.innerHTML="A questão atual ainda não possui dados suficientes para visualização detalhada.";
+    modalOpcoes.innerHTML="";
+  }
+  modalQuestaoProfessor.classList.add("aberto");
+}
+window.fecharDetalheQuestao=()=>modalQuestaoProfessor.classList.remove("aberto");
 
 function atualizarPainelDiamanteProfessor(arena){
   const box=document.getElementById("diamanteMetaProfessor");
@@ -102,9 +324,36 @@ function acompanharHistoricoDiamanteProfessor(cod){
   pararHistoricoDiamante=observarHistoricoDiamante(cod,renderHistoricoDiamanteProfessor);
 }
 
-function conectarArena(cod){if(pararArena)pararArena();if(pararCompetidores)pararCompetidores();if(pararDuelo)pararDuelo();if(pararBoss)pararBoss();if(pararEspecial)pararEspecial();pararArena=observarArena(cod,a=>{if(!a)return;salvarLocal(a);restaurar(a);atualizarPainelDiamanteProfessor(a)});pararCompetidores=observarCompetidores(cod,cs=>{const a=arenaLocal()||{codigo:cod};a.competidores=cs||{};salvarLocal(a);atualizarRanking(cs||{})});pararDuelo=observarDueloAtual(cod,renderDueloProfessor);pararBoss=observarBossFinal(cod,b=>{if(!b){bossStatusProfessor.style.display="none";return}const rs=Object.values(b.respostas||{});bossStatusProfessor.style.display="block";bossStatusProfessor.innerHTML=`👑 <strong>BOSS FINAL:</strong> ${rs.length} concluído(s) • ${rs.filter(x=>x.correta).length} acerto(s) • ${Number(b.bonusXP||300)} XP de bônus.`});pararEspecial=observarEventoEspecial(cod,e=>{if(!e){eventoEspecialStatusProfessor.textContent="⚡ Nenhum Evento Especial jogável ativo.";return}const rs=Object.values(e.respostas||{});eventoEspecialStatusProfessor.innerHTML=`⚡ <strong>${e.nome||"EVENTO ESPECIAL"}</strong> — ${rs.length} resposta(s), ${rs.filter(x=>x.correta).length} acerto(s) • bônus: ${Number(e.bonusXP||0)} XP`});acompanharHistoricoDiamanteProfessor(cod)}
+function conectarArena(cod){
+  if(pararArena)pararArena();if(pararCompetidores)pararCompetidores();if(pararDuelo)pararDuelo();if(pararBoss)pararBoss();if(pararEspecial)pararEspecial();
+  pararArena=observarArena(cod,a=>{if(!a)return;salvarLocal(a);restaurar(a);atualizarPainelDiamanteProfessor(a)});
+  pararCompetidores=observarCompetidores(cod,cs=>{
+    const a=arenaLocal()||{codigo:cod};a.competidores=cs||{};salvarLocal(a);atualizarRanking(cs||{});atualizarMonitor(cs||{});
+  });
+  pararDuelo=observarDueloAtual(cod,d=>{ultimoDuelo=d||null;renderDueloProfessor(d);atualizarMonitor(arenaLocal()?.competidores||{})});
+  pararBoss=observarBossFinal(cod,b=>{
+    ultimoBoss=b||null;atualizarMonitor(arenaLocal()?.competidores||{});
+    if(!b){bossStatusProfessor.style.display="none";return}
+    const rs=Object.values(b.respostas||{});bossStatusProfessor.style.display="block";bossStatusProfessor.innerHTML=`👑 <strong>BOSS FINAL:</strong> ${rs.length} concluído(s) • ${rs.filter(x=>x.correta).length} acerto(s) • ${Number(b.bonusXP||300)} XP de bônus.`;
+  });
+  pararEspecial=observarEventoEspecial(cod,e=>{
+    ultimoEventoEspecial=e||null;atualizarMonitor(arenaLocal()?.competidores||{});
+    if(!e){eventoEspecialStatusProfessor.textContent="⚡ Nenhum Evento Especial jogável ativo.";return}
+    const rs=Object.values(e.respostas||{});eventoEspecialStatusProfessor.innerHTML=`⚡ <strong>${e.nome||"EVENTO ESPECIAL"}</strong> — ${rs.length} resposta(s), ${rs.filter(x=>x.correta).length} acerto(s) • bônus: ${Number(e.bonusXP||0)} XP`;
+  });
+  acompanharHistoricoDiamanteProfessor(cod);
+  if(relogioMonitor)clearInterval(relogioMonitor);
+  relogioMonitor=setInterval(()=>atualizarMonitor(arenaLocal()?.competidores||{}),1000);
+}
 
-window.criarArena=async()=>{const sel=selecionados();if(!sel.length){alert("Selecione pelo menos um descritor.");return}const quantidade=Math.max(5,Math.min(40,Number(qtd.value)||40));qtd.value=quantidade;const dist=lerDistribuicaoNiveis();if(Object.values(dist).reduce((a,b)=>a+b,0)!==100){alert("A distribuição dos níveis deve somar 100%.");return}let questoes;try{questoes=gerarQuestoesArena({quantidade,descritores:sel,configuracaoDescritores:lerConfiguracaoDescritores(),distribuicaoNiveis:dist})}catch(e){alert(e.message||"Erro ao gerar questões.");return}const cod=gerarCodigo(),dados={codigo:cod,nome:nomeArena.value||"Arena Matemática",turma:turma.value,quantidade,limite:Number(limite.value||60),descritores:sel,configuracaoDescritores:lerConfiguracaoDescritores(),distribuicaoNiveis:dist,questoes,status:"preparacao",entradaLiberada:false,aceitaNovos:false,questaoAtual:0,competidores:{},criadaEm:new Date().toISOString()};try{await salvarArena(cod,dados);salvarLocal(dados);restaurar(dados);conectarArena(cod);mensagem.innerHTML=`🎮 Arena criada. Código <strong>${cod}</strong>. Agora libere os estudantes.`}catch(e){console.error(e);alert("Erro ao criar Arena no Firebase.")}}
+window.criarArena=async()=>{
+  const sel=selecionados();if(!sel.length){alert("Selecione pelo menos um descritor.");return}
+  const quantidade=Math.max(5,Math.min(40,Number(qtd.value)||40));qtd.value=quantidade;
+  const dist=lerDistribuicaoNiveis();if(Object.values(dist).reduce((a,b)=>a+b,0)!==100){alert("A distribuição dos níveis deve somar 100%.");return}
+  let questoes;try{questoes=gerarQuestoesArena({quantidade,descritores:sel,configuracaoDescritores:lerConfiguracaoDescritores(),distribuicaoNiveis:dist})}catch(e){alert(e.message||"Erro ao gerar questões.");return}
+  const cod=gerarCodigo(),dados={codigo:cod,nome:nomeArena.value||"Arena Matemática",turma:turma.value,quantidade,limite:Number(limite.value||60),descritores:sel,configuracaoDescritores:lerConfiguracaoDescritores(),distribuicaoNiveis:dist,questoes,status:"preparacao",entradaLiberada:false,aceitaNovos:false,questaoAtual:0,competidores:{},criadaEm:new Date().toISOString()};
+  try{await salvarArena(cod,dados);salvarLocal(dados);restaurar(dados);conectarArena(cod);mensagem.innerHTML=`🎮 Arena criada. Código <strong>${cod}</strong>. Agora libere os estudantes.`}catch(e){console.error(e);alert("Erro ao criar Arena no Firebase.")}
+}
 window.liberar=async()=>{const a=arenaLocal();if(!a?.codigo){alert("Crie uma Arena primeiro.");return}await liberarEntrada(a.codigo);mensagem.innerHTML="🔓 Entrada dos estudantes <strong>LIBERADA</strong>."}
 window.bloquear=async()=>{const a=arenaLocal();if(!a?.codigo)return;await bloquearEntrada(a.codigo);mensagem.innerHTML="🔒 Novas entradas bloqueadas."}
 window.acao=async(tipo)=>{const a=arenaLocal();if(!a?.codigo){alert("Crie uma Arena primeiro.");return}await definirStatusArena(a.codigo,tipo);mensagem.innerHTML=`⚡ Arena <strong>${{iniciada:"iniciada",pausada:"pausada",continuada:"continuada",encerrada:"encerrada"}[tipo]}</strong>.`}
@@ -131,6 +380,7 @@ window.lancarEventoEspecial=async(tipo,btn)=>{const a=arenaLocal();if(!a?.codigo
 
 montarMatriz();renderConfiguracaoDescritores();restaurarReuso();
 const salva=arenaLocal();if(salva?.codigo){restaurar(salva);conectarArena(salva.codigo)}
-console.log("🔥 Painel do professor final carregado.");
+console.log("🔥 Painel do professor final + acompanhamento ao vivo carregado.");
 </script>
-</body></html>
+</body>
+</html>
