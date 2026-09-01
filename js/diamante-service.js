@@ -1,6 +1,7 @@
 // ======================================================
 // DIAMANTE — PODER DE BLOQUEIO
 // ARENA MATEMÁTICA — RUMO AO PAEBES
+// VERSÃO ROBUSTA — FILA + CONSUMO ATÔMICO
 // ======================================================
 
 import { FIREBASE } from "./firebase-config.js";
@@ -14,24 +15,21 @@ import {
 import {
   getDatabase,
   ref,
-  get,
-  update,
   onValue,
-  runTransaction,
-  serverTimestamp
+  runTransaction
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
-
 
 let app = null;
 let db = null;
 
 const RAIZ = "arenaMatematica";
 
+// ======================================================
+// FIREBASE
+// ======================================================
 
-function banco(){
-
-  if(!app){
-
+function banco() {
+  if (!app) {
     app = getApps().length
       ? getApp()
       : initializeApp(FIREBASE.configuracao);
@@ -42,84 +40,79 @@ function banco(){
   return db;
 }
 
-
-function caminhoSeguro(valor=""){
-
+function caminhoSeguro(valor = "") {
   return String(valor)
     .trim()
     .toUpperCase()
-    .replace(/[.#$\[\]\/]/g,"-");
+    .replace(/[.#$\[\]\/]/g, "-");
 }
 
+function criarBloqueioId() {
+  return (
+    "diamante-" +
+    Date.now().toString(36) +
+    "-" +
+    Math.random().toString(36).slice(2, 8)
+  );
+}
 
 // ======================================================
-// BLOQUEIO VISUAL IMEDIATO
+// BLOQUEIO VISUAL LOCAL
 // ======================================================
 
-function bloquearInteracaoLocalDuranteDiamante(){
-
-  try{
-
-    if(typeof window !== "undefined"){
+function bloquearInteracaoLocalDuranteDiamante() {
+  try {
+    if (typeof window !== "undefined") {
       window.__diamanteBloqueioAtivo = true;
     }
 
-    if(typeof document !== "undefined"){
+    if (typeof document !== "undefined") {
+      document
+        .querySelectorAll("#options .option")
+        .forEach(botao => {
+          botao.disabled = true;
+          botao.style.pointerEvents = "none";
+          botao.style.opacity = ".55";
+        });
 
-      document.querySelectorAll("#options .option").forEach(botao=>{
-        botao.disabled = true;
-        botao.style.pointerEvents = "none";
-        botao.style.opacity = ".55";
-      });
+      const confirmar =
+        document.getElementById("confirmButton");
 
-      const confirmar = document.getElementById("confirmButton");
-
-      if(confirmar){
+      if (confirmar) {
         confirmar.disabled = true;
         confirmar.style.pointerEvents = "none";
       }
     }
 
-    setTimeout(()=>{
-
-      if(typeof window !== "undefined"){
+    setTimeout(() => {
+      if (typeof window !== "undefined") {
         window.__diamanteBloqueioAtivo = false;
       }
 
-      if(typeof document !== "undefined"){
+      if (typeof document !== "undefined") {
+        document
+          .querySelectorAll("#options .option")
+          .forEach(botao => {
+            botao.disabled = false;
+            botao.style.pointerEvents = "";
+            botao.style.opacity = "";
+            botao.classList.remove("selected");
+          });
 
-        // libera as alternativas da NOVA questão
-        document.querySelectorAll("#options .option").forEach(botao=>{
-          botao.disabled = false;
-          botao.style.pointerEvents = "";
-          botao.style.opacity = "";
-        });
+        const confirmar =
+          document.getElementById("confirmButton");
 
-        // libera novamente o botão para funcionar
-        // quando uma alternativa da nova questão for escolhida
-        const confirmar = document.getElementById("confirmButton");
-
-        if(confirmar){
+        if (confirmar) {
           confirmar.style.pointerEvents = "";
           confirmar.disabled = true;
         }
-
-        if(typeof player !== "undefined"){
-          player.selected = null;
-        }
-
-        document
-          .querySelectorAll("#options .option")
-          .forEach(botao=>botao.classList.remove("selected"));
       }
+    }, 1900);
 
-    },2200);
-
-  }catch(e){
-
+  } catch (erro) {
     console.error(
-      "Falha ao processar o bloqueio do Diamante:",
-      e
+      "Falha ao processar bloqueio visual do Diamante:",
+      erro
     );
   }
 }
@@ -128,303 +121,353 @@ function bloquearInteracaoLocalDuranteDiamante(){
 // META DO DIAMANTE
 // ======================================================
 
-export function metaDiamante(questoes=[]){
+export function metaDiamante(questoes = []) {
+  const lista =
+    Array.isArray(questoes)
+      ? questoes
+      : [];
 
   const totalMaximo =
-    (Array.isArray(questoes) ? questoes : [])
-      .reduce(
-        (s,q) =>
-          s + Math.max(
-            0,
-            Number(q?.baseXP || 0)
-          ),
-        0
-      );
+    lista.reduce(
+      (soma, questao) =>
+        soma +
+        Math.max(
+          0,
+          Number(questao?.baseXP || 0)
+        ),
+      0
+    );
 
-
-  if(totalMaximo <= 0){
-
+  if (totalMaximo > 0) {
     return Math.ceil(
-
-      (Array.isArray(questoes)
-        ? questoes.length
-        : 0)
-
-      * 100
-      * 0.60
+      totalMaximo * 0.60
     );
   }
 
-
   return Math.ceil(
-    totalMaximo * 0.60
+    lista.length *
+    100 *
+    0.60
   );
 }
-
 
 // ======================================================
 // CONCEDER DIAMANTE
 // ======================================================
 
 export async function concederDiamanteSeAtingiu(
-
   codigo,
   jogadorId,
   pontosRegulares,
-  questoes=[]
-
-){
-
+  questoes = []
+) {
   const database = banco();
-
-  const arenaId =
-    caminhoSeguro(codigo);
+  const arenaId = caminhoSeguro(codigo);
 
   const meta =
     metaDiamante(questoes);
 
-
-  if(
+  if (
     !jogadorId ||
     Number(pontosRegulares || 0) < meta
-  ){
-
+  ) {
     return {
-      conquistado:false,
+      conquistado: false,
+      disponivel: false,
       meta
     };
   }
 
-
   const jogadorRef = ref(
-
     database,
-
     `${RAIZ}/arenas/${arenaId}/competidores/${jogadorId}`
-
   );
-
 
   let concedidoAgora = false;
 
-
   const resultado =
     await runTransaction(
-
       jogadorRef,
-
       atual => {
-
-        if(!atual)
-          return atual;
-
-
-        if(
-          atual.diamanteConquistado === true
-        ){
-
+        if (!atual) {
           return atual;
         }
 
+        const jaConquistado =
+          atual.diamanteConquistado === true;
+
+        const jaUsado =
+          atual.diamanteUsado === true;
+
+        // Já conquistou e ainda não usou:
+        // garante que o Diamante continue disponível.
+        if (
+          jaConquistado &&
+          !jaUsado
+        ) {
+          return {
+            ...atual,
+
+            pontosRegulares:
+              Math.max(
+                Number(
+                  atual.pontosRegulares || 0
+                ),
+                Number(
+                  pontosRegulares || 0
+                )
+              ),
+
+            diamanteConquistado:
+              true,
+
+            diamanteDisponivel:
+              true
+          };
+        }
+
+        // Já utilizou: nunca concede outro Diamante
+        // dentro da mesma Arena.
+        if (
+          jaConquistado &&
+          jaUsado
+        ) {
+          return atual;
+        }
 
         concedidoAgora = true;
 
-
         return {
-
           ...atual,
 
           pontosRegulares:
-            Number(pontosRegulares || 0),
+            Number(
+              pontosRegulares || 0
+            ),
 
-          diamanteConquistado:true,
+          diamanteConquistado:
+            true,
 
-          diamanteDisponivel:true,
+          diamanteDisponivel:
+            true,
 
-          diamanteUsado:false,
+          diamanteUsado:
+            false,
 
           diamanteConquistadoEm:
             Date.now()
-
         };
       }
     );
 
+  const final =
+    resultado.snapshot.exists()
+      ? resultado.snapshot.val()
+      : null;
 
   return {
-
     conquistado:
+      Boolean(
+        final?.diamanteConquistado
+      ),
+
+    concedidoAgora:
       Boolean(
         resultado.committed &&
         concedidoAgora
+      ),
+
+    disponivel:
+      Boolean(
+        final?.diamanteDisponivel
+      ),
+
+    usado:
+      Boolean(
+        final?.diamanteUsado
       ),
 
     meta
   };
 }
 
-
 // ======================================================
 // USAR DIAMANTE
 // ======================================================
 
 export async function usarDiamanteBloqueio(
-
   codigo,
   autorId,
   alvoId
-
-){
-
-  if(
+) {
+  if (
     !codigo ||
     !autorId ||
     !alvoId
-  ){
-
+  ) {
     throw new Error(
       "Dados do Poder de Bloqueio incompletos."
     );
   }
 
-
-  if(autorId === alvoId){
-
+  if (
+    String(autorId) ===
+    String(alvoId)
+  ) {
     throw new Error(
       "Você não pode bloquear a si mesmo."
     );
   }
 
-
   const database = banco();
-
-  const arenaId =
-    caminhoSeguro(codigo);
-
+  const arenaId = caminhoSeguro(codigo);
 
   const arenaRef = ref(
-
     database,
-
     `${RAIZ}/arenas/${arenaId}`
-
   );
 
+  let bloqueioCriado = null;
+  let motivoFalha = "";
 
-  let registro = null;
-
-
-  const transacao =
+  const resultado =
     await runTransaction(
-
       arenaRef,
-
       arena => {
-
-        if(!arena)
+        if (!arena) {
+          motivoFalha =
+            "Arena não encontrada.";
           return;
-
+        }
 
         const competidores =
           arena.competidores || {};
 
-
         const autor =
           competidores[autorId];
-
 
         const alvo =
           competidores[alvoId];
 
-
-        if(!autor || !alvo)
+        if (!autor) {
+          motivoFalha =
+            "Seu registro não foi encontrado na Arena.";
           return;
+        }
 
+        if (!alvo) {
+          motivoFalha =
+            "O competidor escolhido não foi encontrado.";
+          return;
+        }
 
-        if(
-
+        if (
+          autor.diamanteConquistado !== true ||
           autor.diamanteDisponivel !== true ||
-
           autor.diamanteUsado === true
-
-        ){
-
+        ) {
+          motivoFalha =
+            "Seu Diamante já foi utilizado ou não está disponível.";
           return;
         }
 
-
-        if(
-          alvo.diamanteBloqueioPendente === true
-        ){
-
-          return;
-        }
-
-
-        if(
+        if (
           alvo.regularConcluida === true
-        ){
-
+        ) {
+          motivoFalha =
+            "Este competidor já concluiu as questões regulares.";
           return;
         }
 
+        if (
+          alvo.bloqueado === true
+        ) {
+          motivoFalha =
+            "Este competidor está bloqueado pelo professor.";
+          return;
+        }
 
         const bloqueioId =
-
-          "diamante-" +
-
-          Date.now()
-            .toString(36) +
-
-          "-" +
-
-          Math.random()
-            .toString(36)
-            .slice(2,7);
-
+          criarBloqueioId();
 
         const agora =
           Date.now();
 
+        // ==================================================
+        // FILA DE BLOQUEIOS
+        // Permite que dois Diamantes diferentes tenham
+        // o mesmo alvo sem fazer o segundo uso falhar.
+        // ==================================================
+
+        const filaAtual = {
+          ...(
+            alvo.diamanteBloqueiosPendentes ||
+            {}
+          )
+        };
+
+        filaAtual[bloqueioId] = {
+          id: bloqueioId,
+          autorId,
+          criadoEm: agora
+        };
+
+        // Compatibilidade com o estudante.html atual.
+        // diamanteBloqueioId aponta para o PRIMEIRO item
+        // ainda pendente.
+        const idsPendentes =
+          Object.keys(filaAtual)
+            .sort(
+              (a, b) =>
+                Number(
+                  filaAtual[a]?.criadoEm || 0
+                ) -
+                Number(
+                  filaAtual[b]?.criadoEm || 0
+                )
+            );
+
+        const primeiroPendente =
+          idsPendentes[0] ||
+          bloqueioId;
 
         competidores[autorId] = {
-
           ...autor,
 
-          diamanteDisponivel:false,
+          diamanteDisponivel:
+            false,
 
-          diamanteUsado:true,
+          diamanteUsado:
+            true,
 
           diamanteUsadoEm:
             agora
-
         };
 
-
         competidores[alvoId] = {
-
           ...alvo,
 
-          diamanteBloqueioPendente:true,
+          diamanteBloqueioPendente:
+            true,
 
           diamanteBloqueioId:
-            bloqueioId,
+            primeiroPendente,
+
+          diamanteBloqueiosPendentes:
+            filaAtual,
 
           diamanteBloqueioRecebidoEm:
             agora
-
         };
-
 
         const historico = {
-
-          ...(arena.historicoDiamantes || {})
-
+          ...(
+            arena.historicoDiamantes ||
+            {}
+          )
         };
 
-
         historico[bloqueioId] = {
-
           id:
             bloqueioId,
 
@@ -441,15 +484,10 @@ export async function usarDiamanteBloqueio(
             "Competidor",
 
           questaoAlvo:
-
             Number(
-
               alvo.questaoAtual ??
-
               alvo.questionIndex ??
-
               0
-
             ) + 1,
 
           status:
@@ -459,23 +497,18 @@ export async function usarDiamanteBloqueio(
             agora
         };
 
-
         const eventos = {
-
-          ...(arena.eventos || {})
-
+          ...(
+            arena.eventos ||
+            {}
+          )
         };
 
-
         const eventoId =
-
           "diamante-publico-" +
-
           bloqueioId;
 
-
         eventos[eventoId] = {
-
           nome:
             "PODER DE BLOQUEIO",
 
@@ -489,191 +522,291 @@ export async function usarDiamanteBloqueio(
             agora
         };
 
-
-        registro =
+        bloqueioCriado =
           historico[bloqueioId];
 
-
         return {
-
           ...arena,
-
           competidores,
-
           historicoDiamantes:
             historico,
-
           eventos
         };
       }
     );
 
-
-  if(
-    !transacao.committed ||
-    !registro
-  ){
-
+  if (
+    !resultado.committed ||
+    !bloqueioCriado
+  ) {
     throw new Error(
-
-      "O Diamante não está disponível ou o competidor escolhido não pode ser bloqueado agora."
-
+      motivoFalha ||
+      "Não foi possível utilizar o Diamante neste momento."
     );
   }
 
-
   return {
-
-    ok:true,
+    ok: true,
 
     bloqueioId:
-      registro.id
+      bloqueioCriado.id,
+
+    alvoId,
+
+    mensagem:
+      "Poder de Bloqueio utilizado com sucesso."
   };
 }
-
 
 // ======================================================
 // CONSUMIR BLOQUEIO
 // ======================================================
 
 export async function consumirBloqueioDiamante(
-
   codigo,
   jogadorId
-
-){
+) {
+  if (
+    !codigo ||
+    !jogadorId
+  ) {
+    return false;
+  }
 
   const database = banco();
+  const arenaId = caminhoSeguro(codigo);
 
-  const arenaId =
-    caminhoSeguro(codigo);
-
-
-  const jogadorRef = ref(
-
+  const arenaRef = ref(
     database,
-
-    `${RAIZ}/arenas/${arenaId}/competidores/${jogadorId}`
-
+    `${RAIZ}/arenas/${arenaId}`
   );
 
+  let consumido = null;
 
-  const snap =
-    await get(jogadorRef);
+  const resultado =
+    await runTransaction(
+      arenaRef,
+      arena => {
+        if (!arena) {
+          return;
+        }
 
+        const competidores =
+          arena.competidores || {};
 
-  if(!snap.exists()){
+        const jogador =
+          competidores[jogadorId];
 
-    return false;
-  }
+        if (!jogador) {
+          return;
+        }
 
+        const fila = {
+          ...(
+            jogador.diamanteBloqueiosPendentes ||
+            {}
+          )
+        };
 
-  const jogador =
-    snap.val();
+        // ==================================================
+        // COMPATIBILIDADE COM BLOQUEIOS ANTIGOS
+        // ==================================================
 
+        if (
+          Object.keys(fila).length === 0 &&
+          jogador.diamanteBloqueioPendente === true
+        ) {
+          const legadoId =
+            jogador.diamanteBloqueioId ||
+            (
+              "diamante-legado-" +
+              Date.now().toString(36)
+            );
 
-  if(
-    jogador.diamanteBloqueioPendente !== true
-  ){
+          fila[legadoId] = {
+            id:
+              legadoId,
 
-    return false;
-  }
+            autorId:
+              null,
 
+            criadoEm:
+              Number(
+                jogador.diamanteBloqueioRecebidoEm ||
+                Date.now()
+              )
+          };
+        }
 
-  // Bloqueia imediatamente a questão atual
-  bloquearInteracaoLocalDuranteDiamante();
+        const ids =
+          Object.keys(fila)
+            .sort(
+              (a, b) =>
+                Number(
+                  fila[a]?.criadoEm || 0
+                ) -
+                Number(
+                  fila[b]?.criadoEm || 0
+                )
+            );
 
+        if (!ids.length) {
+          return;
+        }
 
-  const bloqueioId =
-    jogador.diamanteBloqueioId ||
-    null;
+        const bloqueioId =
+          ids[0];
 
+        const dadosBloqueio =
+          fila[bloqueioId] ||
+          {};
 
-  await update(
+        delete fila[bloqueioId];
 
-    jogadorRef,
+        const restantes =
+          Object.keys(fila)
+            .sort(
+              (a, b) =>
+                Number(
+                  fila[a]?.criadoEm || 0
+                ) -
+                Number(
+                  fila[b]?.criadoEm || 0
+                )
+            );
 
-    {
+        const proximoId =
+          restantes.length
+            ? restantes[0]
+            : null;
 
-      diamanteBloqueioPendente:false,
+        const historico = {
+          ...(
+            arena.historicoDiamantes ||
+            {}
+          )
+        };
 
-      diamanteBloqueioId:null,
+        if (
+          historico[bloqueioId]
+        ) {
+          historico[bloqueioId] = {
+            ...historico[bloqueioId],
 
-      diamanteBloqueioConsumidoEm:
-        serverTimestamp(),
+            status:
+              "concluido",
 
-      diamanteBloqueiosRecebidos:
+            concluidoEm:
+              Date.now()
+          };
+        }
 
-        Number(
-          jogador.diamanteBloqueiosRecebidos || 0
-        ) + 1
-    }
-  );
+        competidores[jogadorId] = {
+          ...jogador,
 
+          diamanteBloqueioPendente:
+            restantes.length > 0,
 
-  if(bloqueioId){
+          diamanteBloqueioId:
+            proximoId,
 
-    await update(
+          diamanteBloqueiosPendentes:
+            fila,
 
-      ref(
+          diamanteBloqueioConsumidoEm:
+            Date.now(),
 
-        database,
+          diamanteBloqueiosRecebidos:
+            Number(
+              jogador.diamanteBloqueiosRecebidos ||
+              0
+            ) + 1
+        };
 
-        `${RAIZ}/arenas/${arenaId}/historicoDiamantes/${bloqueioId}`
+        consumido = {
+          id:
+            bloqueioId,
 
-      ),
+          autorId:
+            dadosBloqueio.autorId ||
+            null,
 
-      {
+          aindaHaPendentes:
+            restantes.length > 0,
 
-        status:
-          "concluido",
+          proximoId
+        };
 
-        concluidoEm:
-          serverTimestamp()
+        return {
+          ...arena,
+
+          competidores,
+
+          historicoDiamantes:
+            historico
+        };
       }
     );
+
+  if (
+    !resultado.committed ||
+    !consumido
+  ) {
+    return false;
   }
 
+  bloquearInteracaoLocalDuranteDiamante();
 
+  // Mantemos retorno booleano para compatibilidade
+  // com o estudante.html existente.
   return true;
 }
 
+// ======================================================
+// CONSULTAR QUANTIDADE PENDENTE
+// ======================================================
+
+export function quantidadeBloqueiosPendentes(
+  competidor = {}
+) {
+  const fila =
+    competidor?.diamanteBloqueiosPendentes ||
+    {};
+
+  const quantidade =
+    Object.keys(fila).length;
+
+  if (quantidade > 0) {
+    return quantidade;
+  }
+
+  return competidor?.diamanteBloqueioPendente
+    ? 1
+    : 0;
+}
 
 // ======================================================
-// HISTÓRICO DO DIAMANTE
+// HISTÓRICO DO PROFESSOR
 // ======================================================
 
 export function observarHistoricoDiamante(
-
   codigo,
   callback
-
-){
-
+) {
   const database = banco();
-
-  const arenaId =
-    caminhoSeguro(codigo);
-
+  const arenaId = caminhoSeguro(codigo);
 
   return onValue(
-
     ref(
-
       database,
-
       `${RAIZ}/arenas/${arenaId}/historicoDiamantes`
-
     ),
 
-    snap =>
-
+    snapshot =>
       callback(
-
-        snap.exists()
-          ? snap.val()
+        snapshot.exists()
+          ? snapshot.val()
           : {}
-
       )
   );
 }
