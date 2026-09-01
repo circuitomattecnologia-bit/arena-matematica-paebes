@@ -71,6 +71,19 @@ button:disabled,select:disabled{opacity:.42;cursor:not-allowed}
 <div class="status"><strong>Distribuição quando o nível estiver em “Misto”</strong><div class="nivelGrid"><label>Abaixo do Básico (%)<input id="pctAbb" type="number" value="40"></label><label>Básico (%)<input id="pctBasico" type="number" value="30"></label><label>Proficiente (%)<input id="pctProficiente" type="number" value="20"></label><label>Avançado (%)<input id="pctAvancado" type="number" value="10"></label></div></div>
 <div class="actions"><button class="primary" onclick="criarArena()">⚔️ CRIAR ARENA</button><button class="gray" onclick="marcarPrincipais()">✓ Selecionar principais</button><button class="gray" onclick="limpar()">Limpar seleção</button></div>
 <div class="arena-code"><span>CÓDIGO DE ACESSO</span><strong id="codigo">---</strong></div>
+<div class="status" style="margin-top:14px;border-left-color:#facc15">
+  <strong>↩ RETOMAR ARENA ANTERIOR</strong>
+  <div class="two" style="margin-top:10px">
+    <div>
+      <label style="margin-top:0">Código da Arena</label>
+      <input id="codigoRetomar" placeholder="Ex.: MAT-1234" maxlength="20" autocomplete="off">
+    </div>
+    <div style="display:flex;align-items:end">
+      <button class="gold" style="width:100%" onclick="retomarArenaAnterior()">↩ RETOMAR ARENA</button>
+    </div>
+  </div>
+  <div class="small" style="margin-top:8px">Recupera a Arena pelo código mantendo participantes, progresso, pontuação e estado salvo.</div>
+</div>
 </section>
 
 <section class="card">
@@ -135,7 +148,7 @@ button:disabled,select:disabled{opacity:.42;cursor:not-allowed}
 </div>
 
 <script type="module">
-import {iniciarFirebase,salvarArena,observarArena,observarCompetidores,liberarEntrada,bloquearEntrada,definirStatusArena,registrarEvento,criarDuelo,observarDueloAtual,liberarBossFinal,observarBossFinal,criarEventoEspecial,observarEventoEspecial,atualizarCompetidor} from "./js/firebase-service.js";
+import {iniciarFirebase,salvarArena,observarArena,observarCompetidores,liberarEntrada,bloquearEntrada,definirStatusArena,registrarEvento,criarDuelo,observarDueloAtual,liberarBossFinal,observarBossFinal,criarEventoEspecial,observarEventoEspecial,atualizarCompetidor,retomarArena} from "./js/firebase-service.js";
 import {gerarQuestoesArena,HABILIDADES_PAEBES} from "./js/question-bank.js";
 import {metaDiamante,observarHistoricoDiamante} from "./js/diamante-service.js";
 iniciarFirebase();
@@ -346,6 +359,31 @@ function conectarArena(cod){
   relogioMonitor=setInterval(()=>atualizarMonitor(arenaLocal()?.competidores||{}),1000);
 }
 
+window.retomarArenaAnterior=async()=>{
+  const campo=document.getElementById("codigoRetomar");
+  const cod=String(campo?.value||"").trim().toUpperCase();
+  if(!cod){alert("Digite o código da Arena que deseja retomar.");campo?.focus();return}
+  try{
+    mensagem.innerHTML=`↩ Buscando a Arena <strong>${cod}</strong>...`;
+    const a=await retomarArena(cod);
+    if(!a){throw new Error("Arena não encontrada.")}
+    salvarLocal(a);
+    restaurar(a);
+    conectarArena(a.codigo||cod);
+    if(campo)campo.value=a.codigo||cod;
+    mensagem.innerHTML=a.status==="pausada"
+      ?`⏸ Arena <strong>${a.codigo||cod}</strong> recuperada com todo o progresso. Clique em <strong>CONTINUAR</strong> quando desejar retomar a disputa.`
+      :`↩ Arena <strong>${a.codigo||cod}</strong> retomada com participantes, progresso e pontuação preservados.`;
+  }catch(e){
+    console.error(e);
+    mensagem.innerHTML=`❌ Não foi possível retomar a Arena <strong>${cod}</strong>.`;
+    alert(e?.message||"Não foi possível retomar esta Arena.");
+  }
+}
+document.getElementById("codigoRetomar")?.addEventListener("keydown",e=>{
+  if(e.key==="Enter"){e.preventDefault();window.retomarArenaAnterior()}
+});
+
 window.criarArena=async()=>{
   const sel=selecionados();if(!sel.length){alert("Selecione pelo menos um descritor.");return}
   const quantidade=Math.max(5,Math.min(40,Number(qtd.value)||40));qtd.value=quantidade;
@@ -371,7 +409,7 @@ window.bloquearCompetidorSelecionado=()=>bloquearIndividual(true);window.liberar
 const questoesDuelo=[{descritor:"D111_M",texto:"Um cubo possui quantas faces?",opcoes:["4","5","6","8","12"],correta:2},{descritor:"D074_M",texto:"Qual expressão representa uma função exponencial crescente de base 3?",opcoes:["3x","x³","(1/3)^x","3^x","x+3"],correta:3},{descritor:"D097_M",texto:"Numa PG 2, 6, 18, ... qual é o próximo termo?",opcoes:["24","36","48","54","72"],correta:3}];
 window.abrirDuelo=()=>{const a=arenaLocal(),cs=Object.values(a?.competidores||{}).filter(c=>c&&(c.id||c.jogadorId));if(cs.length<2){alert("São necessários pelo menos 2 competidores.");return}const h=cs.map(c=>`<option value="${c.id||c.jogadorId}">${c.nome||"Competidor"} — ${Number(c.xp||0)} XP</option>`).join("");dueloCompetidor1.innerHTML=h;dueloCompetidor2.innerHTML=h;if(dueloCompetidor2.options.length>1)dueloCompetidor2.selectedIndex=1;dueloPanel.classList.add("ativo")}
 window.fecharDuelo=()=>dueloPanel.classList.remove("ativo");
-window.iniciarDuelo=async()=>{const a=arenaLocal(),id1=dueloCompetidor1.value,id2=dueloCompetidor2.value;if(!a?.codigo||!id1||!id2||id1===id2){alert("Selecione dois competidores diferentes.");return}const cs=a.competidores||{},c1=cs[id1]||Object.values(cs).find(c=>(c.id||c.jogadorId)===id1),c2=cs[id2]||Object.values(cs).find(c=>(c.id||c.jogadorId)===id2),q=questoesDuelo[Math.floor(Math.random()*questoesDuelo.length)];const dueloId=await criarDuelo(a.codigo,{competidor1Id:id1,competidor1Nome:c1?.nome||"Competidor 1",competidor2Id:id2,competidor2Nome:c2?.nome||"Competidor 2",descritor:q.descritor,pergunta:q.texto,opcoes:q.opcoes,correta:q.correta,bonusXP:200});await registrarEvento(a.codigo,{nome:"DUELO MATEMÁTICO",tipo:"duelo_iniciado",dueloId,momento:new Date().toISOString()});dueloStatusProfessor.innerHTML=`⚔️ <strong>DUELO INICIADO:</strong> ${c1?.nome} × ${c2?.nome}.`}
+window.iniciarDuelo=async()=>{const a=arenaLocal(),id1=dueloCompetidor1.value,id2=dueloCompetidor2.value;if(!a?.codigo||!id1||!id2||id1===id2){alert("Selecione dois competidores diferentes.");return}const cs=a.competidores||{},c1=cs[id1]||Object.values(cs).find(c=>(c.id||c.jogadorId)===id1),c2=cs[id2]||Object.values(cs).find(c=>(c.id||c.jogadorId)===id2),q=questoesDuelo[Math.floor(Math.random()*questoesDuelo.length)];await criarDuelo(a.codigo,{competidor1Id:id1,competidor1Nome:c1?.nome||"Competidor 1",competidor2Id:id2,competidor2Nome:c2?.nome||"Competidor 2",descritor:q.descritor,pergunta:q.texto,opcoes:q.opcoes,correta:q.correta,bonusXP:200});dueloStatusProfessor.innerHTML=`⚔️ <strong>DUELO INICIADO:</strong> ${c1?.nome} × ${c2?.nome}.`}
 function renderDueloProfessor(d){if(!d)return;dueloPanel.classList.add("ativo");dueloStatusProfessor.innerHTML=d.status==="encerrado"?`🏆 <strong>VENCEDOR:</strong> ${d.vencedorNome||"Competidor"} — +${Number(d.bonusXP||200)} XP.`:`⚔️ <strong>DUELO EM ANDAMENTO:</strong> ${d.competidor1Nome} × ${d.competidor2Nome}.`}
 
 const eventos={relampago:{nome:"QUESTÃO RELÂMPAGO",tipo:"relampago",descritor:"D097_M",pergunta:"Numa PG 3, 9, 27, ... qual é o próximo termo?",opcoes:["36","54","72","81","90"],correta:3,bonusXP:200},bonus:{nome:"BÔNUS PAEBES",tipo:"bonus",descritor:"D038_M",pergunta:"Um produto de R$ 200 recebeu desconto de 25%. Qual o desconto?",opcoes:["R$ 25","R$ 40","R$ 50","R$ 75","R$ 150"],correta:2,bonusXP:150},cacada:{nome:"CAÇADA AO LÍDER",tipo:"cacada",descritor:"D038_M",pergunta:"18 de 24 estudantes acertaram. Qual percentual?",opcoes:["60%","65%","70%","75%","80%"],correta:3,bonusXP:250},escudo:{nome:"ESCUDO MATEMÁTICO",tipo:"escudo",descritor:"D111_M",pergunta:"Um prisma triangular possui quantas faces?",opcoes:["4","5","6","7","8"],correta:1,bonusXP:50}};
