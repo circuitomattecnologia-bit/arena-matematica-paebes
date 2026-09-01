@@ -29,13 +29,15 @@ let db = null;
 
 const RAIZ = "arenaMatematica";
 
+// ======================================================
+// INICIALIZAÇÃO
+// ======================================================
+
 export function iniciarFirebase() {
   if (!app) {
-    if (getApps().length > 0) {
-      app = getApp();
-    } else {
-      app = initializeApp(FIREBASE.configuracao);
-    }
+    app = getApps().length > 0
+      ? getApp()
+      : initializeApp(FIREBASE.configuracao);
 
     db = getDatabase(app);
     console.log("🔥 Firebase inicializado.");
@@ -80,7 +82,10 @@ export async function salvarArena(codigo, dados = {}) {
     atualizadoEm: serverTimestamp()
   };
 
-  await set(ref(database, `${RAIZ}/arenas/${arenaId}`), arena);
+  await set(
+    ref(database, `${RAIZ}/arenas/${arenaId}`),
+    arena
+  );
 
   return arena;
 }
@@ -88,6 +93,8 @@ export async function salvarArena(codigo, dados = {}) {
 export async function buscarArena(codigo) {
   const database = banco();
   const arenaId = caminhoSeguro(codigo);
+
+  if (!arenaId) return null;
 
   const snapshot = await get(
     ref(database, `${RAIZ}/arenas/${arenaId}`)
@@ -133,6 +140,26 @@ export async function removerArena(codigo) {
 }
 
 // ======================================================
+// RETOMAR ARENA EXISTENTE
+// ======================================================
+
+export async function retomarArena(codigo) {
+  const arena = await buscarArena(codigo);
+
+  if (!arena) {
+    throw new Error("Arena não encontrada.");
+  }
+
+  if (arena.status === "encerrada") {
+    throw new Error(
+      "Esta Arena já foi encerrada. Utilize a função de reutilizar Arena para criar uma nova disputa."
+    );
+  }
+
+  return arena;
+}
+
+// ======================================================
 // ENTRADA / REENTRADA DO ESTUDANTE
 // ======================================================
 
@@ -153,45 +180,73 @@ export async function entrarNaArena(codigo, competidor = {}) {
 
   const nomeRecebido = String(
     competidor.nome || competidor.name || ""
-  ).trim().toLowerCase();
+  )
+    .trim()
+    .toLowerCase();
 
   const encontrados = Object.entries(competidoresExistentes)
     .filter(([, dados]) =>
-      String(dados?.nome || "").trim().toLowerCase() === nomeRecebido
+      String(dados?.nome || "")
+        .trim()
+        .toLowerCase() === nomeRecebido
     )
-    .sort(([, a], [, b]) => Number(b?.xp || 0) - Number(a?.xp || 0));
+    .sort(
+      ([, a], [, b]) =>
+        Number(b?.xp || 0) - Number(a?.xp || 0)
+    );
 
   const registroExistente =
     encontrados.length > 0 ? encontrados[0] : null;
 
   const idInformado =
-    competidor.id || competidor.jogadorId || competidor.uid || null;
+    competidor.id ||
+    competidor.jogadorId ||
+    competidor.uid ||
+    null;
 
   const idInformadoExiste = Boolean(
     idInformado && competidoresExistentes[idInformado]
   );
 
-  const ehReentrada = Boolean(idInformadoExiste || registroExistente);
+  const ehReentrada = Boolean(
+    idInformadoExiste || registroExistente
+  );
 
-  const dadosRegistroExistente =
-    idInformadoExiste
-      ? competidoresExistentes[idInformado]
-      : (registroExistente ? registroExistente[1] : null);
+  const dadosRegistroExistente = idInformadoExiste
+    ? competidoresExistentes[idInformado]
+    : registroExistente
+      ? registroExistente[1]
+      : null;
 
   if (dadosRegistroExistente?.bloqueado === true) {
-    throw new Error("Seu acesso a esta Arena está bloqueado pelo professor.");
+    throw new Error(
+      "Seu acesso a esta Arena está bloqueado pelo professor."
+    );
   }
 
+  // Reentrada continua permitida mesmo se novas entradas estiverem bloqueadas
   if (!ehReentrada) {
-    if (arena.entradaLiberada === false || arena.aceitaNovos === false) {
-      throw new Error("A entrada de estudantes está bloqueada.");
+    if (
+      arena.entradaLiberada === false ||
+      arena.aceitaNovos === false
+    ) {
+      throw new Error(
+        "A entrada de novos estudantes está bloqueada."
+      );
     }
 
-    const limite = Math.max(1, Number(arena.limite || 60));
-    const totalAtual = Object.keys(competidoresExistentes).length;
+    const limite = Math.max(
+      1,
+      Number(arena.limite || 60)
+    );
+
+    const totalAtual =
+      Object.keys(competidoresExistentes).length;
 
     if (totalAtual >= limite) {
-      throw new Error("O limite de participantes desta Arena foi atingido.");
+      throw new Error(
+        "O limite de participantes desta Arena foi atingido."
+      );
     }
   }
 
@@ -208,43 +263,119 @@ export async function entrarNaArena(codigo, competidor = {}) {
   const dadosCompetidor = {
     ...dadosAnteriores,
     ...competidor,
+
     id: jogadorId,
     jogadorId,
-    nome: competidor.nome || competidor.name || dadosAnteriores.nome || "Competidor",
-    xp: Number(dadosAnteriores.xp ?? competidor.xp ?? 0),
+
+    nome:
+      competidor.nome ||
+      competidor.name ||
+      dadosAnteriores.nome ||
+      "Competidor",
+
+    xp: Number(
+      dadosAnteriores.xp ??
+      competidor.xp ??
+      0
+    ),
+
     sequencia: Number(
-      dadosAnteriores.sequencia ?? dadosAnteriores.streak ??
-      competidor.sequencia ?? competidor.streak ?? 0
+      dadosAnteriores.sequencia ??
+      dadosAnteriores.streak ??
+      competidor.sequencia ??
+      competidor.streak ??
+      0
     ),
+
     acertos: Number(
-      dadosAnteriores.acertos ?? dadosAnteriores.hits ??
-      competidor.acertos ?? competidor.hits ?? 0
+      dadosAnteriores.acertos ??
+      dadosAnteriores.hits ??
+      competidor.acertos ??
+      competidor.hits ??
+      0
     ),
-    estrelas: Number(dadosAnteriores.estrelas ?? competidor.estrelas ?? 0),
+
+    estrelas: Number(
+      dadosAnteriores.estrelas ??
+      competidor.estrelas ??
+      0
+    ),
+
     questaoAtual: Number(
-      dadosAnteriores.questaoAtual ?? dadosAnteriores.questionIndex ??
-      competidor.questaoAtual ?? competidor.questionIndex ?? 0
+      dadosAnteriores.questaoAtual ??
+      dadosAnteriores.questionIndex ??
+      competidor.questaoAtual ??
+      competidor.questionIndex ??
+      0
     ),
+
+    pontosRegulares: Number(
+      dadosAnteriores.pontosRegulares ??
+      competidor.pontosRegulares ??
+      0
+    ),
+
     regularConcluida: Boolean(
-      dadosAnteriores.regularConcluida ?? competidor.regularConcluida ?? false
+      dadosAnteriores.regularConcluida ??
+      competidor.regularConcluida ??
+      false
     ),
+
     bossFinalConcluido: Boolean(
-      dadosAnteriores.bossFinalConcluido ?? competidor.bossFinalConcluido ?? false
+      dadosAnteriores.bossFinalConcluido ??
+      competidor.bossFinalConcluido ??
+      false
     ),
+
     bossFinalAcertou: Boolean(
-      dadosAnteriores.bossFinalAcertou ?? competidor.bossFinalAcertou ?? false
+      dadosAnteriores.bossFinalAcertou ??
+      competidor.bossFinalAcertou ??
+      false
     ),
-    bloqueado: Boolean(dadosAnteriores.bloqueado ?? competidor.bloqueado ?? false),
-    jaFoiBloqueado: Boolean(
-      dadosAnteriores.jaFoiBloqueado ?? competidor.jaFoiBloqueado ?? false
+
+    bloqueado: Boolean(
+      dadosAnteriores.bloqueado ??
+      competidor.bloqueado ??
+      false
     ),
+
+    diamanteConquistado: Boolean(
+      dadosAnteriores.diamanteConquistado ??
+      competidor.diamanteConquistado ??
+      false
+    ),
+
+    diamanteDisponivel: Boolean(
+      dadosAnteriores.diamanteDisponivel ??
+      competidor.diamanteDisponivel ??
+      false
+    ),
+
+    diamanteUsado: Boolean(
+      dadosAnteriores.diamanteUsado ??
+      competidor.diamanteUsado ??
+      false
+    ),
+
+    diamanteBloqueioPendente: Boolean(
+      dadosAnteriores.diamanteBloqueioPendente ??
+      false
+    ),
+
     online: true,
-    entrouEm: dadosAnteriores.entrouEm || serverTimestamp(),
+
+    entrouEm:
+      dadosAnteriores.entrouEm ||
+      serverTimestamp(),
+
     atualizadoEm: serverTimestamp()
   };
 
   await set(
-    ref(database, `${RAIZ}/arenas/${arenaId}/competidores/${jogadorId}`),
+    ref(
+      database,
+      `${RAIZ}/arenas/${arenaId}/competidores/${jogadorId}`
+    ),
     dadosCompetidor
   );
 
@@ -264,7 +395,9 @@ export async function atualizarCompetidor(
   const arenaId = caminhoSeguro(codigo);
 
   if (!jogadorId) {
-    throw new Error("ID do competidor não informado.");
+    throw new Error(
+      "ID do competidor não informado."
+    );
   }
 
   await update(
@@ -279,7 +412,10 @@ export async function atualizarCompetidor(
   );
 }
 
-export async function buscarCompetidor(codigo, jogadorId) {
+export async function buscarCompetidor(
+  codigo,
+  jogadorId
+) {
   const database = banco();
   const arenaId = caminhoSeguro(codigo);
 
@@ -295,7 +431,10 @@ export async function buscarCompetidor(codigo, jogadorId) {
   return snapshot.val();
 }
 
-export function observarCompetidores(codigo, callback) {
+export function observarCompetidores(
+  codigo,
+  callback
+) {
   const database = banco();
   const arenaId = caminhoSeguro(codigo);
 
@@ -305,12 +444,19 @@ export function observarCompetidores(codigo, callback) {
       `${RAIZ}/arenas/${arenaId}/competidores`
     ),
     snapshot => {
-      callback(snapshot.exists() ? snapshot.val() : {});
+      callback(
+        snapshot.exists()
+          ? snapshot.val()
+          : {}
+      );
     }
   );
 }
 
-export async function removerCompetidor(codigo, jogadorId) {
+export async function removerCompetidor(
+  codigo,
+  jogadorId
+) {
   const database = banco();
   const arenaId = caminhoSeguro(codigo);
 
@@ -350,14 +496,24 @@ export async function salvarResposta(
   return referencia.key;
 }
 
-export function observarRespostas(codigo, callback) {
+export function observarRespostas(
+  codigo,
+  callback
+) {
   const database = banco();
   const arenaId = caminhoSeguro(codigo);
 
   return onValue(
-    ref(database, `${RAIZ}/arenas/${arenaId}/respostas`),
+    ref(
+      database,
+      `${RAIZ}/arenas/${arenaId}/respostas`
+    ),
     snapshot => {
-      callback(snapshot.exists() ? snapshot.val() : {});
+      callback(
+        snapshot.exists()
+          ? snapshot.val()
+          : {}
+      );
     }
   );
 }
@@ -366,12 +522,18 @@ export function observarRespostas(codigo, callback) {
 // EVENTOS EM TEMPO REAL
 // ======================================================
 
-export async function registrarEvento(codigo, evento = {}) {
+export async function registrarEvento(
+  codigo,
+  evento = {}
+) {
   const database = banco();
   const arenaId = caminhoSeguro(codigo);
 
   const referencia = push(
-    ref(database, `${RAIZ}/arenas/${arenaId}/eventos`)
+    ref(
+      database,
+      `${RAIZ}/arenas/${arenaId}/eventos`
+    )
   );
 
   await set(referencia, {
@@ -382,54 +544,86 @@ export async function registrarEvento(codigo, evento = {}) {
   return referencia.key;
 }
 
-export function observarEventos(codigo, callback) {
+export function observarEventos(
+  codigo,
+  callback
+) {
   const database = banco();
   const arenaId = caminhoSeguro(codigo);
 
   return onValue(
-    ref(database, `${RAIZ}/arenas/${arenaId}/eventos`),
+    ref(
+      database,
+      `${RAIZ}/arenas/${arenaId}/eventos`
+    ),
     snapshot => {
-      callback(snapshot.exists() ? snapshot.val() : {});
+      callback(
+        snapshot.exists()
+          ? snapshot.val()
+          : {}
+      );
     }
   );
 }
-
 
 // ======================================================
 // DUELO MATEMÁTICO
 // ======================================================
 
-export async function criarDuelo(codigo, duelo = {}) {
+export async function criarDuelo(
+  codigo,
+  duelo = {}
+) {
   const database = banco();
   const arenaId = caminhoSeguro(codigo);
-  const dueloId = duelo.id || criarId("duelo");
+
+  const dueloId =
+    duelo.id || criarId("duelo");
 
   const dados = {
     ...duelo,
+
     id: dueloId,
     status: "ativo",
+
     vencedorId: null,
     vencedorNome: null,
+
     respostas: {},
+
     criadoEm: serverTimestamp(),
     atualizadoEm: serverTimestamp()
   };
 
   await set(
-    ref(database, `${RAIZ}/arenas/${arenaId}/dueloAtual`),
+    ref(
+      database,
+      `${RAIZ}/arenas/${arenaId}/dueloAtual`
+    ),
     dados
   );
 
   return dueloId;
 }
 
-export function observarDueloAtual(codigo, callback) {
+export function observarDueloAtual(
+  codigo,
+  callback
+) {
   const database = banco();
   const arenaId = caminhoSeguro(codigo);
 
   return onValue(
-    ref(database, `${RAIZ}/arenas/${arenaId}/dueloAtual`),
-    snapshot => callback(snapshot.exists() ? snapshot.val() : null)
+    ref(
+      database,
+      `${RAIZ}/arenas/${arenaId}/dueloAtual`
+    ),
+    snapshot =>
+      callback(
+        snapshot.exists()
+          ? snapshot.val()
+          : null
+      )
   );
 }
 
@@ -440,45 +634,85 @@ export async function responderDuelo(
 ) {
   const database = banco();
   const arenaId = caminhoSeguro(codigo);
-  const dueloRef = ref(database, `${RAIZ}/arenas/${arenaId}/dueloAtual`);
+
+  const dueloRef = ref(
+    database,
+    `${RAIZ}/arenas/${arenaId}/dueloAtual`
+  );
+
   const snap = await get(dueloRef);
 
   if (!snap.exists()) {
-    throw new Error("Não há duelo ativo.");
+    throw new Error(
+      "Não há duelo ativo."
+    );
   }
 
   const duelo = snap.val();
 
   if (duelo.status !== "ativo") {
-    return { correta:false, vencedor:false, encerrado:true };
-  }
-
-  const participantes = [duelo.competidor1Id, duelo.competidor2Id];
-  if (!participantes.includes(jogadorId)) {
-    throw new Error("Este competidor não participa do duelo atual.");
-  }
-
-  if (duelo.respostas && duelo.respostas[jogadorId]) {
     return {
-      correta: Boolean(duelo.respostas[jogadorId].correta),
-      vencedor: duelo.vencedorId === jogadorId,
+      correta: false,
+      vencedor: false,
+      encerrado: true
+    };
+  }
+
+  const participantes = [
+    duelo.competidor1Id,
+    duelo.competidor2Id
+  ];
+
+  if (!participantes.includes(jogadorId)) {
+    throw new Error(
+      "Este competidor não participa do duelo atual."
+    );
+  }
+
+  if (
+    duelo.respostas &&
+    duelo.respostas[jogadorId]
+  ) {
+    return {
+      correta: Boolean(
+        duelo.respostas[jogadorId].correta
+      ),
+      vencedor:
+        duelo.vencedorId === jogadorId,
       jaRespondido: true
     };
   }
 
-  const correta = Number(resposta) === Number(duelo.correta);
-  const competidorSnap = await get(
-    ref(database, `${RAIZ}/arenas/${arenaId}/competidores/${jogadorId}`)
+  const correta =
+    Number(resposta) ===
+    Number(duelo.correta);
+
+  const competidorRef = ref(
+    database,
+    `${RAIZ}/arenas/${arenaId}/competidores/${jogadorId}`
   );
-  const competidor = competidorSnap.exists() ? competidorSnap.val() : {};
+
+  const competidorSnap =
+    await get(competidorRef);
+
+  const competidor =
+    competidorSnap.exists()
+      ? competidorSnap.val()
+      : {};
 
   await set(
-    ref(database, `${RAIZ}/arenas/${arenaId}/dueloAtual/respostas/${jogadorId}`),
+    ref(
+      database,
+      `${RAIZ}/arenas/${arenaId}/dueloAtual/respostas/${jogadorId}`
+    ),
     {
       resposta: Number(resposta),
       correta,
-      nome: competidor.nome || "Competidor",
-      respondidoEm: serverTimestamp()
+      nome:
+        competidor.nome ||
+        "Competidor",
+      respondidoEm:
+        serverTimestamp()
     }
   );
 
@@ -490,196 +724,399 @@ export async function responderDuelo(
       `${RAIZ}/arenas/${arenaId}/dueloAtual/vencedorId`
     );
 
-    const resultado = await runTransaction(vencedorRef, atual => {
-      if (atual) return;
-      return jogadorId;
-    });
-
-    vencedor = resultado.committed && resultado.snapshot.val() === jogadorId;
-
-    if (vencedor) {
-      const bonusXP = Number(duelo.bonusXP || 200);
-      const xpAtual = Number(competidor.xp || 0);
-
-      await update(
-        ref(database, `${RAIZ}/arenas/${arenaId}/competidores/${jogadorId}`),
-        {
-          xp: xpAtual + bonusXP,
-          atualizadoEm: serverTimestamp()
+    const resultado =
+      await runTransaction(
+        vencedorRef,
+        atual => {
+          if (atual) return;
+          return jogadorId;
         }
       );
 
-      await update(dueloRef, {
-        status: "encerrado",
-        vencedorId: jogadorId,
-        vencedorNome: competidor.nome || "Competidor",
-        encerradoEm: serverTimestamp(),
-        atualizadoEm: serverTimestamp()
-      });
+    vencedor =
+      resultado.committed &&
+      resultado.snapshot.val() === jogadorId;
+
+    if (vencedor) {
+      const bonusXP =
+        Number(
+          duelo.bonusXP || 200
+        );
+
+      // XP usando transação para impedir perda de pontos
+      await runTransaction(
+        ref(
+          database,
+          `${RAIZ}/arenas/${arenaId}/competidores/${jogadorId}/xp`
+        ),
+        atual =>
+          Number(atual || 0) + bonusXP
+      );
+
+      await update(
+        dueloRef,
+        {
+          status: "encerrado",
+
+          vencedorId:
+            jogadorId,
+
+          vencedorNome:
+            competidor.nome ||
+            "Competidor",
+
+          encerradoEm:
+            serverTimestamp(),
+
+          atualizadoEm:
+            serverTimestamp()
+        }
+      );
+
+      await registrarEvento(
+        codigo,
+        {
+          nome:
+            "DUELO MATEMÁTICO",
+
+          tipo:
+            "duelo_encerrado",
+
+          vencedorId:
+            jogadorId,
+
+          vencedorNome:
+            competidor.nome ||
+            "Competidor",
+
+          dueloId:
+            duelo.id ||
+            null,
+
+          bonusXP
+        }
+      );
     }
   }
 
-  return { correta, vencedor, bonusXP: Number(duelo.bonusXP || 200) };
+  return {
+    correta,
+    vencedor,
+    bonusXP:
+      Number(
+        duelo.bonusXP || 200
+      )
+  };
 }
 
-export async function encerrarDuelo(codigo, motivo = "encerrado") {
+export async function encerrarDuelo(
+  codigo,
+  motivo = "encerrado"
+) {
   const database = banco();
   const arenaId = caminhoSeguro(codigo);
 
   await update(
-    ref(database, `${RAIZ}/arenas/${arenaId}/dueloAtual`),
+    ref(
+      database,
+      `${RAIZ}/arenas/${arenaId}/dueloAtual`
+    ),
     {
       status: motivo,
-      encerradoEm: serverTimestamp(),
-      atualizadoEm: serverTimestamp()
+      encerradoEm:
+        serverTimestamp(),
+      atualizadoEm:
+        serverTimestamp()
     }
   );
 }
-
 
 // ======================================================
 // BOSS FINAL
 // ======================================================
 
-export async function liberarBossFinal(codigo, boss = {}) {
+export async function liberarBossFinal(
+  codigo,
+  boss = {}
+) {
   const database = banco();
   const arenaId = caminhoSeguro(codigo);
 
   const dados = {
     status: "liberado",
-    titulo: boss.titulo || "BOSS FINAL",
-    descriptor: boss.descriptor || "DESAFIO FINAL",
-    level: boss.level || "BOSS",
-    text: boss.text || "Uma escola realizou uma atividade com 40 estudantes. 75% participaram e, entre os participantes, 1/3 acertou o desafio final. Quantos estudantes acertaram?",
-    options: boss.options || ["8 estudantes","10 estudantes","12 estudantes","15 estudantes","30 estudantes"],
-    correct: Number(boss.correct ?? 1),
-    bonusXP: Number(boss.bonusXP || 300),
-    liberadoEm: serverTimestamp(),
-    atualizadoEm: serverTimestamp()
+
+    titulo:
+      boss.titulo ||
+      "BOSS FINAL",
+
+    descriptor:
+      boss.descriptor ||
+      "DESAFIO FINAL",
+
+    level:
+      boss.level ||
+      "BOSS",
+
+    text:
+      boss.text ||
+      "Uma escola realizou uma atividade com 40 estudantes. 75% participaram e, entre os participantes, 1/3 acertou o desafio final. Quantos estudantes acertaram?",
+
+    options:
+      boss.options ||
+      [
+        "8 estudantes",
+        "10 estudantes",
+        "12 estudantes",
+        "15 estudantes",
+        "30 estudantes"
+      ],
+
+    correct:
+      Number(
+        boss.correct ?? 1
+      ),
+
+    bonusXP:
+      Number(
+        boss.bonusXP || 300
+      ),
+
+    liberadoEm:
+      serverTimestamp(),
+
+    atualizadoEm:
+      serverTimestamp()
   };
 
-  await set(ref(database, `${RAIZ}/arenas/${arenaId}/bossFinal`), dados);
+  await set(
+    ref(
+      database,
+      `${RAIZ}/arenas/${arenaId}/bossFinal`
+    ),
+    dados
+  );
 
-  await registrarEvento(codigo, {
-    nome: "BOSS FINAL",
-    tipo: "boss_final",
-    texto: "👑 BOSS FINAL liberado! O desafio final já está disponível."
-  });
+  await registrarEvento(
+    codigo,
+    {
+      nome:
+        "BOSS FINAL",
+
+      tipo:
+        "boss_final",
+
+      texto:
+        "👑 BOSS FINAL liberado! O desafio final já está disponível."
+    }
+  );
 
   return dados;
 }
 
-export async function responderBossFinal(codigo, jogadorId, resposta) {
+export async function responderBossFinal(
+  codigo,
+  jogadorId,
+  resposta
+) {
   const database = banco();
   const arenaId = caminhoSeguro(codigo);
 
-  const bossRef = ref(database, `${RAIZ}/arenas/${arenaId}/bossFinal`);
+  const bossRef = ref(
+    database,
+    `${RAIZ}/arenas/${arenaId}/bossFinal`
+  );
+
   const bossSnap = await get(bossRef);
-  if (!bossSnap.exists()) throw new Error("Boss Final ainda não foi liberado.");
+
+  if (!bossSnap.exists()) {
+    throw new Error(
+      "Boss Final ainda não foi liberado."
+    );
+  }
 
   const boss = bossSnap.val();
-  if (boss.status !== "liberado") throw new Error("Boss Final não está ativo.");
+
+  if (boss.status !== "liberado") {
+    throw new Error(
+      "Boss Final não está ativo."
+    );
+  }
 
   const respostaRef = ref(
     database,
     `${RAIZ}/arenas/${arenaId}/bossFinal/respostas/${jogadorId}`
   );
-  const respostaSnap = await get(respostaRef);
+
+  const respostaSnap =
+    await get(respostaRef);
 
   if (respostaSnap.exists()) {
-    return { ...respostaSnap.val(), jaRespondido: true };
+    return {
+      ...respostaSnap.val(),
+      jaRespondido: true
+    };
   }
 
-  const correta = Number(resposta) === Number(boss.correct);
-  const bonusXP = correta ? Number(boss.bonusXP || 300) : 0;
+  const correta =
+    Number(resposta) ===
+    Number(boss.correct);
 
-  const competidorRef = ref(
-    database,
-    `${RAIZ}/arenas/${arenaId}/competidores/${jogadorId}`
-  );
-  const competidorSnap = await get(competidorRef);
-  const competidor = competidorSnap.exists() ? competidorSnap.val() : {};
+  const bonusXP =
+    correta
+      ? Number(
+          boss.bonusXP || 300
+        )
+      : 0;
 
   if (correta && bonusXP > 0) {
-    await update(competidorRef, {
-      xp: Number(competidor.xp || 0) + bonusXP,
-      bossFinalConcluido: true,
-      bossFinalAcertou: true,
-      atualizadoEm: serverTimestamp()
-    });
-  } else {
-    await update(competidorRef, {
-      bossFinalConcluido: true,
-      bossFinalAcertou: false,
-      atualizadoEm: serverTimestamp()
-    });
+    await runTransaction(
+      ref(
+        database,
+        `${RAIZ}/arenas/${arenaId}/competidores/${jogadorId}/xp`
+      ),
+      atual =>
+        Number(atual || 0) + bonusXP
+    );
   }
+
+  await atualizarCompetidor(
+    codigo,
+    jogadorId,
+    {
+      bossFinalConcluido: true,
+      bossFinalAcertou: correta
+    }
+  );
+
+  const competidor =
+    await buscarCompetidor(
+      codigo,
+      jogadorId
+    );
 
   const resultado = {
     jogadorId,
-    nome: competidor.nome || "Competidor",
-    resposta: Number(resposta),
+
+    nome:
+      competidor?.nome ||
+      "Competidor",
+
+    resposta:
+      Number(resposta),
+
     correta,
+
     bonusXP,
-    respondidoEm: serverTimestamp()
+
+    respondidoEm:
+      serverTimestamp()
   };
 
-  await set(respostaRef, resultado);
+  await set(
+    respostaRef,
+    resultado
+  );
+
   return resultado;
 }
 
-export function observarBossFinal(codigo, callback) {
+export function observarBossFinal(
+  codigo,
+  callback
+) {
   const database = banco();
   const arenaId = caminhoSeguro(codigo);
 
   return onValue(
-    ref(database, `${RAIZ}/arenas/${arenaId}/bossFinal`),
-    snapshot => callback(snapshot.exists() ? snapshot.val() : null)
+    ref(
+      database,
+      `${RAIZ}/arenas/${arenaId}/bossFinal`
+    ),
+    snapshot =>
+      callback(
+        snapshot.exists()
+          ? snapshot.val()
+          : null
+      )
   );
 }
 
-
-
 // ======================================================
-// EVENTOS ESPECIAIS JOGÁVEIS
+// EVENTOS ESPECIAIS
 // ======================================================
 
-export async function criarEventoEspecial(codigo, evento = {}) {
+export async function criarEventoEspecial(
+  codigo,
+  evento = {}
+) {
   const database = banco();
   const arenaId = caminhoSeguro(codigo);
-  const eventoId = evento.id || criarId("especial");
+
+  const eventoId =
+    evento.id ||
+    criarId("especial");
 
   const dados = {
     ...evento,
+
     id: eventoId,
     status: "ativo",
+
     respostas: {},
-    criadoEm: serverTimestamp(),
-    atualizadoEm: serverTimestamp()
+
+    criadoEm:
+      serverTimestamp(),
+
+    atualizadoEm:
+      serverTimestamp()
   };
 
   await set(
-    ref(database, `${RAIZ}/arenas/${arenaId}/eventoEspecialAtual`),
+    ref(
+      database,
+      `${RAIZ}/arenas/${arenaId}/eventoEspecialAtual`
+    ),
     dados
   );
 
-  await registrarEvento(codigo, {
-    nome: evento.nome || "EVENTO ESPECIAL",
-    tipo: "evento_especial",
-    eventoId,
-    momento: new Date().toISOString()
-  });
+  await registrarEvento(
+    codigo,
+    {
+      nome:
+        evento.nome ||
+        "EVENTO ESPECIAL",
+
+      tipo:
+        "evento_especial",
+
+      eventoId,
+
+      momento:
+        new Date().toISOString()
+    }
+  );
 
   return eventoId;
 }
 
-export function observarEventoEspecial(codigo, callback) {
+export function observarEventoEspecial(
+  codigo,
+  callback
+) {
   const database = banco();
   const arenaId = caminhoSeguro(codigo);
 
   return onValue(
-    ref(database, `${RAIZ}/arenas/${arenaId}/eventoEspecialAtual`),
-    snapshot => callback(snapshot.exists() ? snapshot.val() : null)
+    ref(
+      database,
+      `${RAIZ}/arenas/${arenaId}/eventoEspecialAtual`
+    ),
+    snapshot =>
+      callback(
+        snapshot.exists()
+          ? snapshot.val()
+          : null
+      )
   );
 }
 
@@ -696,16 +1133,22 @@ export async function responderEventoEspecial(
     `${RAIZ}/arenas/${arenaId}/eventoEspecialAtual`
   );
 
-  const eventoSnap = await get(eventoRef);
+  const eventoSnap =
+    await get(eventoRef);
 
   if (!eventoSnap.exists()) {
-    throw new Error("Não há Evento Especial ativo.");
+    throw new Error(
+      "Não há Evento Especial ativo."
+    );
   }
 
-  const evento = eventoSnap.val();
+  const evento =
+    eventoSnap.val();
 
   if (evento.status !== "ativo") {
-    throw new Error("Este Evento Especial já foi encerrado.");
+    throw new Error(
+      "Este Evento Especial já foi encerrado."
+    );
   }
 
   if (
@@ -713,7 +1156,9 @@ export async function responderEventoEspecial(
     evento.liderId &&
     evento.liderId === jogadorId
   ) {
-    throw new Error("O líder acompanha a Caçada como alvo da rodada.");
+    throw new Error(
+      "O líder acompanha a Caçada como alvo da rodada."
+    );
   }
 
   const respostaRef = ref(
@@ -721,7 +1166,8 @@ export async function responderEventoEspecial(
     `${RAIZ}/arenas/${arenaId}/eventoEspecialAtual/respostas/${jogadorId}`
   );
 
-  const respostaAnterior = await get(respostaRef);
+  const respostaAnterior =
+    await get(respostaRef);
 
   if (respostaAnterior.exists()) {
     return {
@@ -731,81 +1177,132 @@ export async function responderEventoEspecial(
   }
 
   const correta =
-    Number(resposta) === Number(evento.correta);
+    Number(resposta) ===
+    Number(evento.correta);
 
-  const competidorRef = ref(
-    database,
-    `${RAIZ}/arenas/${arenaId}/competidores/${jogadorId}`
-  );
+  const competidor =
+    await buscarCompetidor(
+      codigo,
+      jogadorId
+    ) || {};
 
-  const competidorSnap = await get(competidorRef);
-  const competidor = competidorSnap.exists()
-    ? competidorSnap.val()
-    : {};
+  const bonusXP =
+    correta
+      ? Number(
+          evento.bonusXP || 0
+        )
+      : 0;
 
-  let xpNovo = Number(competidor.xp || 0);
-  let shieldNovo = Number(
-    competidor.shield ??
-    competidor.escudo ??
-    0
-  );
-
-  const bonusXP = correta
-    ? Number(evento.bonusXP || 0)
-    : 0;
-
-  if (correta) {
-    xpNovo += bonusXP;
-
-    if (evento.tipo === "escudo") {
-      shieldNovo += 1;
-    }
+  if (correta && bonusXP > 0) {
+    await runTransaction(
+      ref(
+        database,
+        `${RAIZ}/arenas/${arenaId}/competidores/${jogadorId}/xp`
+      ),
+      atual =>
+        Number(atual || 0) + bonusXP
+    );
   }
 
-  const atualizacao = {
-    xp: xpNovo,
-    shield: shieldNovo,
-    atualizadoEm: serverTimestamp()
-  };
+  let shieldNovo =
+    Number(
+      competidor.shield ??
+      competidor.escudo ??
+      0
+    );
 
-  await update(competidorRef, atualizacao);
+  if (
+    correta &&
+    evento.tipo === "escudo"
+  ) {
+    shieldNovo += 1;
+
+    await atualizarCompetidor(
+      codigo,
+      jogadorId,
+      {
+        shield: shieldNovo
+      }
+    );
+  }
 
   const resultado = {
     jogadorId,
-    nome: competidor.nome || "Competidor",
-    resposta: Number(resposta),
+
+    nome:
+      competidor.nome ||
+      "Competidor",
+
+    resposta:
+      Number(resposta),
+
     correta,
+
     bonusXP,
-    shield: shieldNovo,
-    respondidoEm: serverTimestamp()
+
+    shield:
+      shieldNovo,
+
+    respondidoEm:
+      serverTimestamp()
   };
 
-  await set(respostaRef, resultado);
+  await set(
+    respostaRef,
+    resultado
+  );
 
   return resultado;
 }
 
-
 // ======================================================
-// CONTROLE
+// CONTROLE DA ARENA
 // ======================================================
 
 export async function liberarEntrada(codigo) {
-  await atualizarArena(codigo, {
-    entradaLiberada: true,
-    aceitaNovos: true
-  });
+  await atualizarArena(
+    codigo,
+    {
+      entradaLiberada: true,
+      aceitaNovos: true
+    }
+  );
 }
 
 export async function bloquearEntrada(codigo) {
-  await atualizarArena(codigo, {
-    entradaLiberada: false,
-    aceitaNovos: false
-  });
+  await atualizarArena(
+    codigo,
+    {
+      entradaLiberada: false,
+      aceitaNovos: false
+    }
+  );
 }
 
-export async function definirStatusArena(codigo, status) {
-  await atualizarArena(codigo, { status });
+export async function definirStatusArena(
+  codigo,
+  status
+) {
+  const permitidos = [
+    "preparacao",
+    "iniciada",
+    "pausada",
+    "continuada",
+    "encerrada"
+  ];
+
+  if (!permitidos.includes(status)) {
+    throw new Error(
+      "Status da Arena inválido."
+    );
+  }
+
+  await atualizarArena(
+    codigo,
+    {
+      status
+    }
+  );
 }
 
 // ======================================================
