@@ -3,116 +3,332 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Arena Matemática PAEBES — Professor</title>
+<title>Arena Matemática — Professor Leopoldo</title>
 <style>
 *{box-sizing:border-box}
-:root{--bg:#04101f;--card:#0c2342;--line:#23466e;--cyan:#22d3ee;--purple:#8b5cf6;--pink:#ec4899;--gold:#facc15;--green:#22c55e;--red:#ef4444;--white:#f8fafc;--muted:#a8bdd7}
-body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--white);background:radial-gradient(circle at 20% 10%,#123b6a 0,transparent 30%),radial-gradient(circle at 85% 20%,#35145e 0,transparent 28%),linear-gradient(135deg,#020817,#07162b 55%,#020817);min-height:100vh}
-header{padding:28px 5%;border-bottom:1px solid rgba(255,255,255,.1);background:rgba(3,12,27,.75)}
-.top{max-width:1450px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:20px}
-.brand small{color:var(--cyan);font-weight:900;letter-spacing:3px}.brand h1{margin:7px 0 3px;font-size:34px}.brand p{margin:0;color:var(--muted)}
-.live{padding:12px 18px;border-radius:999px;border:1px solid #ef476f;color:#ff9fb3;font-weight:900;background:#351225}
-main{max-width:1450px;margin:auto;padding:28px 5% 70px}
-.hero,.card{background:rgba(10,31,59,.94);border:1px solid var(--line);border-radius:22px;padding:25px;box-shadow:0 15px 45px rgba(0,0,0,.20)}
-.hero{margin-bottom:24px;background:linear-gradient(135deg,rgba(16,43,80,.96),rgba(8,24,48,.96))}
-.hero h2{font-size:30px;margin:0 0 10px}.hero p,.small{color:#a9bdd5;line-height:1.55}
-.badges,.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}.badge{background:#07182d;border:1px solid #28517c;padding:10px 14px;border-radius:999px;font-weight:800}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}.full{grid-column:1/-1}.card h2{margin-top:0}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-label{display:block;color:#a9c0db;font-size:13px;font-weight:900;margin:14px 0 7px}
-input,select{width:100%;padding:13px;border-radius:12px;border:1px solid #294b70;background:#06172b;color:#fff;font-size:15px}
-button{border:0;cursor:pointer;color:#fff;font-weight:900;border-radius:12px;padding:13px 17px}
-.primary{background:linear-gradient(90deg,#0ea5e9,#7c3aed,#ec4899)}.green{background:#15803d}.red{background:#b91c1c}.gold{background:#b77905}.blue{background:#155eaa}.gray{background:#243b55}
-button:disabled,select:disabled{opacity:.42;cursor:not-allowed}
-.descritores{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:15px}
-.desc{background:#071a31;border:1px solid #294c74;border-radius:12px;padding:11px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800}.desc input{width:auto}
-.configDescritores{display:grid;gap:10px;margin:15px 0}.configLinha{display:grid;grid-template-columns:1fr 180px 230px;gap:10px;align-items:center;padding:12px;border:1px solid #294b70;border-radius:12px;background:#07182d}.habilidadeLinha{grid-column:1/-1;color:#a9c0db;font-size:12px}
-.nivelGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-.status{margin-top:16px;padding:14px;border-left:4px solid var(--cyan);border-radius:10px;background:#0c2b47;color:#d9ebff}
-.arena-code{text-align:center;border:1px dashed #f5bd42;border-radius:18px;padding:18px;margin-top:18px;background:#07182d}.arena-code strong{display:block;color:#ffd166;font-size:35px;letter-spacing:4px;margin-top:8px}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat{background:#07182d;border:1px solid #24486e;border-radius:15px;padding:16px}.stat span{display:block;color:#9db5d1;font-size:13px}.stat strong{display:block;font-size:23px;margin-top:7px}
-.eventos{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.evento{padding:17px;border-radius:15px;background:#07182d;border:1px solid #294b70}.evento strong{display:block;margin-bottom:7px}.evento p{color:#a9bdd5;font-size:13px;min-height:42px}
-.ranking{margin-top:15px}.rank{display:grid;grid-template-columns:55px 1fr 130px 120px;align-items:center;gap:12px;background:#07182d;border:1px solid #24486e;border-radius:13px;padding:13px;margin-bottom:9px}.pos{font-size:21px;font-weight:900;color:var(--gold)}
-.progress{height:8px;background:#132c49;border-radius:99px;overflow:hidden;margin-top:7px}.progress div{height:100%;background:linear-gradient(90deg,#22d3ee,#8b5cf6,#ec4899)}
-.managePanel,.dueloPanel{display:none;margin-top:16px;padding:18px;border:1px solid #294b70;border-radius:15px;background:#07182d}.ativo{display:block}.dueloGrid{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:end}.dueloVs{font-size:24px;font-weight:900;color:var(--gold);padding-bottom:12px}.especialStatus{margin-top:16px;padding:14px;border-radius:13px;border:1px solid #7c3aed;background:#101c38}
+:root{
+  --bg:#06080f;--stone:#241b18;--stone2:#3b2a23;--gold:#f4c75b;--gold2:#ffdf83;
+  --red:#b91c1c;--blue:#2563eb;--cyan:#22d3ee;--green:#22c55e;--pink:#ec4899;
+  --purple:#7c3aed;--white:#fffaf0;--muted:#d4c7b6;--line:rgba(244,199,91,.28);
+  --card:rgba(22,18,19,.90);--card2:rgba(38,28,24,.92)
+}
+html{scroll-behavior:smooth}
+body{
+  margin:0;font-family:Inter,Arial,Helvetica,sans-serif;color:var(--white);min-height:100vh;
+  background:
+    radial-gradient(circle at 50% -15%,rgba(244,199,91,.24),transparent 33%),
+    radial-gradient(circle at 15% 25%,rgba(37,99,235,.16),transparent 28%),
+    radial-gradient(circle at 85% 20%,rgba(236,72,153,.12),transparent 28%),
+    linear-gradient(180deg,#100b0a,#08090d 48%,#030407);
+}
+body:before{
+  content:"";position:fixed;inset:0;pointer-events:none;opacity:.20;
+  background-image:linear-gradient(90deg,transparent 49%,rgba(255,255,255,.04) 50%,transparent 51%);
+  background-size:90px 100%;
+}
+button,input,select{font:inherit}
+button{border:0;cursor:pointer;color:#fff;font-weight:900;border-radius:14px;padding:13px 17px;transition:.2s}
+button:hover{transform:translateY(-1px)}
+button:disabled,select:disabled{opacity:.4;cursor:not-allowed;transform:none}
+input,select{
+  width:100%;padding:13px 14px;border-radius:12px;border:1px solid rgba(244,199,91,.25);
+  background:#0c0e14;color:#fff;font-size:15px;outline:none
+}
+input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(244,199,91,.08)}
+label{display:block;color:#eadfcf;font-size:13px;font-weight:900;margin:14px 0 7px}
+.primary{background:linear-gradient(90deg,#b77905,#d97706,#a855f7)}
+.green{background:#15803d}.red{background:#b91c1c}.gold{background:#a66a08}.blue{background:#155eaa}.gray{background:#374151}
 
-/* ===== NOVO: ACOMPANHAMENTO AO VIVO DO PROFESSOR ===== */
+.cover{
+  position:relative;min-height:560px;overflow:hidden;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;text-align:center;padding:40px 5%;
+  background:
+    linear-gradient(180deg,rgba(3,3,5,.16),rgba(3,3,5,.70)),
+    radial-gradient(ellipse at 50% 70%,rgba(244,199,91,.23),transparent 28%),
+    linear-gradient(180deg,#2f211a 0,#160f0d 42%,#07080d 100%);
+}
+.cover:before{
+  content:"";position:absolute;left:50%;bottom:0;transform:translateX(-50%);
+  width:min(980px,92vw);height:390px;border:22px solid rgba(183,132,77,.40);
+  border-bottom:0;border-radius:52% 52% 0 0/38% 38% 0 0;
+  box-shadow:
+    inset 0 0 0 12px rgba(60,39,27,.45),
+    0 0 80px rgba(244,199,91,.08);
+}
+.cover:after{
+  content:"";position:absolute;left:50%;bottom:0;transform:translateX(-50%);
+  width:min(760px,78vw);height:300px;
+  background:
+    repeating-linear-gradient(90deg,
+      rgba(0,0,0,0) 0 44px,
+      rgba(0,0,0,.58) 45px 72px,
+      rgba(0,0,0,0) 73px 120px);
+  clip-path:ellipse(50% 54% at 50% 100%);
+  opacity:.72
+}
+.coverContent{position:relative;z-index:3;max-width:980px}
+.kicker{letter-spacing:4px;color:var(--gold2);font-weight:1000;font-size:13px}
+.cover h1{font-size:clamp(38px,6vw,76px);line-height:.96;margin:14px 0 12px;text-shadow:0 8px 30px #000}
+.cover h1 span{display:block;color:var(--gold2)}
+.cover p{font-size:clamp(17px,2vw,24px);color:#f5e9d6;margin:0 auto;max-width:800px;line-height:1.45}
+.coverBadges{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin:22px 0}
+.coverBadge{padding:10px 15px;border:1px solid rgba(244,199,91,.35);border-radius:999px;background:rgba(0,0,0,.36);font-weight:900}
+.coverActions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:22px}
+.coverActions a{text-decoration:none}
+
+.commandBar{
+  position:sticky;top:0;z-index:20;background:rgba(7,8,12,.88);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);padding:11px 5%
+}
+.commandInner{max-width:1500px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:15px}
+.brandSmall strong{display:block;color:var(--gold2);font-size:14px}.brandSmall span{font-size:12px;color:var(--muted)}
+.live{padding:10px 14px;border:1px solid rgba(244,199,91,.30);border-radius:999px;color:#ffd98c;background:#241a12;font-weight:1000;font-size:13px}
+
+main{max-width:1500px;margin:auto;padding:30px 5% 80px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}.full{grid-column:1/-1}
+.card{
+  background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
+  border-radius:24px;padding:24px;box-shadow:0 20px 55px rgba(0,0,0,.22)
+}
+.card h2{margin:0 0 8px;font-size:26px}.card h3{margin-top:22px}
+.small{color:var(--muted);line-height:1.55}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.status{margin-top:16px;padding:14px 15px;border-left:4px solid var(--gold);border-radius:12px;background:#15141a;color:#f5ead8}
+.arena-code{text-align:center;border:1px dashed var(--gold);border-radius:18px;padding:18px;margin-top:18px;background:#100d0d}
+.arena-code strong{display:block;color:var(--gold2);font-size:38px;letter-spacing:4px;margin-top:6px}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.stat{background:#0e1016;border:1px solid rgba(244,199,91,.20);border-radius:15px;padding:15px}
+.stat span{display:block;color:#baa995;font-size:12px}.stat strong{display:block;font-size:22px;margin-top:6px}
+
+.nucleoGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:14px}
+.nucleo{
+  border:1px solid rgba(244,199,91,.22);border-radius:18px;padding:16px;background:#0f1016;
+  transition:.2s
+}
+.nucleo:hover{border-color:rgba(244,199,91,.55);transform:translateY(-1px)}
+.nucleoTopo{display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
+.nucleo h4{margin:0 0 7px;color:var(--gold2);font-size:17px}
+.nucleo p{margin:0;color:#cbbba8;font-size:13px;line-height:1.45}
+.caminho{margin-top:10px;color:#fff;font-weight:900;font-size:12px}
+.nucleo .selNucleo{width:auto;transform:scale(1.3);accent-color:#f4c75b}
+
+.descritores{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+.desc{background:#0e1118;border:1px solid rgba(244,199,91,.18);border-radius:12px;padding:11px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:900}
+.desc input{width:auto;accent-color:#f4c75b}
+.configDescritores{display:grid;gap:10px;margin:15px 0}
+.configLinha{display:grid;grid-template-columns:1fr 180px 230px;gap:10px;align-items:center;padding:12px;border:1px solid rgba(244,199,91,.18);border-radius:12px;background:#0d1016}
+.habilidadeLinha{grid-column:1/-1;color:#cdbda9;font-size:12px}
+.nivelGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+
+.mosaico{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px;margin-top:14px
+}
+.rostoCard{background:#0b0e13;border:1px solid rgba(244,199,91,.20);border-radius:18px;padding:12px;text-align:center;position:relative}
+.rostoWrap{width:72px;height:72px;border-radius:50%;margin:auto;overflow:hidden;border:3px solid #3b82f6;background:#1f2937;display:grid;place-items:center}
+.rostoWrap img{width:100%;height:100%;object-fit:cover}
+.iniciais{font-size:23px;font-weight:1000;color:#fff}
+.dot{position:absolute;right:15px;top:62px;width:13px;height:13px;border-radius:50%;border:2px solid #0b0e13;background:#22c55e}
+.rostoCard.off .rostoWrap{filter:grayscale(1);opacity:.55}.rostoCard.off .dot{background:#64748b}
+.rostoNome{font-weight:1000;margin-top:9px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rostoMeta{color:#b9aa98;font-size:11px;margin-top:3px}
+
 .monitorResumo{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:14px 0}
-.monitorResumo .mini{background:#07182d;border:1px solid #294b70;border-radius:13px;padding:13px}
-.monitorResumo .mini span{display:block;color:#9db5d1;font-size:12px}.monitorResumo .mini strong{display:block;margin-top:6px;font-size:20px}
-.monitorWrap{overflow:auto;border:1px solid #294b70;border-radius:14px;margin-top:14px}
-.monitorTable{width:100%;border-collapse:collapse;min-width:900px;background:#07182d}
-.monitorTable th,.monitorTable td{padding:12px 10px;border-bottom:1px solid #1d3b5c;text-align:left;vertical-align:middle;font-size:13px}
-.monitorTable th{position:sticky;top:0;background:#0b2442;color:#cfe8ff;z-index:1}
-.monitorTable tr:last-child td{border-bottom:0}.monitorTable tr:hover td{background:#0a2039}
+.mini{background:#0d1016;border:1px solid rgba(244,199,91,.18);border-radius:13px;padding:13px}
+.mini span{display:block;color:#b3a38f;font-size:12px}.mini strong{display:block;margin-top:5px;font-size:20px}
+.monitorWrap{overflow:auto;border:1px solid rgba(244,199,91,.18);border-radius:14px;margin-top:14px}
+.monitorTable{width:100%;border-collapse:collapse;min-width:1000px;background:#0c0f14}
+.monitorTable th,.monitorTable td{padding:12px 10px;border-bottom:1px solid #252025;text-align:left;vertical-align:middle;font-size:13px}
+.monitorTable th{position:sticky;top:0;background:#1b1514;color:#f9dfad;z-index:1}
+.estudanteCell{display:flex;align-items:center;gap:10px}.miniFoto{width:48px;height:48px;border-radius:50%;overflow:hidden;background:#1f2937;display:grid;place-items:center;border:2px solid rgba(244,199,91,.35);flex:none}
+.miniFoto img{width:100%;height:100%;object-fit:cover}.miniFoto span{font-weight:1000}
 .monitorBtn{padding:8px 10px;border-radius:9px;background:#155eaa;font-size:12px}
 .situacao{font-weight:900;white-space:nowrap}.sitRespondendo{color:#86efac}.sitAguardando{color:#fde68a}.sitEvento{color:#c4b5fd}.sitBloqueado{color:#fca5a5}.sitInativo{color:#94a3b8}
-.modalProfessor{display:none;position:fixed;inset:0;background:rgba(0,0,0,.76);z-index:9999;padding:24px;align-items:center;justify-content:center}
-.modalProfessor.aberto{display:flex}.modalBox{width:min(820px,96vw);max-height:90vh;overflow:auto;background:#081a31;border:1px solid #315b87;border-radius:20px;padding:22px;box-shadow:0 25px 80px rgba(0,0,0,.45)}
-.modalTopo{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.modalTopo h3{margin:0}.fecharModal{background:#243b55;padding:9px 12px}
-.questaoBox{margin-top:15px;background:#06172b;border:1px solid #294b70;border-radius:14px;padding:16px;line-height:1.55}.metaGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}.metaItem{background:#0c2b47;border-radius:11px;padding:11px}.metaItem span{display:block;color:#9db5d1;font-size:11px}.metaItem strong{display:block;margin-top:4px}
-.opcoesProfessor{display:grid;gap:8px;margin-top:12px}.opProfessor{padding:10px 12px;background:#07182d;border:1px solid #274c74;border-radius:10px}.opProfessor.correta{border-color:#22c55e;background:#0a3526}
-#monitorBossAviso{display:none;margin-top:14px;border-left-color:#facc15}
-@media(max-width:950px){.grid,.two,.configLinha{grid-template-columns:1fr}.descritores{grid-template-columns:repeat(3,1fr)}.stats{grid-template-columns:1fr 1fr}.eventos{grid-template-columns:1fr}.nivelGrid{grid-template-columns:1fr 1fr}.monitorResumo{grid-template-columns:1fr 1fr}.metaGrid{grid-template-columns:1fr 1fr}}
-@media(max-width:600px){.descritores{grid-template-columns:repeat(2,1fr)}.rank{grid-template-columns:45px 1fr}.top{align-items:flex-start;flex-direction:column}.monitorResumo,.metaGrid{grid-template-columns:1fr}}
+
+.eventos{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.evento{padding:17px;border-radius:15px;background:#0d1016;border:1px solid rgba(244,199,91,.18)}
+.evento strong{display:block;margin-bottom:7px;color:#ffe0a1}.evento p{color:#c7b6a2;font-size:13px;min-height:42px}
+.especialStatus{margin-top:16px;padding:14px;border-radius:13px;border:1px solid #7c3aed;background:#171127}
+
+.ranking{margin-top:15px}
+.rank{display:grid;grid-template-columns:55px 56px 1fr 130px 120px;align-items:center;gap:12px;background:#0d1016;border:1px solid rgba(244,199,91,.18);border-radius:13px;padding:13px;margin-bottom:9px}
+.pos{font-size:21px;font-weight:1000;color:var(--gold2)}
+.progress{height:8px;background:#25212a;border-radius:99px;overflow:hidden;margin-top:7px}.progress div{height:100%;background:linear-gradient(90deg,#f4c75b,#f97316,#ec4899)}
+.managePanel,.dueloPanel{display:none;margin-top:16px;padding:18px;border:1px solid rgba(244,199,91,.18);border-radius:15px;background:#0e1016}.ativo{display:block}
+.dueloGrid{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:end}.dueloVs{font-size:24px;font-weight:1000;color:var(--gold2);padding-bottom:12px}
+
+.modalProfessor{display:none;position:fixed;inset:0;background:rgba(0,0,0,.80);z-index:9999;padding:24px;align-items:center;justify-content:center}
+.modalProfessor.aberto{display:flex}.modalBox{width:min(860px,96vw);max-height:90vh;overflow:auto;background:#100f14;border:1px solid rgba(244,199,91,.35);border-radius:20px;padding:22px}
+.modalTopo{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.modalTopo h3{margin:0}.fecharModal{background:#374151;padding:9px 12px}
+.questaoBox{margin-top:15px;background:#0a0c11;border:1px solid rgba(244,199,91,.18);border-radius:14px;padding:16px;line-height:1.55}
+.metaGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.metaItem{background:#15151b;border-radius:11px;padding:11px}.metaItem span{display:block;color:#b6a792;font-size:11px}.metaItem strong{display:block;margin-top:4px}
+.opcoesProfessor{display:grid;gap:8px;margin-top:12px}.opProfessor{padding:10px 12px;background:#0d1016;border:1px solid #3a3230;border-radius:10px}.opProfessor.correta{border-color:#22c55e;background:#0a3526}
+#monitorBossAviso{display:none}
+
+@media(max-width:1000px){
+  .grid,.two,.configLinha{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}
+  .nucleoGrid{grid-template-columns:1fr}.descritores{grid-template-columns:repeat(3,1fr)}
+  .eventos{grid-template-columns:1fr}.nivelGrid{grid-template-columns:1fr 1fr}
+  .monitorResumo{grid-template-columns:1fr 1fr}.metaGrid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:620px){
+  .cover{min-height:520px}.cover h1{font-size:42px}.commandInner{align-items:flex-start;flex-direction:column}
+  .descritores{grid-template-columns:repeat(2,1fr)}.stats,.monitorResumo,.metaGrid{grid-template-columns:1fr}
+  .rank{grid-template-columns:42px 50px 1fr}.rank>div:nth-child(4),.rank>div:nth-child(5){grid-column:3}
+}
 </style>
 </head>
 <body>
-<header><div class="top"><div class="brand"><small>PROFESSOR ADILSON LEOPOLDO DOS SANTOS</small><h1>⚔️ ARENA MATEMÁTICA — RUMO AO PAEBES</h1><p>Central de comando do professor</p></div><div id="live" class="live">● ARENA EM PREPARAÇÃO</div></div></header>
+
+<section class="cover" id="topo">
+  <div class="coverContent">
+    <div class="kicker">PROFESSOR LEOPOLDO • 3º TRIMESTRE 2026</div>
+    <h1>ARENA MATEMÁTICA <span>COLISEU DO CONHECIMENTO</span></h1>
+    <p>Rumo à AMA e ao PAEBES. Uma disputa em que raciocínio, estratégia, evolução e coragem matemática entram na mesma arena.</p>
+    <div class="coverBadges">
+      <div class="coverBadge">🏛️ Coliseu Matemático</div>
+      <div class="coverBadge">🎯 AMA + PAEBES</div>
+      <div class="coverBadge">📓 Resolver no caderno</div>
+      <div class="coverBadge">🏆 Ranking ao vivo</div>
+      <div class="coverBadge">👑 Boss Final</div>
+    </div>
+    <div class="coverActions">
+      <a href="#criar"><button class="primary">⚔️ ENTRAR NO COMANDO</button></a>
+      <a href="#retomar"><button class="gold">↩ RETOMAR ARENA</button></a>
+      <a href="#mosaico"><button class="blue">👥 VER COMPETIDORES</button></a>
+    </div>
+  </div>
+</section>
+
+<div class="commandBar">
+  <div class="commandInner">
+    <div class="brandSmall"><strong>🏛️ ARENA MATEMÁTICA — PROFESSOR</strong><span>Adilson Leopoldo dos Santos</span></div>
+    <div id="live" class="live">● ARENA EM PREPARAÇÃO</div>
+  </div>
+</div>
+
 <main>
-<section class="hero"><h2>🏟️ Central de Comando da Arena</h2><p>Configure a batalha matemática, selecione os descritores, libere os competidores e acompanhe a classificação em tempo real.</p><div class="badges"><div class="badge">👥 Até 60 competidores</div><div class="badge">❓ 5 a 40 questões</div><div class="badge">🏆 Ranking ao vivo</div><div class="badge">💾 Progresso salvo</div><div class="badge">⚡ Eventos especiais</div><div class="badge">🎯 Pesos por descritor</div></div></section>
 <div class="grid">
-<section class="card">
-<h2>🎮 Criar nova Arena</h2>
-<div class="two"><div><label>Nome da Arena</label><input id="nomeArena" value="Desafio PAEBES"></div><div><label>Turma</label><select id="turma"><option>3ª M01 — Integral</option><option>3ª M01 — Técnico ADM</option><option>Unir as duas turmas</option><option>Outra turma</option></select></div></div>
-<div class="two"><div><label>Quantidade de questões</label><input id="qtd" type="number" value="40" min="5" max="40"></div><div><label>Limite de participantes</label><input id="limite" type="number" value="60" min="1" max="60"></div></div>
-<div class="status" style="border-left-color:#facc15">
+
+<section class="card" id="criar">
+<h2>⚔️ Criar nova Arena</h2>
+<p class="small">Configure a corrida principal. Todos os estudantes terão a mesma linha de chegada. As questões podem variar, mas permanecem equivalentes por etapa competitiva.</p>
+
+<div class="two">
+  <div><label>Nome da Arena</label><input id="nomeArena" value="Arena 3º Trimestre — AMA + PAEBES"></div>
+  <div><label>Turma</label><select id="turma"><option>3ª M01 — Integral</option><option>3ª M01 — Técnico ADM</option><option>Unir as duas turmas</option><option>Outra turma</option></select></div>
+</div>
+
+<div class="two">
+  <div><label>Quantidade de questões</label><input id="qtd" type="number" value="40" min="5" step="1"><div class="small">A nova versão não terá limite pedagógico fixo de 40. O banco será ampliado no próximo arquivo.</div></div>
+  <div><label>Limite de participantes</label><input id="limite" type="number" value="60" min="1" max="120"></div>
+</div>
+
+<div class="status">
   <strong>👑 CRITÉRIOS DO BOSS FINAL</strong>
   <div class="two">
-    <div>
-      <label>Mínimo de acertos do estudante para acesso automático ao Boss (%)</label>
-      <input id="bossPctAcertos" type="number" value="60" min="0" max="100">
-    </div>
-    <div>
-      <label>Mínimo de participantes que devem ter concluído as questões para permitir a liberação do Boss (%)</label>
-      <input id="bossPctConcluidos" type="number" value="70" min="0" max="100">
-    </div>
+    <div><label>Mínimo de acertos para acesso automático ao Boss (%)</label><input id="bossPctAcertos" type="number" value="60" min="0" max="100"></div>
+    <div><label>Participantes que devem concluir para liberar o Boss (%)</label><input id="bossPctConcluidos" type="number" value="70" min="0" max="100"></div>
   </div>
-  <div class="small" style="margin-top:8px">Você poderá liberar individualmente para o Boss estudantes que não atingirem o percentual de acertos ou que ainda não tenham concluído todas as questões.</div>
+  <div class="small">O professor continua podendo liberar individualmente estudantes fora do critério automático.</div>
 </div>
-<h3>📚 Selecione os descritores <span style="color:#22d3ee;font-size:13px">— 35 disponíveis</span></h3><div class="descritores" id="descritores"><label class="desc" title="D009_M"><input type="checkbox" value="D009_M"><span>D009_M</span></label><label class="desc" title="D033_M"><input type="checkbox" value="D033_M"><span>D033_M</span></label><label class="desc" title="D038_M"><input type="checkbox" value="D038_M"><span>D038_M</span></label><label class="desc" title="D039_M"><input type="checkbox" value="D039_M"><span>D039_M</span></label><label class="desc" title="D042_M"><input type="checkbox" value="D042_M"><span>D042_M</span></label><label class="desc" title="D043_M"><input type="checkbox" value="D043_M"><span>D043_M</span></label><label class="desc" title="D049_M"><input type="checkbox" value="D049_M"><span>D049_M</span></label><label class="desc" title="D051_M"><input type="checkbox" value="D051_M"><span>D051_M</span></label><label class="desc" title="D057_M"><input type="checkbox" value="D057_M"><span>D057_M</span></label><label class="desc" title="D058_M"><input type="checkbox" value="D058_M"><span>D058_M</span></label><label class="desc" title="D063_M"><input type="checkbox" value="D063_M"><span>D063_M</span></label><label class="desc" title="D064_M"><input type="checkbox" value="D064_M"><span>D064_M</span></label><label class="desc" title="D065_M"><input type="checkbox" value="D065_M"><span>D065_M</span></label><label class="desc" title="D071_M"><input type="checkbox" value="D071_M"><span>D071_M</span></label><label class="desc" title="D074_M"><input type="checkbox" value="D074_M"><span>D074_M</span></label><label class="desc" title="D076_M"><input type="checkbox" value="D076_M"><span>D076_M</span></label><label class="desc" title="D078_M"><input type="checkbox" value="D078_M"><span>D078_M</span></label><label class="desc" title="D080_M"><input type="checkbox" value="D080_M"><span>D080_M</span></label><label class="desc" title="D082_M"><input type="checkbox" value="D082_M"><span>D082_M</span></label><label class="desc" title="D085_M"><input type="checkbox" value="D085_M"><span>D085_M</span></label><label class="desc" title="D086_M"><input type="checkbox" value="D086_M"><span>D086_M</span></label><label class="desc" title="D087_M"><input type="checkbox" value="D087_M"><span>D087_M</span></label><label class="desc" title="D088_M"><input type="checkbox" value="D088_M"><span>D088_M</span></label><label class="desc" title="D096_M"><input type="checkbox" value="D096_M"><span>D096_M</span></label><label class="desc" title="D097_M"><input type="checkbox" value="D097_M"><span>D097_M</span></label><label class="desc" title="D111_M"><input type="checkbox" value="D111_M"><span>D111_M</span></label><label class="desc" title="D119_M"><input type="checkbox" value="D119_M"><span>D119_M</span></label><label class="desc" title="D124_M"><input type="checkbox" value="D124_M"><span>D124_M</span></label><label class="desc" title="D125_M"><input type="checkbox" value="D125_M"><span>D125_M</span></label><label class="desc" title="D126_M"><input type="checkbox" value="D126_M"><span>D126_M</span></label><label class="desc" title="D127_M"><input type="checkbox" value="D127_M"><span>D127_M</span></label><label class="desc" title="D129_M"><input type="checkbox" value="D129_M"><span>D129_M</span></label><label class="desc" title="D132_M"><input type="checkbox" value="D132_M"><span>D132_M</span></label><label class="desc" title="D133_M"><input type="checkbox" value="D133_M"><span>D133_M</span></label><label class="desc" title="D145_M"><input type="checkbox" value="D145_M"><span>D145_M</span></label></div>
-<div class="status">🎯 Defina o peso e o nível de cada descritor selecionado.</div><div id="configDescritores" class="configDescritores"></div>
-<div class="status"><strong>Distribuição quando o nível estiver em “Misto”</strong><div class="nivelGrid"><label>Abaixo do Básico (%)<input id="pctAbb" type="number" value="40"></label><label>Básico (%)<input id="pctBasico" type="number" value="30"></label><label>Proficiente (%)<input id="pctProficiente" type="number" value="20"></label><label>Avançado (%)<input id="pctAvancado" type="number" value="10"></label></div></div>
-<div class="actions"><button class="primary" onclick="criarArena()">⚔️ CRIAR ARENA</button><button class="gray" onclick="marcarPrincipais()">✓ Selecionar principais</button><button class="gray" onclick="limpar()">Limpar seleção</button></div>
-<div class="arena-code"><span>CÓDIGO DE ACESSO</span><strong id="codigo">---</strong></div>
-<div class="status" style="margin-top:14px;border-left-color:#facc15">
-  <strong>↩ RETOMAR ARENA ANTERIOR</strong>
-  <div class="two" style="margin-top:10px">
-    <div>
-      <label style="margin-top:0">Código da Arena</label>
-      <input id="codigoRetomar" placeholder="Ex.: MAT-1234" maxlength="20" autocomplete="off">
-    </div>
-    <div style="display:flex;align-items:end">
-      <button class="gold" style="width:100%" onclick="retomarArenaAnterior()">↩ RETOMAR ARENA</button>
-    </div>
+
+<h3>🏛️ Núcleos de Aprendizagem</h3>
+<p class="small">Selecione um núcleo inteiro ou, logo abaixo, descritores específicos. Esta organização é pedagógica da Arena e preserva os descritores oficiais.</p>
+<div id="nucleos" class="nucleoGrid"></div>
+
+<h3>📚 Descritores disponíveis</h3>
+<div class="descritores" id="descritores"></div>
+
+<div class="status">🎯 Para cada descritor selecionado, defina prioridade e nível de trabalho.</div>
+<div id="configDescritores" class="configDescritores"></div>
+
+<div class="status">
+  <strong>Distribuição quando o nível estiver em “Misto”</strong>
+  <div class="nivelGrid">
+    <label>Abaixo do Básico (%)<input id="pctAbb" type="number" value="40"></label>
+    <label>Básico (%)<input id="pctBasico" type="number" value="35"></label>
+    <label>Proficiente (%)<input id="pctProficiente" type="number" value="25"></label>
+    <label>Avançado (%)<input id="pctAvancado" type="number" value="0"></label>
   </div>
-  <div class="small" style="margin-top:8px">Recupera a Arena pelo código mantendo participantes, progresso, pontuação e estado salvo.</div>
+  <div class="small">Prioridade pedagógica: Abaixo do Básico → Básico → Proficiente. Avançado permanece opcional.</div>
+</div>
+
+<div class="actions">
+  <button class="primary" onclick="criarArena()">⚔️ CRIAR ARENA</button>
+  <button class="gold" onclick="marcarAMA()">🎯 PRIORIDADE AMA</button>
+  <button class="gray" onclick="limpar()">LIMPAR SELEÇÃO</button>
+</div>
+
+<div class="arena-code"><span>CÓDIGO DE ACESSO</span><strong id="codigo">---</strong></div>
+
+<div class="status" id="retomar">
+  <strong>↩ RETOMAR ARENA ANTERIOR</strong>
+  <div class="two">
+    <div><label>Código da Arena</label><input id="codigoRetomar" placeholder="Ex.: MAT-1234" maxlength="20" autocomplete="off"></div>
+    <div style="display:flex;align-items:end"><button class="gold" style="width:100%" onclick="retomarArenaAnterior()">↩ RETOMAR ARENA</button></div>
+  </div>
+  <div class="small">Mantém participantes, progresso, pontuação e estado. As Arenas pausadas continuam preservadas.</div>
 </div>
 </section>
 
 <section class="card">
-<h2>🎛️ Controle da disputa</h2>
-<div class="stats"><div class="stat"><span>Competidores</span><strong id="competidores">0/60</strong></div><div class="stat"><span>Questão atual</span><strong id="questaoAtual">0/40</strong></div><div class="stat"><span>Status</span><strong id="estado">Preparação</strong></div><div class="stat"><span>Líder</span><strong id="lider">—</strong></div></div>
-<div class="actions"><button class="green" onclick="acao('iniciada')">▶ INICIAR</button><button class="gold" onclick="acao('pausada')">⏸ PAUSAR</button><button class="blue" onclick="acao('continuada')">▶ CONTINUAR</button><button class="primary" onclick="liberarBoss()">👑 LIBERAR BOSS FINAL</button><button class="red" onclick="acao('encerrada')">■ ENCERRAR</button><button id="btnReutilizarArena" class="primary" onclick="reutilizarArena()" style="display:none">♻️ REUTILIZAR ARENA</button></div>
-<div id="mensagem" class="status">Aguardando criação da Arena.</div><div id="bossStatusProfessor" class="status" style="display:none;border-left-color:#facc15"></div>
-<h3>🔐 Controle de acesso</h3><div class="actions"><button class="green" onclick="liberar()">🔓 Liberar estudantes</button><button class="red" onclick="bloquear()">🔒 Bloquear novas entradas</button><button class="gray" onclick="abrirGerenciamentoIndividual()">👤 Gerenciar individualmente</button></div>
-<div id="managePanel" class="managePanel"><h3>👤 Gerenciamento individual</h3><label>Competidor</label><select id="manageCompetidor"></select><div class="actions"><button class="red" onclick="bloquearCompetidorSelecionado()">🔒 BLOQUEAR</button><button class="green" onclick="liberarCompetidorSelecionado()">🔓 LIBERAR</button><button class="red" style="background:#7f1d1d" onclick="excluirCompetidorSelecionado()">🗑 EXCLUIR PARTICIPANTE</button></div><div id="manageStatus" class="status">Selecione um competidor.</div></div>
+<h2>🎛️ Comando da disputa</h2>
+<div class="stats">
+  <div class="stat"><span>Competidores</span><strong id="competidores">0/60</strong></div>
+  <div class="stat"><span>Questão atual</span><strong id="questaoAtual">0/40</strong></div>
+  <div class="stat"><span>Status</span><strong id="estado">Preparação</strong></div>
+  <div class="stat"><span>Líder</span><strong id="lider">—</strong></div>
+</div>
+
+<div class="actions">
+  <button class="green" onclick="acao('iniciada')">▶ INICIAR</button>
+  <button class="gold" onclick="acao('pausada')">⏸ PAUSAR</button>
+  <button class="blue" onclick="acao('continuada')">▶ CONTINUAR</button>
+  <button class="primary" onclick="liberarBoss()">👑 LIBERAR BOSS FINAL</button>
+  <button class="red" onclick="acao('encerrada')">■ ENCERRAR</button>
+  <button id="btnReutilizarArena" class="primary" onclick="reutilizarArena()" style="display:none">♻️ REUTILIZAR ARENA</button>
+</div>
+
+<div id="mensagem" class="status">Aguardando criação ou retomada da Arena.</div>
+<div id="bossStatusProfessor" class="status" style="display:none"></div>
+
+<h3>🔐 Controle de acesso</h3>
+<div class="actions">
+  <button class="green" onclick="liberar()">🔓 LIBERAR ESTUDANTES</button>
+  <button class="red" onclick="bloquear()">🔒 BLOQUEAR NOVAS ENTRADAS</button>
+  <button class="gray" onclick="abrirGerenciamentoIndividual()">👤 GERENCIAR INDIVIDUALMENTE</button>
+</div>
+
+<div id="managePanel" class="managePanel">
+  <h3>👤 Gerenciamento individual</h3>
+  <label>Competidor</label><select id="manageCompetidor"></select>
+  <div class="actions">
+    <button class="red" onclick="bloquearCompetidorSelecionado()">🔒 BLOQUEAR</button>
+    <button class="green" onclick="liberarCompetidorSelecionado()">🔓 LIBERAR</button>
+    <button class="red" style="background:#7f1d1d" onclick="excluirCompetidorSelecionado()">🗑 EXCLUIR</button>
+  </div>
+  <div id="manageStatus" class="status">Selecione um competidor.</div>
+</div>
+
+<h3>📌 Regras desta reformulação</h3>
+<div class="status">
+  <strong>COMPETIÇÃO → PROGRESSÃO → BÔNUS → BOSS → RESULTADO PEDAGÓGICO</strong>
+  <div class="small">O ranking segue visível e transparente. A progressão pedagógica será registrada separadamente e poderá gerar pequeno bônus antes do Boss.</div>
+</div>
 </section>
 
-<!-- NOVO BLOCO: ACOMPANHAMENTO AO VIVO -->
-<section class="card full" id="monitorProfessorCard">
-<h2>📡 Acompanhamento ao vivo dos estudantes</h2>
-<p class="small">Visualização exclusiva do professor. Mostra o avanço individual sem alterar a pontuação, o ranking, os poderes ou a sequência de respostas do estudante.</p>
+<section class="card full" id="mosaico">
+<h2>👥 Mosaico dos Competidores</h2>
+<p class="small">Quando atualizarmos a tela do estudante, a câmera será usada somente na entrada para uma única foto. Depois fecha. Aqui aparecerão os rostos dos participantes, como em uma reunião online — sem vídeo ao vivo.</p>
+<div id="mosaicoCompetidores" class="mosaico"><div class="small">Aguardando competidores...</div></div>
+</section>
+
+<section class="card full">
+<h2>📡 Acompanhamento ao vivo</h2>
+<p class="small">Foto, nome, avanço, questão, nível e situação de cada estudante. A foto aparecerá automaticamente quando o novo acesso do estudante estiver instalado.</p>
 <div class="monitorResumo">
   <div class="mini"><span>👥 Participantes</span><strong id="monParticipantes">0</strong></div>
   <div class="mini"><span>🟢 Em atividade</span><strong id="monRespondendo">0</strong></div>
@@ -121,6 +337,7 @@ button:disabled,select:disabled{opacity:.42;cursor:not-allowed}
   <div class="mini"><span>👑 Boss</span><strong id="monBoss">Aguardando</strong></div>
 </div>
 <div id="monitorBossAviso" class="status"></div>
+
 <div class="monitorWrap">
 <table class="monitorTable">
 <thead><tr><th>Estudante</th><th>Progresso</th><th>Questão atual</th><th>Nível</th><th>Tempo</th><th>Situação</th><th>Detalhes</th></tr></thead>
@@ -129,29 +346,46 @@ button:disabled,select:disabled{opacity:.42;cursor:not-allowed}
 </div>
 </section>
 
-<section class="card full"><h2>⚡ Eventos especiais da Arena</h2><div class="eventos">
-<div class="evento"><strong>🔥 Questão Relâmpago</strong><p>Questão especial com pontuação extra.</p><button class="gold" onclick="lancarEventoEspecial('relampago',this)">DISPARAR</button></div>
-<div class="evento"><strong>⚔️ Duelo Matemático</strong><p>Dois competidores recebem o mesmo desafio.</p><button class="primary" onclick="abrirDuelo()">CRIAR DUELO</button></div>
-<div class="evento"><strong>💎 Bônus PAEBES</strong><p>Rodada surpresa com bônus de XP.</p><button class="blue" onclick="lancarEventoEspecial('bonus',this)">LIBERAR BÔNUS</button></div>
-<div class="evento"><strong>🎯 Desafio do Descritor</strong><p>Questão especial de um descritor da Arena.</p><select id="descritorEspecial"><option value="">Selecione</option></select><button class="green" style="margin-top:10px" onclick="lancarEventoEspecial('descritor',this)">LANÇAR</button></div>
-<div class="evento"><strong>👑 Caçada ao Líder</strong><p>Desafio para tentar alcançar o primeiro colocado.</p><button class="red" onclick="lancarEventoEspecial('cacada',this)">ATIVAR</button></div>
-<div class="evento"><strong>🛡️ Escudo Matemático</strong><p>Possibilidade de conquistar um escudo.</p><button class="gray" onclick="lancarEventoEspecial('escudo',this)">LIBERAR</button></div>
-</div><div id="eventoEspecialStatusProfessor" class="especialStatus">⚡ Nenhum Evento Especial jogável ativo.</div>
-<div id="dueloPanel" class="dueloPanel"><h3>⚔️ Configurar Duelo Matemático</h3><div class="dueloGrid"><div><label>Competidor 1</label><select id="dueloCompetidor1"></select></div><div class="dueloVs">VS</div><div><label>Competidor 2</label><select id="dueloCompetidor2"></select></div></div><div class="actions"><button class="primary" onclick="iniciarDuelo()">⚔️ INICIAR DUELO</button><button class="gray" onclick="fecharDuelo()">FECHAR</button></div><div id="dueloStatusProfessor" class="status">Selecione dois competidores.</div></div>
+<section class="card full">
+<h2>⚡ Eventos especiais da Arena</h2>
+<div class="eventos">
+  <div class="evento"><strong>🔥 Questão Relâmpago</strong><p>Questão especial com pontuação extra.</p><button class="gold" onclick="lancarEventoEspecial('relampago',this)">DISPARAR</button></div>
+  <div class="evento"><strong>⚔️ Duelo Matemático</strong><p>Dois competidores recebem o mesmo desafio.</p><button class="primary" onclick="abrirDuelo()">CRIAR DUELO</button></div>
+  <div class="evento"><strong>💎 Bônus AMA/PAEBES</strong><p>Rodada surpresa com bônus de XP.</p><button class="blue" onclick="lancarEventoEspecial('bonus',this)">LIBERAR BÔNUS</button></div>
+  <div class="evento"><strong>🎯 Desafio do Descritor</strong><p>Questão especial de um descritor da Arena.</p><select id="descritorEspecial"><option value="">Selecione</option></select><button class="green" style="margin-top:10px" onclick="lancarEventoEspecial('descritor',this)">LANÇAR</button></div>
+  <div class="evento"><strong>👑 Caçada ao Líder</strong><p>Desafio para tentar alcançar o primeiro colocado.</p><button class="red" onclick="lancarEventoEspecial('cacada',this)">ATIVAR</button></div>
+  <div class="evento"><strong>🛡️ Escudo Matemático</strong><p>Possibilidade de conquistar um escudo.</p><button class="gray" onclick="lancarEventoEspecial('escudo',this)">LIBERAR</button></div>
+</div>
+<div id="eventoEspecialStatusProfessor" class="especialStatus">⚡ Nenhum Evento Especial jogável ativo.</div>
+
+<div id="dueloPanel" class="dueloPanel">
+  <h3>⚔️ Configurar Duelo Matemático</h3>
+  <div class="dueloGrid">
+    <div><label>Competidor 1</label><select id="dueloCompetidor1"></select></div>
+    <div class="dueloVs">VS</div>
+    <div><label>Competidor 2</label><select id="dueloCompetidor2"></select></div>
+  </div>
+  <div class="actions"><button class="primary" onclick="iniciarDuelo()">⚔️ INICIAR DUELO</button><button class="gray" onclick="fecharDuelo()">FECHAR</button></div>
+  <div id="dueloStatusProfessor" class="status">Selecione dois competidores.</div>
+</div>
 </section>
 
 <section class="card full" id="diamanteProfessorCard">
 <h2>💎 Diamante — Poder de Bloqueio</h2>
-<p class="small">Acompanhamento exclusivo do professor. O estudante conquista 1 Diamante ao atingir 60% da pontuação máxima das questões regulares. O poder pode ser usado uma única vez e bloqueia um adversário por somente uma rodada.</p>
-<div class="status" style="border-left-color:#22d3ee">🔐 <strong>Privacidade:</strong> os estudantes não visualizam quem bloqueou quem. O detalhamento abaixo aparece somente neste painel do professor.</div>
+<p class="small">O estudante conquista 1 Diamante ao atingir 60% da pontuação máxima regular. Pode usar uma única vez para bloquear um adversário por uma rodada.</p>
+<div class="status">🔐 O detalhamento de quem bloqueou quem permanece exclusivo do professor.</div>
 <div id="diamanteMetaProfessor" class="status">💎 Meta da Arena: aguardando carregamento.</div>
-<div id="diamanteHistoricoProfessor" class="ranking"><div class="rank"><div class="pos">💎</div><div><strong>Nenhum uso registrado</strong></div><div>—</div><div>—</div></div></div>
+<div id="diamanteHistoricoProfessor" class="ranking"><div class="rank"><div class="pos">💎</div><div class="miniFoto"><span>—</span></div><div><strong>Nenhum uso registrado</strong></div><div>—</div><div>—</div></div></div>
 </section>
 
-<section class="card full"><h2>🏆 Ranking ao vivo</h2><div class="ranking" id="ranking"><div class="rank"><div class="pos">🥇</div><div><strong>Aguardando competidores...</strong><div class="progress"><div style="width:0"></div></div></div><div>0 acertos</div><div>0 XP</div></div></div></section>
-</div></main>
+<section class="card full">
+<h2>🏆 Ranking ao vivo</h2>
+<div class="ranking" id="ranking"><div class="rank"><div class="pos">🥇</div><div class="miniFoto"><span>—</span></div><div><strong>Aguardando competidores...</strong><div class="progress"><div style="width:0"></div></div></div><div>0 acertos</div><div>0 XP</div></div></div>
+</section>
 
-<!-- MODAL EXCLUSIVO DO PROFESSOR -->
+</div>
+</main>
+
 <div id="modalQuestaoProfessor" class="modalProfessor" onclick="if(event.target===this)fecharDetalheQuestao()">
   <div class="modalBox">
     <div class="modalTopo"><div><h3 id="modalTitulo">👁 Detalhes da questão</h3><div id="modalSubtitulo" class="small"></div></div><button class="fecharModal" onclick="fecharDetalheQuestao()">✕ FECHAR</button></div>
@@ -162,301 +396,245 @@ button:disabled,select:disabled{opacity:.42;cursor:not-allowed}
 </div>
 
 <script type="module">
-import {iniciarFirebase,salvarArena,observarArena,observarCompetidores,liberarEntrada,bloquearEntrada,definirStatusArena,registrarEvento,criarDuelo,observarDueloAtual,liberarBossFinal,observarBossFinal,criarEventoEspecial,observarEventoEspecial,atualizarCompetidor,removerCompetidor,retomarArena} from "./js/firebase-service.js";
+import {
+  iniciarFirebase,salvarArena,observarArena,observarCompetidores,liberarEntrada,bloquearEntrada,
+  definirStatusArena,criarDuelo,observarDueloAtual,liberarBossFinal,observarBossFinal,
+  criarEventoEspecial,observarEventoEspecial,atualizarCompetidor,removerCompetidor,retomarArena
+} from "./js/firebase-service.js";
 import {gerarQuestoesArena,HABILIDADES_PAEBES} from "./js/question-bank.js";
 import {metaDiamante,observarHistoricoDiamante} from "./js/diamante-service.js";
 iniciarFirebase();
 
-const DESCRITORES_FIXOS=['D009_M', 'D033_M', 'D038_M', 'D039_M', 'D042_M', 'D043_M', 'D049_M', 'D051_M', 'D057_M', 'D058_M', 'D063_M', 'D064_M', 'D065_M', 'D071_M', 'D074_M', 'D076_M', 'D078_M', 'D080_M', 'D082_M', 'D085_M', 'D086_M', 'D087_M', 'D088_M', 'D096_M', 'D097_M', 'D111_M', 'D119_M', 'D124_M', 'D125_M', 'D126_M', 'D127_M', 'D129_M', 'D132_M', 'D133_M', 'D145_M'];
-const listaDescritores=Object.keys(HABILIDADES_PAEBES||{}).length?Object.keys(HABILIDADES_PAEBES):DESCRITORES_FIXOS;
+const NUCLEOS=[
+  {id:"retas",nome:"Plano Cartesiano e Retas",foco:"Da localização à equação da reta.",descritores:["D009_M","D043_M","D085_M","D124_M"]},
+  {id:"circ",nome:"Circunferência no Plano",foco:"Coordenadas, centro, raio e equação.",descritores:["D043_M","D155_M"]},
+  {id:"sistemas",nome:"Sistemas Lineares e Matrizes",foco:"Representações, interseção, sistemas e matrizes.",descritores:["D043_M","D085_M","D154_M","D127_M","D157_M"]},
+  {id:"exp",nome:"Exponencial e PG",foco:"Gráfico, modelagem exponencial e progressão geométrica.",descritores:["D074_M","D088_M","D097_M"]},
+  {id:"espacial",nome:"Geometria Espacial",foco:"Planificações, poliedros, área e volume.",descritores:["D111_M","D125_M","D129_M"]},
+  {id:"trig",nome:"Trigonometria",foco:"Proporcionalidade, relações métricas e razões trigonométricas.",descritores:["D039_M","D049_M","D051_M"]},
+  {id:"funtrig",nome:"Funções Trigonométricas",foco:"Plano cartesiano, razões e gráficos trigonométricos.",descritores:["D043_M","D051_M","D071_M","D126_M"]},
+  {id:"rec",nome:"Fundamentos e Recuperação",foco:"Recomposição para avançar até o Proficiente.",descritores:["D013_M","D038_M","D039_M","D049_M","D058_M","D064_M","D087_M"]}
+];
+const AMA=["D013_M","D039_M","D043_M","D049_M","D064_M","D074_M","D085_M","D087_M","D088_M","D097_M","D111_M","D124_M","D125_M","D129_M"];
+const DESCRITORES_FIXOS=['D009_M','D033_M','D038_M','D039_M','D042_M','D043_M','D049_M','D051_M','D057_M','D058_M','D063_M','D064_M','D065_M','D071_M','D074_M','D076_M','D078_M','D080_M','D082_M','D085_M','D086_M','D087_M','D088_M','D096_M','D097_M','D111_M','D119_M','D124_M','D125_M','D126_M','D127_M','D129_M','D132_M','D133_M','D145_M'];
+
 const area=document.getElementById("descritores");
 let pararArena=null,pararCompetidores=null,pararDuelo=null,pararBoss=null,pararEspecial=null,pararHistoricoDiamante=null;
-let ultimoEventoEspecial=null,ultimoDuelo=null,ultimoBoss=null;
-let relogioMonitor=null;
+let ultimoEventoEspecial=null,ultimoDuelo=null,ultimoBoss=null,relogioMonitor=null;
 
 function arenaLocal(){try{return JSON.parse(localStorage.getItem("arenaPAEBES"))}catch{return null}}
 function salvarLocal(a){localStorage.setItem("arenaPAEBES",JSON.stringify(a))}
 function gerarCodigo(){return "MAT-"+Math.floor(1000+Math.random()*9000)}
+function iniciais(nome=""){return nome.trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase()||"?"}
+function fotoJogador(j){return j?.foto||j?.fotoPerfil||j?.avatar||j?.fotoBase64||""}
+function htmlFoto(j,classe="miniFoto"){
+  const f=fotoJogador(j);
+  return `<div class="${classe}">${f?`<img src="${f}" alt="Foto de ${j?.nome||"competidor"}">`:`<span>${iniciais(j?.nome||"")}</span>`}</div>`;
+}
+
+function montarNucleos(){
+  const el=document.getElementById("nucleos");
+  el.innerHTML=NUCLEOS.map(n=>`
+    <div class="nucleo">
+      <div class="nucleoTopo">
+        <div><h4>${n.nome}</h4><p>${n.foco}</p></div>
+        <input class="selNucleo" type="checkbox" data-nucleo="${n.id}" aria-label="Selecionar ${n.nome}">
+      </div>
+      <div class="caminho">${n.descritores.join(" → ")}</div>
+    </div>`).join("");
+  el.querySelectorAll(".selNucleo").forEach(ch=>ch.addEventListener("change",()=>{
+    const n=NUCLEOS.find(x=>x.id===ch.dataset.nucleo);if(!n)return;
+    document.querySelectorAll(".desc input").forEach(inp=>{if(n.descritores.includes(inp.value)&&!inp.disabled)inp.checked=ch.checked});
+    renderConfiguracaoDescritores();atualizarDescritorEspecial();sincronizarNucleos();
+  }));
+}
 function montarMatriz(){
-  if(!area)return;
-  const existentes=[...area.querySelectorAll(".desc input")].map(x=>x.value);
-  if(existentes.length<DESCRITORES_FIXOS.length){
-    area.innerHTML=DESCRITORES_FIXOS.map(d=>`<label class="desc" title="${HABILIDADES_PAEBES?.[d]||d}"><input type="checkbox" value="${d}"><span>${d}</span></label>`).join("");
-  }else{
-    area.querySelectorAll(".desc").forEach(l=>{
-      const inp=l.querySelector("input");
-      if(inp)l.title=HABILIDADES_PAEBES?.[inp.value]||inp.value;
-    });
-  }
-  area.querySelectorAll(".desc input").forEach(x=>x.addEventListener("change",()=>{renderConfiguracaoDescritores();atualizarDescritorEspecial()}));
+  const disponiveis=new Set(Object.keys(HABILIDADES_PAEBES||{}));
+  const lista=[...new Set([...DESCRITORES_FIXOS,...NUCLEOS.flatMap(n=>n.descritores),...AMA])];
+  area.innerHTML=lista.map(d=>{
+    const ativo=disponiveis.has(d);
+    const titulo=HABILIDADES_PAEBES?.[d]||(ativo?"":`${d} — banco será incorporado na próxima etapa`);
+    return `<label class="desc" title="${titulo}"><input type="checkbox" value="${d}" ${ativo?"":"disabled"}><span>${d}${AMA.includes(d)?" 🎯":""}</span></label>`;
+  }).join("");
+  area.querySelectorAll(".desc input").forEach(x=>x.addEventListener("change",()=>{renderConfiguracaoDescritores();atualizarDescritorEspecial();sincronizarNucleos()}));
+}
+function sincronizarNucleos(){
+  document.querySelectorAll(".selNucleo").forEach(ch=>{
+    const n=NUCLEOS.find(x=>x.id===ch.dataset.nucleo);
+    const ativos=n.descritores.filter(d=>{const i=document.querySelector(`.desc input[value="${d}"]`);return i&&!i.disabled});
+    ch.checked=ativos.length>0&&ativos.every(d=>document.querySelector(`.desc input[value="${d}"]`)?.checked);
+  });
 }
 function selecionados(){return [...document.querySelectorAll(".desc input:checked")].map(x=>x.value)}
-function renderConfiguracaoDescritores(base=null){const ar=document.getElementById("configDescritores"),sel=selecionados(),cfg=base||arenaLocal()?.configuracaoDescritores||{};if(!sel.length){ar.innerHTML='<div class="small">Selecione descritores para configurar.</div>';return}ar.innerHTML=sel.map(d=>{const c=cfg[d]||{},p=Number(c.peso||1),n=c.nivel||"MISTO";return `<div class="configLinha" data-desc="${d}"><strong>${d}</strong><select class="pesoDesc">${[1,2,3,4].map(v=>`<option value="${v}" ${p===v?"selected":""}>${v===1?"Peso normal":v===2?"Prioridade média":v===3?"Prioridade alta":"Prioridade máxima"} — ${v}×</option>`).join("")}</select><select class="nivelDesc">${["MISTO","ABAIXO DO BÁSICO","BÁSICO","PROFICIENTE","AVANÇADO"].map(v=>`<option ${n===v?"selected":""}>${v}</option>`).join("")}</select><div class="habilidadeLinha">📘 ${HABILIDADES_PAEBES[d]||""}</div></div>`}).join("")}
-function lerConfiguracaoDescritores(){const c={};document.querySelectorAll(".configLinha").forEach(l=>c[l.dataset.desc]={peso:Number(l.querySelector(".pesoDesc").value||1),nivel:l.querySelector(".nivelDesc").value||"MISTO"});return c}
+function renderConfiguracaoDescritores(base=null){
+  const ar=document.getElementById("configDescritores"),sel=selecionados(),cfg=base||arenaLocal()?.configuracaoDescritores||{};
+  if(!sel.length){ar.innerHTML='<div class="small">Selecione descritores ou um Núcleo de Aprendizagem.</div>';return}
+  ar.innerHTML=sel.map(d=>{
+    const c=cfg[d]||{},p=Number(c.peso||1),n=c.nivel||"MISTO";
+    return `<div class="configLinha" data-desc="${d}">
+      <strong>${d}${AMA.includes(d)?' <span style="color:#f4c75b">• AMA</span>':""}</strong>
+      <select class="pesoDesc">${[1,2,3,4].map(v=>`<option value="${v}" ${p===v?"selected":""}>${v===1?"Peso normal":v===2?"Prioridade média":v===3?"Prioridade alta":"Prioridade máxima"} — ${v}×</option>`).join("")}</select>
+      <select class="nivelDesc">${["MISTO","ABAIXO DO BÁSICO","BÁSICO","PROFICIENTE","AVANÇADO"].map(v=>`<option ${n===v?"selected":""}>${v}</option>`).join("")}</select>
+      <div class="habilidadeLinha">📘 ${HABILIDADES_PAEBES[d]||""}</div>
+    </div>`;
+  }).join("");
+}
+function lerConfiguracaoDescritores(){
+  const c={};document.querySelectorAll(".configLinha").forEach(l=>c[l.dataset.desc]={peso:Number(l.querySelector(".pesoDesc").value||1),nivel:l.querySelector(".nivelDesc").value||"MISTO"});return c
+}
 function lerDistribuicaoNiveis(){return{abb:Number(pctAbb.value||0),basico:Number(pctBasico.value||0),proficiente:Number(pctProficiente.value||0),avancado:Number(pctAvancado.value||0)}}
 function atualizarDescritorEspecial(){const s=document.getElementById("descritorEspecial"),ant=s.value,sel=selecionados();s.innerHTML='<option value="">Selecione</option>'+sel.map(d=>`<option value="${d}">${d}</option>`).join("");if(sel.includes(ant))s.value=ant}
-function setLive(status){const map={preparacao:"● ARENA EM PREPARAÇÃO",iniciada:"● ARENA EM DISPUTA",continuada:"● ARENA EM DISPUTA",pausada:"● ARENA PAUSADA",encerrada:"■ ARENA ENCERRADA"};document.getElementById("live").textContent=map[status]||"● ARENA EM PREPARAÇÃO"}
-function configBossAtual(a=arenaLocal()||{}){const c=a.configBoss||{};return{pctAcertos:Math.max(0,Math.min(100,Number(c.pctAcertos??bossPctAcertos?.value??60))),pctConcluidos:Math.max(0,Math.min(100,Number(c.pctConcluidos??bossPctConcluidos?.value??70)))}}
+function setLive(status){const map={preparacao:"● ARENA EM PREPARAÇÃO",iniciada:"● ARENA EM DISPUTA",continuada:"● ARENA EM DISPUTA",pausada:"● ARENA PAUSADA",encerrada:"■ ARENA ENCERRADA"};live.textContent=map[status]||"● ARENA EM PREPARAÇÃO"}
+function configBossAtual(a=arenaLocal()||{}){const c=a.configBoss||{};return{pctAcertos:Math.max(0,Math.min(100,Number(c.pctAcertos??bossPctAcertos.value??60))),pctConcluidos:Math.max(0,Math.min(100,Number(c.pctConcluidos??bossPctConcluidos.value??70)))}}
 function percentualAcertosBoss(j,a=arenaLocal()||{}){const total=Math.max(1,Number(a.quantidade||a.questoes?.length||qtd.value||40));return Math.max(0,Math.min(100,Number(j?.acertos||0)/total*100))}
 function elegivelBossAutomatico(j,a=arenaLocal()||{}){const cfg=configBossAtual(a);return j?.regularConcluida===true&&percentualAcertosBoss(j,a)>=cfg.pctAcertos}
 function elegivelBossFinal(j,a=arenaLocal()||{}){return elegivelBossAutomatico(j,a)||j?.bossLiberadoIndividual===true}
-function percentualConcluidosArena(a=arenaLocal()||{}){const lista=Object.values(a.competidores||{});if(!lista.length)return 0;return lista.filter(j=>j?.regularConcluida===true).length/lista.length*100}
 
-function atualizarControles(enc){document.querySelectorAll(`button[onclick*="acao("],button[onclick="liberarBoss()"],button[onclick="liberar()"],button[onclick="bloquear()"],button[onclick="abrirGerenciamentoIndividual()"],.eventos button,#descritorEspecial`).forEach(e=>e.disabled=!!enc);btnReutilizarArena.style.display=enc?"inline-flex":"none";btnReutilizarArena.disabled=false}
-function restaurar(a){if(!a)return;codigo.textContent=a.codigo||"---";nomeArena.value=a.nome||nomeArena.value;turma.value=a.turma||turma.value;qtd.value=Number(a.quantidade||40);limite.value=Number(a.limite||60);const cfgBoss=a.configBoss||{};bossPctAcertos.value=Number(cfgBoss.pctAcertos??60);bossPctConcluidos.value=Number(cfgBoss.pctConcluidos??70);document.querySelectorAll(".desc input").forEach(x=>x.checked=(a.descritores||[]).includes(x.value));const d=a.distribuicaoNiveis||{};pctAbb.value=d.abb??40;pctBasico.value=d.basico??30;pctProficiente.value=d.proficiente??20;pctAvancado.value=d.avancado??10;renderConfiguracaoDescritores(a.configuracaoDescritores||{});atualizarDescritorEspecial();const nomesStatus={preparacao:"Preparação",iniciada:"Em disputa",continuada:"Em disputa",pausada:"Pausada",encerrada:"Encerrada"};estado.textContent=nomesStatus[a.status]||"Preparação";setLive(a.status);atualizarControles(a.status==="encerrada");atualizarRanking(a.competidores||{});atualizarMonitor(a.competidores||{});const mensagens={preparacao:`🎮 Arena <strong>${a.codigo||""}</strong> criada e aguardando início.`,iniciada:`⚡ Arena <strong>${a.codigo||""}</strong> em disputa.`,continuada:`▶ Arena <strong>${a.codigo||""}</strong> em disputa.`,pausada:`⏸ Arena <strong>${a.codigo||""}</strong> pausada. O progresso foi preservado.`,encerrada:`🏁 Arena <strong>${a.codigo||""}</strong> encerrada. Resultados preservados.`};mensagem.innerHTML=mensagens[a.status]||`🎮 Arena <strong>${a.codigo||""}</strong> carregada.`}
+function atualizarControles(enc){
+  document.querySelectorAll(`button[onclick*="acao("],button[onclick="liberarBoss()"],button[onclick="liberar()"],button[onclick="bloquear()"],button[onclick="abrirGerenciamentoIndividual()"],.eventos button,#descritorEspecial`).forEach(e=>e.disabled=!!enc);
+  btnReutilizarArena.style.display=enc?"inline-flex":"none";btnReutilizarArena.disabled=false
+}
+function restaurar(a){
+  if(!a)return;
+  codigo.textContent=a.codigo||"---";nomeArena.value=a.nome||nomeArena.value;
+  if([...turma.options].some(o=>o.value===a.turma))turma.value=a.turma;
+  qtd.value=Number(a.quantidade||40);limite.value=Number(a.limite||60);
+  const cfgBoss=a.configBoss||{};bossPctAcertos.value=Number(cfgBoss.pctAcertos??60);bossPctConcluidos.value=Number(cfgBoss.pctConcluidos??70);
+  document.querySelectorAll(".desc input").forEach(x=>x.checked=(a.descritores||[]).includes(x.value));
+  const d=a.distribuicaoNiveis||{};pctAbb.value=d.abb??40;pctBasico.value=d.basico??35;pctProficiente.value=d.proficiente??25;pctAvancado.value=d.avancado??0;
+  renderConfiguracaoDescritores(a.configuracaoDescritores||{});atualizarDescritorEspecial();sincronizarNucleos();
+  const nomesStatus={preparacao:"Preparação",iniciada:"Em disputa",continuada:"Em disputa",pausada:"Pausada",encerrada:"Encerrada"};
+  estado.textContent=nomesStatus[a.status]||"Preparação";setLive(a.status);atualizarControles(a.status==="encerrada");
+  atualizarRanking(a.competidores||{});atualizarMonitor(a.competidores||{});atualizarMosaico(a.competidores||{});
+  const mensagens={preparacao:`🎮 Arena <strong>${a.codigo||""}</strong> criada e aguardando início.`,iniciada:`⚡ Arena <strong>${a.codigo||""}</strong> em disputa.`,continuada:`▶ Arena <strong>${a.codigo||""}</strong> em disputa.`,pausada:`⏸ Arena <strong>${a.codigo||""}</strong> pausada. O progresso foi preservado.`,encerrada:`🏁 Arena <strong>${a.codigo||""}</strong> encerrada. Resultados preservados.`};
+  mensagem.innerHTML=mensagens[a.status]||`🎮 Arena <strong>${a.codigo||""}</strong> carregada.`
+}
+function atualizarMosaico(cs={}){
+  const lista=Object.values(cs||{}).sort((a,b)=>Number(b.xp||0)-Number(a.xp||0));
+  if(!lista.length){mosaicoCompetidores.innerHTML='<div class="small">Aguardando competidores...</div>';return}
+  mosaicoCompetidores.innerHTML=lista.map(j=>{
+    const online=j?.online!==false&&j?.ativo!==false;
+    return `<div class="rostoCard ${online?"":"off"}">
+      <div class="rostoWrap">${fotoJogador(j)?`<img src="${fotoJogador(j)}" alt="Foto de ${j.nome||"competidor"}">`:`<span class="iniciais">${iniciais(j.nome||"")}</span>`}</div>
+      <span class="dot"></span>
+      <div class="rostoNome">${j.nome||"Competidor"}</div>
+      <div class="rostoMeta">${Number(j.xp||0)} XP • Q${numeroQuestaoJogador(j)+1}</div>
+    </div>`;
+  }).join("")
+}
+function atualizarRanking(cs={}){
+  const lista=Object.values(cs||{}),lim=Number(limite.value||60),a=arenaLocal(),qmax=Number(a?.quantidade||qtd.value||40);
+  competidores.textContent=lista.length+"/"+lim;const maiorQ=lista.length?Math.max(...lista.map(j=>Number(j.questaoAtual??j.questionIndex??0))):0;
+  questaoAtual.textContent=Math.min(maiorQ,qmax)+"/"+qmax;
+  const r=[...lista].sort((a,b)=>Number(b.xp||0)-Number(a.xp||0)||Number(b.acertos||0)-Number(a.acertos||0));
+  lider.textContent=r[0]?.nome||"—";
+  if(!r.length){ranking.innerHTML='<div class="rank"><div class="pos">🥇</div><div class="miniFoto"><span>—</span></div><div><strong>Aguardando competidores...</strong></div><div>0 acertos</div><div>0 XP</div></div>';return}
+  const max=Math.max(...r.map(x=>Number(x.xp||0)),1);
+  ranking.innerHTML=r.map((j,i)=>`<div class="rank">
+    <div class="pos">${["🥇","🥈","🥉"][i]||(i+1)+"º"}</div>
+    ${htmlFoto(j)}
+    <div><strong>${j.nome||"Competidor"}</strong><div class="progress"><div style="width:${Math.min(100,Number(j.xp||0)/max*100)}%"></div></div></div>
+    <div>${Number(j.acertos||0)} acertos<br><small>💎 ${j.diamanteUsado?"Utilizado":j.diamanteDisponivel?"Disponível":j.diamanteConquistado?"Conquistado":"—"}</small></div>
+    <div>${Number(j.xp||0)} XP</div>
+  </div>`).join("")
+}
+function numeroQuestaoJogador(j){const v=j?.questaoAtual??j?.questionIndex??j?.indiceQuestao??0;return Math.max(0,Number(v)||0)}
+function nomeNivelAtual(j,a){const idx=numeroQuestaoJogador(j),q=Array.isArray(a?.questoes)?a.questoes[idx]:null;return j?.nivelAtual||j?.nivel||q?.nivel||q?.level||"—"}
+function descritorAtual(j,a){const idx=numeroQuestaoJogador(j),q=Array.isArray(a?.questoes)?a.questoes[idx]:null;return j?.descritorAtual||q?.descritor||q?.descriptor||"—"}
+function tempoLimiteJogador(j,a){const idx=numeroQuestaoJogador(j),q=Array.isArray(a?.questoes)?a.questoes[idx]:null;return Number(j?.tempoQuestaoSegundos??j?.questionTimeLimitSec??j?.tempoLimiteSegundos??q?.tempoSegundos??0)}
+function inicioQuestaoJogador(j){const bruto=j?.questaoIniciadaEm??j?.questionStartedAt??j?.inicioQuestao??j?.questaoInicioEm??null;if(bruto==null)return null;if(typeof bruto==="number")return bruto<100000000000?bruto*1000:bruto;if(typeof bruto==="string"){const n=Number(bruto);if(Number.isFinite(n)&&n>0)return n<100000000000?n*1000:n;const d=Date.parse(bruto);return Number.isFinite(d)?d:null}return null}
+function formatarTempoRestante(j,a){const limite=tempoLimiteJogador(j,a),inicio=inicioQuestaoJogador(j);if(!limite||!inicio)return"—";const restante=Math.max(0,Math.ceil(limite-(Date.now()-inicio)/1000)),m=Math.floor(restante/60),s=restante%60;return`${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`}
+function detectarEventoJogador(j){const tipo=String(j?.eventoAtual?.tipo||j?.eventoTipo||j?.modoAtual||"").toLowerCase();if(tipo.includes("duelo"))return"⚔️ Duelo";if(tipo.includes("relamp"))return"⚡ Relâmpago";if(tipo.includes("bonus"))return"💎 Bônus";if(tipo.includes("cacada"))return"👑 Caçada";if(tipo.includes("descritor"))return"🎯 Descritor";if(tipo.includes("escudo"))return"🛡️ Escudo";if(j?.emEvento===true)return"⚡ Evento";return null}
+function situacaoJogador(j){if(j?.bloqueado===true||j?.diamanteBloqueioPendente===true)return{texto:"🔴 Bloqueado",classe:"sitBloqueado"};const ev=detectarEventoJogador(j);if(ev)return{texto:ev,classe:"sitEvento"};if(j?.regularConcluida===true)return{texto:"🟡 Aguardando Boss",classe:"sitAguardando"};if(j?.ativo===false||j?.online===false)return{texto:"⚪ Inativo",classe:"sitInativo"};return{texto:"🟢 Respondendo",classe:"sitRespondendo"}}
 
-function atualizarRanking(cs={}){const lista=Object.values(cs),lim=Number(limite.value||60),a=arenaLocal(),qmax=Number(a?.quantidade||qtd.value||40);competidores.textContent=lista.length+"/"+lim;const maiorQ=lista.length?Math.max(...lista.map(j=>Number(j.questaoAtual??0))):0;questaoAtual.textContent=Math.min(maiorQ,qmax)+"/"+qmax;const r=[...lista].sort((a,b)=>Number(b.xp||0)-Number(a.xp||0)||Number(b.acertos||0)-Number(a.acertos||0));lider.textContent=r[0]?.nome||"—";if(!r.length){ranking.innerHTML='<div class="rank"><div class="pos">🥇</div><div><strong>Aguardando competidores...</strong></div><div>0 acertos</div><div>0 XP</div></div>';return}const max=Math.max(...r.map(x=>Number(x.xp||0)),1);ranking.innerHTML=r.map((j,i)=>`<div class="rank"><div class="pos">${["🥇","🥈","🥉"][i]||(i+1)+"º"}</div><div><strong>${j.nome||"Competidor"}</strong><div class="progress"><div style="width:${Math.min(100,Number(j.xp||0)/max*100)}%"></div></div></div><div>${Number(j.acertos||0)} acertos<br><small>💎 ${j.diamanteUsado?"Utilizado":j.diamanteDisponivel?"Disponível":j.diamanteConquistado?"Conquistado":"—"}</small></div><div>${Number(j.xp||0)} XP</div></div>`).join("")}
-
-/* ========== NOVO: FUNÇÕES DE ACOMPANHAMENTO, SEM ALTERAR O JOGO ========== */
-function numeroQuestaoJogador(j){
-  const v=j?.questaoAtual ?? j?.questionIndex ?? j?.indiceQuestao ?? 0;
-  return Math.max(0,Number(v)||0);
-}
-function nomeNivelAtual(j,a){
-  const idx=numeroQuestaoJogador(j);
-  const q=Array.isArray(a?.questoes)?a.questoes[idx]:null;
-  return j?.nivelAtual || j?.nivel || q?.nivel || q?.level || "—";
-}
-function descritorAtual(j,a){
-  const idx=numeroQuestaoJogador(j);
-  const q=Array.isArray(a?.questoes)?a.questoes[idx]:null;
-  return j?.descritorAtual || q?.descritor || "—";
-}
-function tempoLimiteJogador(j,a){
-  const idx=numeroQuestaoJogador(j);
-  const q=Array.isArray(a?.questoes)?a.questoes[idx]:null;
-  return Number(j?.tempoQuestaoSegundos ?? j?.questionTimeLimitSec ?? j?.tempoLimiteSegundos ?? q?.tempoSegundos ?? 0);
-}
-function inicioQuestaoJogador(j){
-  const bruto=j?.questaoIniciadaEm ?? j?.questionStartedAt ?? j?.inicioQuestao ?? j?.questaoInicioEm ?? null;
-  if(bruto==null)return null;
-  if(typeof bruto==="number")return bruto<100000000000?bruto*1000:bruto;
-  if(typeof bruto==="string"){
-    const n=Number(bruto);if(Number.isFinite(n)&&n>0)return n<100000000000?n*1000:n;
-    const d=Date.parse(bruto);return Number.isFinite(d)?d:null;
-  }
-  return null;
-}
-function formatarTempoRestante(j,a){
-  const limite=tempoLimiteJogador(j,a),inicio=inicioQuestaoJogador(j);
-  if(!limite||!inicio)return "—";
-  const restante=Math.max(0,Math.ceil(limite-(Date.now()-inicio)/1000));
-  const m=Math.floor(restante/60),s=restante%60;
-  return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
-}
-function detectarEventoJogador(j){
-  const tipo=String(j?.eventoAtual?.tipo||j?.eventoTipo||j?.modoAtual||"").toLowerCase();
-  if(tipo.includes("duelo"))return "⚔️ Duelo";
-  if(tipo.includes("relamp"))return "⚡ Relâmpago";
-  if(tipo.includes("bonus"))return "💎 Bônus";
-  if(tipo.includes("cacada"))return "👑 Caçada";
-  if(tipo.includes("descritor"))return "🎯 Descritor";
-  if(tipo.includes("escudo"))return "🛡️ Escudo";
-  if(j?.emEvento===true)return "⚡ Evento";
-  return null;
-}
-function situacaoJogador(j){
-  if(j?.bloqueado===true || j?.diamanteBloqueioPendente===true)return {texto:"🔴 Bloqueado",classe:"sitBloqueado"};
-  const ev=detectarEventoJogador(j);if(ev)return {texto:ev,classe:"sitEvento"};
-  if(j?.regularConcluida===true)return {texto:"🟡 Aguardando Boss",classe:"sitAguardando"};
-  if(j?.ativo===false || j?.online===false)return {texto:"⚪ Inativo",classe:"sitInativo"};
-  return {texto:"🟢 Respondendo",classe:"sitRespondendo"};
-}
 function atualizarMonitor(cs={}){
   const a=arenaLocal()||{},lista=Object.values(cs||{}),qmax=Number(a.quantidade||qtd.value||40);
-  const concluidos=lista.filter(j=>j?.regularConcluida===true).length;
-  const emEvento=lista.filter(j=>!!detectarEventoJogador(j)).length;
-  const respondendo=lista.filter(j=>j?.regularConcluida!==true && j?.bloqueado!==true && j?.diamanteBloqueioPendente!==true && !detectarEventoJogador(j)).length;
-  monParticipantes.textContent=lista.length;
-  monRespondendo.textContent=respondendo;
-  monEventos.textContent=emEvento;
-  monConcluidos.textContent=concluidos;
+  const concluidos=lista.filter(j=>j?.regularConcluida===true).length,emEvento=lista.filter(j=>!!detectarEventoJogador(j)).length;
+  const respondendo=lista.filter(j=>j?.regularConcluida!==true&&j?.bloqueado!==true&&j?.diamanteBloqueioPendente!==true&&!detectarEventoJogador(j)).length;
+  monParticipantes.textContent=lista.length;monRespondendo.textContent=respondendo;monEventos.textContent=emEvento;monConcluidos.textContent=concluidos;
   const cfgBoss=configBossAtual(a),pctConcluidos=lista.length?concluidos/lista.length*100:0;
   monBoss.textContent=ultimoBoss?"Liberado":(lista.length>0&&pctConcluidos>=cfgBoss.pctConcluidos?`Pronto ${Math.round(pctConcluidos)}%`:`${Math.round(pctConcluidos)}% / ${cfgBoss.pctConcluidos}%`);
-
-  if(lista.length>0&&!ultimoBoss){
-    monitorBossAviso.style.display="block";
-    if(pctConcluidos>=cfgBoss.pctConcluidos){
-      monitorBossAviso.innerHTML=`👑 <strong>CRITÉRIO PARA LIBERAR O BOSS ATINGIDO.</strong> ${concluidos} de ${lista.length} estudantes concluíram (${Math.round(pctConcluidos)}%). Mínimo definido: ${cfgBoss.pctConcluidos}%. Acesso automático individual exige ${cfgBoss.pctAcertos}% de acertos; casos fora do critério poderão ser liberados pelo professor.`;
-    }else{
-      monitorBossAviso.innerHTML=`👑 <strong>CRITÉRIO DO BOSS:</strong> ${concluidos} de ${lista.length} concluíram (${Math.round(pctConcluidos)}%). É necessário atingir ${cfgBoss.pctConcluidos}% dos participantes concluídos para habilitar a liberação do Boss.`;
-    }
-  }else{
-    monitorBossAviso.style.display=ultimoBoss?"block":"none";
-    if(ultimoBoss)monitorBossAviso.innerHTML=`👑 <strong>BOSS FINAL LIBERADO.</strong> Estudantes com ${cfgBoss.pctAcertos}% ou mais de acertos e questões concluídas entram automaticamente. Use “LIBERAR BOSS” para exceções.`;
-  }
-
-  if(!lista.length){
-    monitorCorpo.innerHTML='<tr><td colspan="7">Aguardando competidores...</td></tr>';
-    return;
-  }
+  if(lista.length&&!ultimoBoss){monitorBossAviso.style.display="block";monitorBossAviso.innerHTML=pctConcluidos>=cfgBoss.pctConcluidos?`👑 <strong>CRITÉRIO DO BOSS ATINGIDO.</strong> ${concluidos}/${lista.length} concluíram (${Math.round(pctConcluidos)}%).`:`👑 <strong>CRITÉRIO DO BOSS:</strong> ${concluidos}/${lista.length} concluíram (${Math.round(pctConcluidos)}%). Mínimo: ${cfgBoss.pctConcluidos}%.`}else monitorBossAviso.style.display="none";
+  if(!lista.length){monitorCorpo.innerHTML='<tr><td colspan="7">Aguardando competidores...</td></tr>';return}
   const ordenada=[...lista].sort((x,y)=>(x.nome||"").localeCompare(y.nome||"","pt-BR",{sensitivity:"base"}));
   monitorCorpo.innerHTML=ordenada.map(j=>{
-    const id=String(j.id||j.jogadorId||"");
-    const idx=numeroQuestaoJogador(j);
-    const concluida=j.regularConcluida===true;
-    const atual=concluida?"—":`${descritorAtual(j,a)} • Q${Math.min(idx+1,qmax)}`;
-    const prog=concluida?`${qmax}/${qmax}`:`${Math.min(idx,qmax)}/${qmax}`;
-    const sit=situacaoJogador(j);
-    const tempo=concluida?"—":formatarTempoRestante(j,a);
-    const pctA=Math.round(percentualAcertosBoss(j,a));
-    const autoBoss=elegivelBossAutomatico(j,a),libBoss=elegivelBossFinal(j,a);
-    const bossAtivo=ultimoBoss?.status==="liberado"||a?.bossFinal?.status==="liberado";
-    const bossInfo=j?.bossLiberadoIndividual===true?"👑 Boss liberado pelo professor":autoBoss?"👑 Acesso automático ao Boss":`👑 ${pctA}% de acertos • mínimo ${configBossAtual(a).pctAcertos}%`;
-    const botaoBoss=bossAtivo&&!libBoss?` <button class="monitorBtn" style="background:#b77905" onclick="liberarBossIndividual('${id.replace(/'/g,"")}')">👑 LIBERAR BOSS</button>`:"";
+    const id=String(j.id||j.jogadorId||""),idx=numeroQuestaoJogador(j),concluida=j.regularConcluida===true;
+    const atual=concluida?"—":`${descritorAtual(j,a)} • Q${Math.min(idx+1,qmax)}`,prog=concluida?`${qmax}/${qmax}`:`${Math.min(idx,qmax)}/${qmax}`;
+    const sit=situacaoJogador(j),tempo=concluida?"—":formatarTempoRestante(j,a),pctA=Math.round(percentualAcertosBoss(j,a));
+    const autoBoss=elegivelBossAutomatico(j,a),libBoss=elegivelBossFinal(j,a),bossAtivo=ultimoBoss?.status==="liberado"||a?.bossFinal?.status==="liberado";
+    const bossInfo=j?.bossLiberadoIndividual===true?"👑 Boss liberado":autoBoss?"👑 Acesso automático ao Boss":`👑 ${pctA}% • mínimo ${configBossAtual(a).pctAcertos}%`;
+    const botaoBoss=bossAtivo&&!libBoss?` <button class="monitorBtn" style="background:#a66a08" onclick="liberarBossIndividual('${id.replace(/'/g,"")}')">👑 LIBERAR BOSS</button>`:"";
     return `<tr>
-      <td><strong>${j.nome||"Competidor"}</strong><div class="small">${Number(j.xp||0)} XP • ${Number(j.acertos||0)} acerto(s)<br>${bossInfo}</div></td>
-      <td>${prog}</td>
-      <td>${atual}</td>
-      <td>${concluida?"—":nomeNivelAtual(j,a)}</td>
-      <td data-monitor-tempo="${id}">${tempo}</td>
+      <td><div class="estudanteCell">${htmlFoto(j)}<div><strong>${j.nome||"Competidor"}</strong><div class="small">${Number(j.xp||0)} XP • ${Number(j.acertos||0)} acerto(s)<br>${bossInfo}</div></div></div></td>
+      <td>${prog}</td><td>${atual}</td><td>${concluida?"—":nomeNivelAtual(j,a)}</td><td>${tempo}</td>
       <td><span class="situacao ${sit.classe}">${sit.texto}</span></td>
       <td><button class="monitorBtn" onclick="verQuestaoProfessor('${id.replace(/'/g,"")}')">👁 VER QUESTÃO</button>${botaoBoss}</td>
     </tr>`;
-  }).join("");
+  }).join("")
 }
 window.verQuestaoProfessor=(id)=>{
-  const a=arenaLocal()||{},cs=a.competidores||{};
-  const j=cs[id]||Object.values(cs).find(x=>String(x?.id||x?.jogadorId||"")===String(id));
+  const a=arenaLocal()||{},cs=a.competidores||{},j=cs[id]||Object.values(cs).find(x=>String(x?.id||x?.jogadorId||"")===String(id));
   if(!j){alert("Não foi possível localizar este competidor.");return}
-  const idx=numeroQuestaoJogador(j),q=Array.isArray(a.questoes)?a.questoes[idx]:null;
-  const sit=situacaoJogador(j);
-  modalTitulo.textContent=`👁 ${j.nome||"Competidor"} — questão atual`;
-  modalSubtitulo.textContent=sit.texto;
+  const idx=numeroQuestaoJogador(j),q=Array.isArray(a.questoes)?a.questoes[idx]:null,sit=situacaoJogador(j);
+  modalTitulo.textContent=`👁 ${j.nome||"Competidor"} — questão atual`;modalSubtitulo.textContent=sit.texto;
   modalMeta.innerHTML=[
     ["Progresso",j.regularConcluida?`${a.quantidade||a.questoes?.length||0}/${a.quantidade||a.questoes?.length||0}`:`${idx+1}/${a.quantidade||a.questoes?.length||0}`],
-    ["Descritor",q?.descritor||j.descritorAtual||"—"],
-    ["Nível",q?.nivel||q?.level||j.nivelAtual||"—"],
-    ["Habilidade",q?.habilidade||"—"],
-    ["Tempo previsto",tempoLimiteJogador(j,a)?`${tempoLimiteJogador(j,a)} s`:"—"],
-    ["Tempo restante",formatarTempoRestante(j,a)]
+    ["Descritor",q?.descritor||q?.descriptor||j.descritorAtual||"—"],["Nível",q?.nivel||q?.level||j.nivelAtual||"—"],["Habilidade",q?.habilidade||"—"],["Tempo previsto",tempoLimiteJogador(j,a)?`${tempoLimiteJogador(j,a)} s`:"—"],["Tempo restante",formatarTempoRestante(j,a)]
   ].map(([k,v])=>`<div class="metaItem"><span>${k}</span><strong>${v}</strong></div>`).join("");
-  if(j.regularConcluida){
-    modalQuestaoTexto.innerHTML="<strong>Questões regulares concluídas.</strong><br>Este estudante está aguardando a liberação do Boss Final.";
-    modalOpcoes.innerHTML="";
-  }else if(q){
-    modalQuestaoTexto.innerHTML=`<strong>Q${idx+1} — ${q.descritor||""}</strong><br>${q.texto||q.pergunta||"Questão sem texto disponível."}`;
-    const ops=q.opcoes||q.alternativas||[];
-    const correta=Number(q.correta ?? q.correct ?? -1);
-    modalOpcoes.innerHTML=ops.map((op,i)=>`<div class="opProfessor ${i===correta?"correta":""}"><strong>${String.fromCharCode(65+i)}.</strong> ${typeof op==="object"?(op.texto||op.valor||JSON.stringify(op)):op}${i===correta?' <small>✓ gabarito</small>':""}</div>`).join("");
-  }else{
-    modalQuestaoTexto.innerHTML="A questão atual ainda não possui dados suficientes para visualização detalhada.";
-    modalOpcoes.innerHTML="";
-  }
-  modalQuestaoProfessor.classList.add("aberto");
+  if(j.regularConcluida){modalQuestaoTexto.innerHTML="<strong>Questões regulares concluídas.</strong><br>Este estudante está aguardando o Boss Final.";modalOpcoes.innerHTML=""}
+  else if(q){
+    modalQuestaoTexto.innerHTML=`<strong>Q${idx+1} — ${q.descritor||q.descriptor||""}</strong><br>${q.texto||q.text||q.pergunta||"Questão sem texto disponível."}`;
+    const ops=q.opcoes||q.options||q.alternativas||[],correta=Number(q.correta??q.correct??-1);
+    modalOpcoes.innerHTML=ops.map((op,i)=>`<div class="opProfessor ${i===correta?"correta":""}"><strong>${String.fromCharCode(65+i)}.</strong> ${typeof op==="object"?(op.texto||op.valor||JSON.stringify(op)):op}${i===correta?' <small>✓ gabarito</small>':""}</div>`).join("")
+  }else{modalQuestaoTexto.innerHTML="A questão atual ainda não possui dados suficientes.";modalOpcoes.innerHTML=""}
+  modalQuestaoProfessor.classList.add("aberto")
 }
 window.fecharDetalheQuestao=()=>modalQuestaoProfessor.classList.remove("aberto");
 
-function atualizarPainelDiamanteProfessor(arena){
-  const box=document.getElementById("diamanteMetaProfessor");
-  if(!box||!arena)return;
-  const meta=metaDiamante(Array.isArray(arena.questoes)?arena.questoes:[]);
-  box.innerHTML=`💎 <strong>Meta automática:</strong> ${meta} pontos regulares (60% da pontuação máxima regular). Bônus, eventos, multiplicadores e Boss Final não contam para esta conquista.`;
-}
-function renderHistoricoDiamanteProfessor(historico={}){
-  const area=document.getElementById("diamanteHistoricoProfessor");
-  if(!area)return;
-  const lista=Object.values(historico||{}).sort((a,b)=>Number(b.criadoEm||0)-Number(a.criadoEm||0));
-  if(!lista.length){
-    area.innerHTML='<div class="rank"><div class="pos">💎</div><div><strong>Nenhum uso registrado</strong></div><div>—</div><div>—</div></div>';
-    return;
-  }
-  area.innerHTML=lista.map(x=>`<div class="rank"><div class="pos">💎</div><div><strong>${x.autorNome||"Competidor"}</strong><div class="small">bloqueou ${x.alvoNome||"Competidor"} • rodada/questão ${Number(x.questaoAlvo||0)}</div></div><div>${x.status==="concluido"?"✓ Concluído":"⏳ Pendente"}</div><div>Uso único</div></div>`).join("");
-}
-function acompanharHistoricoDiamanteProfessor(cod){
-  if(typeof pararHistoricoDiamante==="function") pararHistoricoDiamante();
-  pararHistoricoDiamante=observarHistoricoDiamante(cod,renderHistoricoDiamanteProfessor);
-}
+function atualizarPainelDiamanteProfessor(arena){const box=document.getElementById("diamanteMetaProfessor");if(!box||!arena)return;const meta=metaDiamante(Array.isArray(arena.questoes)?arena.questoes:[]);box.innerHTML=`💎 <strong>Meta automática:</strong> ${meta} pontos regulares (60% da pontuação máxima regular).`}
+function renderHistoricoDiamanteProfessor(historico={}){const lista=Object.values(historico||{}).sort((a,b)=>Number(b.criadoEm||0)-Number(a.criadoEm||0));diamanteHistoricoProfessor.innerHTML=lista.length?lista.map(x=>`<div class="rank"><div class="pos">💎</div><div class="miniFoto"><span>${iniciais(x.autorNome||"")}</span></div><div><strong>${x.autorNome||"Competidor"}</strong><div class="small">bloqueou ${x.alvoNome||"Competidor"} • rodada ${Number(x.questaoAlvo||0)}</div></div><div>${x.status==="concluido"?"✓ Concluído":"⏳ Pendente"}</div><div>Uso único</div></div>`).join(""):'<div class="rank"><div class="pos">💎</div><div class="miniFoto"><span>—</span></div><div><strong>Nenhum uso registrado</strong></div><div>—</div><div>—</div></div>'}
+function acompanharHistoricoDiamanteProfessor(cod){if(typeof pararHistoricoDiamante==="function")pararHistoricoDiamante();pararHistoricoDiamante=observarHistoricoDiamante(cod,renderHistoricoDiamanteProfessor)}
 
 function conectarArena(cod){
   if(pararArena)pararArena();if(pararCompetidores)pararCompetidores();if(pararDuelo)pararDuelo();if(pararBoss)pararBoss();if(pararEspecial)pararEspecial();
   pararArena=observarArena(cod,a=>{if(!a)return;salvarLocal(a);restaurar(a);atualizarPainelDiamanteProfessor(a)});
-  pararCompetidores=observarCompetidores(cod,cs=>{
-    const a=arenaLocal()||{codigo:cod};a.competidores=cs||{};salvarLocal(a);atualizarRanking(cs||{});atualizarMonitor(cs||{});
-  });
+  pararCompetidores=observarCompetidores(cod,cs=>{const a=arenaLocal()||{codigo:cod};a.competidores=cs||{};salvarLocal(a);atualizarRanking(cs||{});atualizarMonitor(cs||{});atualizarMosaico(cs||{})});
   pararDuelo=observarDueloAtual(cod,d=>{ultimoDuelo=d||null;renderDueloProfessor(d);atualizarMonitor(arenaLocal()?.competidores||{})});
-  pararBoss=observarBossFinal(cod,b=>{
-    ultimoBoss=b||null;atualizarMonitor(arenaLocal()?.competidores||{});
-    if(!b){bossStatusProfessor.style.display="none";return}
-    const rs=Object.values(b.respostas||{});bossStatusProfessor.style.display="block";bossStatusProfessor.innerHTML=`👑 <strong>BOSS FINAL:</strong> ${rs.length} concluído(s) • ${rs.filter(x=>x.correta).length} acerto(s) • ${Number(b.bonusXP||300)} XP de bônus.`;
-  });
-  pararEspecial=observarEventoEspecial(cod,e=>{
-    ultimoEventoEspecial=e||null;atualizarMonitor(arenaLocal()?.competidores||{});
-    if(!e){eventoEspecialStatusProfessor.textContent="⚡ Nenhum Evento Especial jogável ativo.";return}
-    const rs=Object.values(e.respostas||{});eventoEspecialStatusProfessor.innerHTML=`⚡ <strong>${e.nome||"EVENTO ESPECIAL"}</strong> — ${rs.length} resposta(s), ${rs.filter(x=>x.correta).length} acerto(s) • bônus: ${Number(e.bonusXP||0)} XP`;
-  });
-  acompanharHistoricoDiamanteProfessor(cod);
-  if(relogioMonitor)clearInterval(relogioMonitor);
-  relogioMonitor=setInterval(()=>atualizarMonitor(arenaLocal()?.competidores||{}),1000);
+  pararBoss=observarBossFinal(cod,b=>{ultimoBoss=b||null;atualizarMonitor(arenaLocal()?.competidores||{});if(!b){bossStatusProfessor.style.display="none";return}const rs=Object.values(b.respostas||{});bossStatusProfessor.style.display="block";bossStatusProfessor.innerHTML=`👑 <strong>BOSS FINAL:</strong> ${rs.length} concluído(s) • ${rs.filter(x=>x.correta).length} acerto(s) • ${Number(b.bonusXP||300)} XP.`});
+  pararEspecial=observarEventoEspecial(cod,e=>{ultimoEventoEspecial=e||null;if(!e){eventoEspecialStatusProfessor.textContent="⚡ Nenhum Evento Especial jogável ativo.";return}const rs=Object.values(e.respostas||{});eventoEspecialStatusProfessor.innerHTML=`⚡ <strong>${e.nome||"EVENTO ESPECIAL"}</strong> — ${rs.length} resposta(s), ${rs.filter(x=>x.correta).length} acerto(s) • bônus: ${Number(e.bonusXP||0)} XP`});
+  acompanharHistoricoDiamanteProfessor(cod);if(relogioMonitor)clearInterval(relogioMonitor);relogioMonitor=setInterval(()=>atualizarMonitor(arenaLocal()?.competidores||{}),1000)
 }
 
 window.retomarArenaAnterior=async()=>{
-  const campo=document.getElementById("codigoRetomar");
-  const cod=String(campo?.value||"").trim().toUpperCase();
-  if(!cod){alert("Digite o código da Arena que deseja retomar.");campo?.focus();return}
-  try{
-    mensagem.innerHTML=`↩ Buscando a Arena <strong>${cod}</strong>...`;
-    const a=await retomarArena(cod);
-    if(!a){throw new Error("Arena não encontrada.")}
-    salvarLocal(a);
-    restaurar(a);
-    conectarArena(a.codigo||cod);
-    if(campo)campo.value=a.codigo||cod;
-    mensagem.innerHTML=a.status==="pausada"
-      ?`⏸ Arena <strong>${a.codigo||cod}</strong> recuperada com todo o progresso. Clique em <strong>CONTINUAR</strong> quando desejar retomar a disputa.`
-      :`↩ Arena <strong>${a.codigo||cod}</strong> retomada com participantes, progresso e pontuação preservados.`;
-  }catch(e){
-    console.error(e);
-    mensagem.innerHTML=`❌ Não foi possível retomar a Arena <strong>${cod}</strong>.`;
-    alert(e?.message||"Não foi possível retomar esta Arena.");
-  }
+  const cod=String(codigoRetomar.value||"").trim().toUpperCase();if(!cod){alert("Digite o código da Arena.");return}
+  try{mensagem.innerHTML=`↩ Buscando <strong>${cod}</strong>...`;const a=await retomarArena(cod);if(!a)throw new Error("Arena não encontrada.");salvarLocal(a);restaurar(a);conectarArena(a.codigo||cod);codigoRetomar.value=a.codigo||cod;mensagem.innerHTML=a.status==="pausada"?`⏸ Arena <strong>${a.codigo||cod}</strong> recuperada com todo o progresso.`:`↩ Arena <strong>${a.codigo||cod}</strong> retomada.`}
+  catch(e){console.error(e);alert(e?.message||"Não foi possível retomar esta Arena.")}
 }
-document.getElementById("codigoRetomar")?.addEventListener("keydown",e=>{
-  if(e.key==="Enter"){e.preventDefault();window.retomarArenaAnterior()}
-});
+codigoRetomar.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();window.retomarArenaAnterior()}});
 
 window.criarArena=async()=>{
   const sel=selecionados();if(!sel.length){alert("Selecione pelo menos um descritor.");return}
-  const quantidade=Math.max(5,Math.min(40,Number(qtd.value)||40));qtd.value=quantidade;
+  const quantidade=Math.max(5,Number(qtd.value)||40);qtd.value=quantidade;
   const dist=lerDistribuicaoNiveis();if(Object.values(dist).reduce((a,b)=>a+b,0)!==100){alert("A distribuição dos níveis deve somar 100%.");return}
-  let questoes;try{questoes=gerarQuestoesArena({quantidade,descritores:sel,configuracaoDescritores:lerConfiguracaoDescritores(),distribuicaoNiveis:dist})}catch(e){alert(e.message||"Erro ao gerar questões.");return}
-  const cfgBoss={pctAcertos:Math.max(0,Math.min(100,Number(bossPctAcertos.value||0))),pctConcluidos:Math.max(0,Math.min(100,Number(bossPctConcluidos.value||0)))};const cod=gerarCodigo(),dados={codigo:cod,nome:nomeArena.value||"Arena Matemática",turma:turma.value,quantidade,limite:Number(limite.value||60),descritores:sel,configuracaoDescritores:lerConfiguracaoDescritores(),distribuicaoNiveis:dist,configBoss:cfgBoss,questoes,status:"preparacao",entradaLiberada:false,aceitaNovos:false,questaoAtual:0,competidores:{},criadaEm:new Date().toISOString()};
-  try{await salvarArena(cod,dados);salvarLocal(dados);restaurar(dados);conectarArena(cod);mensagem.innerHTML=`🎮 Arena criada. Código <strong>${cod}</strong>. Agora libere os estudantes.`}catch(e){console.error(e);alert("Erro ao criar Arena no Firebase.")}
+  let questoes;try{questoes=gerarQuestoesArena({quantidade,descritores:sel,configuracaoDescritores:lerConfiguracaoDescritores(),distribuicaoNiveis:dist})}catch(e){alert((e.message||"Erro ao gerar questões.")+"\n\nObservação: enquanto o question-bank.js antigo ainda estiver instalado, Arenas acima de 40 questões só funcionarão depois de substituirmos esse arquivo.");return}
+  const cfgBoss={pctAcertos:Math.max(0,Math.min(100,Number(bossPctAcertos.value||0))),pctConcluidos:Math.max(0,Math.min(100,Number(bossPctConcluidos.value||0)))};
+  const cod=gerarCodigo(),dados={codigo:cod,nome:nomeArena.value||"Arena Matemática",turma:turma.value,quantidade:questoes.length,quantidadeSolicitada:quantidade,limite:Number(limite.value||60),descritores:sel,configuracaoDescritores:lerConfiguracaoDescritores(),distribuicaoNiveis:dist,configBoss:cfgBoss,questoes,status:"preparacao",entradaLiberada:false,aceitaNovos:false,questaoAtual:0,competidores:{},versaoArena:"3tri-2026-coliseu-v1",criadaEm:new Date().toISOString()};
+  try{await salvarArena(cod,dados);salvarLocal(dados);restaurar(dados);conectarArena(cod);mensagem.innerHTML=`🏛️ Arena criada. Código <strong>${cod}</strong>. Agora libere os estudantes.`}catch(e){console.error(e);alert("Erro ao criar Arena no Firebase.")}
 }
-window.liberar=async()=>{const a=arenaLocal();if(!a?.codigo){alert("Crie uma Arena primeiro.");return}await liberarEntrada(a.codigo);mensagem.innerHTML="🔓 Entrada dos estudantes <strong>LIBERADA</strong>."}
+window.liberar=async()=>{const a=arenaLocal();if(!a?.codigo){alert("Crie ou retome uma Arena primeiro.");return}await liberarEntrada(a.codigo);mensagem.innerHTML="🔓 Entrada dos estudantes <strong>LIBERADA</strong>."}
 window.bloquear=async()=>{const a=arenaLocal();if(!a?.codigo)return;await bloquearEntrada(a.codigo);mensagem.innerHTML="🔒 Novas entradas bloqueadas."}
-window.acao=async(tipo)=>{const a=arenaLocal();if(!a?.codigo){alert("Crie uma Arena primeiro.");return}await definirStatusArena(a.codigo,tipo);mensagem.innerHTML=`⚡ Arena <strong>${{iniciada:"iniciada",pausada:"pausada",continuada:"continuada",encerrada:"encerrada"}[tipo]}</strong>.`}
-window.marcarPrincipais=()=>{const p=["D074_M","D088_M","D097_M","D111_M","D125_M"];document.querySelectorAll(".desc input").forEach(x=>x.checked=p.includes(x.value));renderConfiguracaoDescritores();atualizarDescritorEspecial()}
-window.limpar=()=>{document.querySelectorAll(".desc input").forEach(x=>x.checked=false);renderConfiguracaoDescritores();atualizarDescritorEspecial()}
-window.reutilizarArena=()=>{const a=arenaLocal();if(!a?.codigo||a.status!=="encerrada"){alert("Encerre a Arena atual antes de reutilizar.");return}sessionStorage.setItem("arenaConfigReuso",JSON.stringify({nome:a.nome,turma:a.turma,quantidade:a.quantidade||40,limite:a.limite||60,descritores:a.descritores||[],configuracaoDescritores:a.configuracaoDescritores||{},distribuicaoNiveis:a.distribuicaoNiveis||{abb:40,basico:30,proficiente:20,avancado:10},configBoss:a.configBoss||{pctAcertos:60,pctConcluidos:70}}));localStorage.removeItem("arenaPAEBES");location.reload()}
-function restaurarReuso(){try{const r=sessionStorage.getItem("arenaConfigReuso");if(!r)return;const c=JSON.parse(r);nomeArena.value=c.nome||"Desafio PAEBES";turma.value=c.turma||turma.value;qtd.value=Number(c.quantidade||40);limite.value=Number(c.limite||60);document.querySelectorAll(".desc input").forEach(x=>x.checked=(c.descritores||[]).includes(x.value));const d=c.distribuicaoNiveis||{};pctAbb.value=d.abb??40;pctBasico.value=d.basico??30;pctProficiente.value=d.proficiente??20;pctAvancado.value=d.avancado??10;const cb=c.configBoss||{};bossPctAcertos.value=Number(cb.pctAcertos??60);bossPctConcluidos.value=Number(cb.pctConcluidos??70);renderConfiguracaoDescritores(c.configuracaoDescritores||{});atualizarDescritorEspecial();sessionStorage.removeItem("arenaConfigReuso");mensagem.innerHTML="♻️ Configuração reaproveitada. Ajuste e clique em <strong>CRIAR ARENA</strong>."}catch(e){console.error(e)}}
+window.acao=async(tipo)=>{const a=arenaLocal();if(!a?.codigo){alert("Crie ou retome uma Arena primeiro.");return}await definirStatusArena(a.codigo,tipo);mensagem.innerHTML=`⚡ Arena <strong>${{iniciada:"iniciada",pausada:"pausada",continuada:"continuada",encerrada:"encerrada"}[tipo]}</strong>.`}
+window.marcarAMA=()=>{document.querySelectorAll(".desc input").forEach(x=>{if(!x.disabled)x.checked=AMA.includes(x.value)});renderConfiguracaoDescritores();atualizarDescritorEspecial();sincronizarNucleos()}
+window.limpar=()=>{document.querySelectorAll(".desc input").forEach(x=>x.checked=false);document.querySelectorAll(".selNucleo").forEach(x=>x.checked=false);renderConfiguracaoDescritores();atualizarDescritorEspecial()}
+window.reutilizarArena=()=>{const a=arenaLocal();if(!a?.codigo||a.status!=="encerrada"){alert("Encerre a Arena atual antes de reutilizar.");return}sessionStorage.setItem("arenaConfigReuso",JSON.stringify({nome:a.nome,turma:a.turma,quantidade:a.quantidade||40,limite:a.limite||60,descritores:a.descritores||[],configuracaoDescritores:a.configuracaoDescritores||{},distribuicaoNiveis:a.distribuicaoNiveis||{abb:40,basico:35,proficiente:25,avancado:0},configBoss:a.configBoss||{pctAcertos:60,pctConcluidos:70}}));localStorage.removeItem("arenaPAEBES");location.reload()}
+function restaurarReuso(){try{const r=sessionStorage.getItem("arenaConfigReuso");if(!r)return;const c=JSON.parse(r);nomeArena.value=c.nome||nomeArena.value;turma.value=c.turma||turma.value;qtd.value=Number(c.quantidade||40);limite.value=Number(c.limite||60);document.querySelectorAll(".desc input").forEach(x=>x.checked=(c.descritores||[]).includes(x.value));const d=c.distribuicaoNiveis||{};pctAbb.value=d.abb??40;pctBasico.value=d.basico??35;pctProficiente.value=d.proficiente??25;pctAvancado.value=d.avancado??0;const cb=c.configBoss||{};bossPctAcertos.value=Number(cb.pctAcertos??60);bossPctConcluidos.value=Number(cb.pctConcluidos??70);renderConfiguracaoDescritores(c.configuracaoDescritores||{});atualizarDescritorEspecial();sincronizarNucleos();sessionStorage.removeItem("arenaConfigReuso");mensagem.innerHTML="♻️ Configuração reaproveitada. Ajuste e crie uma nova Arena."}catch(e){console.error(e)}}
 
-window.liberarBoss=async()=>{const a=arenaLocal();if(!a?.codigo){alert("Crie uma Arena primeiro.");return}if(a.status==="encerrada"){alert("A Arena já foi encerrada.");return}const cs=Object.values(a.competidores||{});if(!cs.length){alert("Ainda não há competidores.");return}const cfg=configBossAtual(a),concluidos=cs.filter(c=>c?.regularConcluida===true).length,pct=concluidos/cs.length*100;if(pct<cfg.pctConcluidos){alert(`Ainda não atingiu o critério definido para liberar o Boss Final.\n\nConcluíram: ${concluidos} de ${cs.length} (${Math.round(pct)}%)\nMínimo definido: ${cfg.pctConcluidos}% dos participantes.`);return}const automaticos=cs.filter(c=>elegivelBossAutomatico(c,a)).length;if(confirm(`Liberar o BOSS FINAL agora?\n\nParticipantes concluídos: ${concluidos}/${cs.length} (${Math.round(pct)}%)\nCritério mínimo de conclusão: ${cfg.pctConcluidos}%\nCritério de acesso automático individual: ${cfg.pctAcertos}% de acertos\nAcesso automático neste momento: ${automaticos} estudante(s)\n\nOs demais poderão ser liberados individualmente pelo professor.`)){await liberarBossFinal(a.codigo,{bonusXP:300});mensagem.innerHTML=`👑 <strong>BOSS FINAL LIBERADO.</strong> ${automaticos} estudante(s) com acesso automático. Use o acompanhamento ao vivo para liberar exceções individualmente.`;}}
-
+window.liberarBoss=async()=>{const a=arenaLocal();if(!a?.codigo){alert("Crie ou retome uma Arena primeiro.");return}const cs=Object.values(a.competidores||{});if(!cs.length){alert("Ainda não há competidores.");return}const cfg=configBossAtual(a),concluidos=cs.filter(c=>c?.regularConcluida===true).length,pct=concluidos/cs.length*100;if(pct<cfg.pctConcluidos){alert(`Ainda não atingiu o critério do Boss.\n\nConcluíram: ${concluidos}/${cs.length} (${Math.round(pct)}%)\nMínimo: ${cfg.pctConcluidos}%`);return}const automaticos=cs.filter(c=>elegivelBossAutomatico(c,a)).length;if(confirm(`Liberar o BOSS FINAL agora?\n\n${automaticos} estudante(s) terão acesso automático.`)){await liberarBossFinal(a.codigo,{bonusXP:300});mensagem.innerHTML=`👑 <strong>BOSS FINAL LIBERADO.</strong> ${automaticos} acesso(s) automático(s).`}}
 window.abrirGerenciamentoIndividual=()=>{const a=arenaLocal(),lista=Object.values(a?.competidores||{});if(!lista.length){alert("Ainda não há competidores.");return}manageCompetidor.innerHTML=lista.map(c=>`<option value="${c.id||c.jogadorId}">${c.nome||"Competidor"} — ${Number(c.xp||0)} XP</option>`).join("");managePanel.classList.toggle("ativo")}
 async function bloquearIndividual(v){const a=arenaLocal(),id=manageCompetidor.value;if(!a?.codigo||!id)return;await atualizarCompetidor(a.codigo,id,{bloqueado:v});manageStatus.textContent=v?"🔒 Competidor bloqueado.":"🔓 Competidor liberado."}
 window.bloquearCompetidorSelecionado=()=>bloquearIndividual(true);window.liberarCompetidorSelecionado=()=>bloquearIndividual(false);
-window.excluirCompetidorSelecionado=async()=>{
-  const a=arenaLocal(),id=manageCompetidor.value;
-  if(!a?.codigo||!id){alert("Selecione um participante.");return}
-  const j=(a.competidores||{})[id]||Object.values(a.competidores||{}).find(x=>String(x?.id||x?.jogadorId||"")===String(id));
-  if(!j){alert("Participante não encontrado.");return}
-  const nome=j.nome||"Participante";
-  if(!confirm(`EXCLUIR ${nome} da Arena?\n\nEsta ação remove este registro da lista de participantes e do ranking. Use principalmente para registros duplicados ou entradas indevidas.`))return;
-  try{
-    await removerCompetidor(a.codigo,id);
-    manageStatus.textContent=`🗑 ${nome} foi excluído da Arena.`;
-    const novaLista=Object.values((arenaLocal()?.competidores)||{}).filter(c=>String(c?.id||c?.jogadorId||"")!==String(id));
-    manageCompetidor.innerHTML=novaLista.map(c=>`<option value="${c.id||c.jogadorId}">${c.nome||"Competidor"} — ${Number(c.xp||0)} XP</option>`).join("");
-    if(!novaLista.length)managePanel.classList.remove("ativo");
-  }catch(e){
-    console.error(e);
-    alert(e?.message||"Não foi possível excluir o participante.");
-  }
-};
-
-window.liberarBossIndividual=async(id)=>{const a=arenaLocal();if(!a?.codigo||!id)return;const j=(a.competidores||{})[id]||Object.values(a.competidores||{}).find(x=>String(x?.id||x?.jogadorId||"")===String(id));if(!j){alert("Competidor não encontrado.");return}if(!confirm(`Liberar ${j.nome||"este estudante"} para participar do Boss Final mesmo sem atender automaticamente aos critérios?`))return;try{await atualizarCompetidor(a.codigo,id,{bossLiberadoIndividual:true,bossLiberadoEm:new Date().toISOString()});mensagem.innerHTML=`👑 <strong>${j.nome||"Estudante"}</strong> liberado individualmente para o Boss Final.`}catch(e){console.error(e);alert("Não foi possível liberar este estudante para o Boss.")}}
-
+window.excluirCompetidorSelecionado=async()=>{const a=arenaLocal(),id=manageCompetidor.value;if(!a?.codigo||!id)return;const j=(a.competidores||{})[id]||Object.values(a.competidores||{}).find(x=>String(x?.id||x?.jogadorId||"")===String(id));if(!j)return;if(!confirm(`Excluir ${j.nome||"participante"} da Arena?`))return;await removerCompetidor(a.codigo,id);manageStatus.textContent="🗑 Participante excluído."}
+window.liberarBossIndividual=async(id)=>{const a=arenaLocal();if(!a?.codigo||!id)return;const j=(a.competidores||{})[id]||Object.values(a.competidores||{}).find(x=>String(x?.id||x?.jogadorId||"")===String(id));if(!j)return;if(!confirm(`Liberar ${j.nome||"este estudante"} para o Boss Final?`))return;await atualizarCompetidor(a.codigo,id,{bossLiberadoIndividual:true,bossLiberadoEm:new Date().toISOString()});mensagem.innerHTML=`👑 ${j.nome||"Estudante"} liberado individualmente para o Boss.`}
 
 const questoesDuelo=[{descritor:"D111_M",texto:"Um cubo possui quantas faces?",opcoes:["4","5","6","8","12"],correta:2},{descritor:"D074_M",texto:"Qual expressão representa uma função exponencial crescente de base 3?",opcoes:["3x","x³","(1/3)^x","3^x","x+3"],correta:3},{descritor:"D097_M",texto:"Numa PG 2, 6, 18, ... qual é o próximo termo?",opcoes:["24","36","48","54","72"],correta:3}];
 window.abrirDuelo=()=>{const a=arenaLocal(),cs=Object.values(a?.competidores||{}).filter(c=>c&&(c.id||c.jogadorId));if(cs.length<2){alert("São necessários pelo menos 2 competidores.");return}const h=cs.map(c=>`<option value="${c.id||c.jogadorId}">${c.nome||"Competidor"} — ${Number(c.xp||0)} XP</option>`).join("");dueloCompetidor1.innerHTML=h;dueloCompetidor2.innerHTML=h;if(dueloCompetidor2.options.length>1)dueloCompetidor2.selectedIndex=1;dueloPanel.classList.add("ativo")}
@@ -464,13 +642,13 @@ window.fecharDuelo=()=>dueloPanel.classList.remove("ativo");
 window.iniciarDuelo=async()=>{const a=arenaLocal(),id1=dueloCompetidor1.value,id2=dueloCompetidor2.value;if(!a?.codigo||!id1||!id2||id1===id2){alert("Selecione dois competidores diferentes.");return}const cs=a.competidores||{},c1=cs[id1]||Object.values(cs).find(c=>(c.id||c.jogadorId)===id1),c2=cs[id2]||Object.values(cs).find(c=>(c.id||c.jogadorId)===id2),q=questoesDuelo[Math.floor(Math.random()*questoesDuelo.length)];await criarDuelo(a.codigo,{competidor1Id:id1,competidor1Nome:c1?.nome||"Competidor 1",competidor2Id:id2,competidor2Nome:c2?.nome||"Competidor 2",descritor:q.descritor,pergunta:q.texto,opcoes:q.opcoes,correta:q.correta,bonusXP:200});dueloStatusProfessor.innerHTML=`⚔️ <strong>DUELO INICIADO:</strong> ${c1?.nome} × ${c2?.nome}.`}
 function renderDueloProfessor(d){if(!d)return;dueloPanel.classList.add("ativo");dueloStatusProfessor.innerHTML=d.status==="encerrado"?`🏆 <strong>VENCEDOR:</strong> ${d.vencedorNome||"Competidor"} — +${Number(d.bonusXP||200)} XP.`:`⚔️ <strong>DUELO EM ANDAMENTO:</strong> ${d.competidor1Nome} × ${d.competidor2Nome}.`}
 
-const eventos={relampago:{nome:"QUESTÃO RELÂMPAGO",tipo:"relampago",descritor:"D097_M",pergunta:"Numa PG 3, 9, 27, ... qual é o próximo termo?",opcoes:["36","54","72","81","90"],correta:3,bonusXP:200},bonus:{nome:"BÔNUS PAEBES",tipo:"bonus",descritor:"D038_M",pergunta:"Um produto de R$ 200 recebeu desconto de 25%. Qual o desconto?",opcoes:["R$ 25","R$ 40","R$ 50","R$ 75","R$ 150"],correta:2,bonusXP:150},cacada:{nome:"CAÇADA AO LÍDER",tipo:"cacada",descritor:"D038_M",pergunta:"18 de 24 estudantes acertaram. Qual percentual?",opcoes:["60%","65%","70%","75%","80%"],correta:3,bonusXP:250},escudo:{nome:"ESCUDO MATEMÁTICO",tipo:"escudo",descritor:"D111_M",pergunta:"Um prisma triangular possui quantas faces?",opcoes:["4","5","6","7","8"],correta:1,bonusXP:50}};
+const eventos={relampago:{nome:"QUESTÃO RELÂMPAGO",tipo:"relampago",descritor:"D097_M",pergunta:"Numa PG 3, 9, 27, ... qual é o próximo termo?",opcoes:["36","54","72","81","90"],correta:3,bonusXP:200},bonus:{nome:"BÔNUS AMA/PAEBES",tipo:"bonus",descritor:"D038_M",pergunta:"Um produto de R$ 200 recebeu desconto de 25%. Qual o desconto?",opcoes:["R$ 25","R$ 40","R$ 50","R$ 75","R$ 150"],correta:2,bonusXP:150},cacada:{nome:"CAÇADA AO LÍDER",tipo:"cacada",descritor:"D038_M",pergunta:"18 de 24 estudantes acertaram. Qual percentual?",opcoes:["60%","65%","70%","75%","80%"],correta:3,bonusXP:250},escudo:{nome:"ESCUDO MATEMÁTICO",tipo:"escudo",descritor:"D111_M",pergunta:"Um prisma triangular possui quantas faces?",opcoes:["4","5","6","7","8"],correta:1,bonusXP:50}};
 function eventoDescritor(d){const q={D074_M:["Qual expressão representa uma função exponencial crescente de base 3?",["3x","x³","(1/3)^x","3^x","x+3"],3],D088_M:["Uma cultura começa com 200 bactérias e dobra a cada hora. Quantas haverá após 3 horas?",["800","1200","1600","1800","2400"],2],D097_M:["Numa PG 5, 15, 45, ... qual é o próximo termo?",["60","90","120","135","225"],3],D111_M:["Qual sólido possui duas bases circulares paralelas?",["Cone","Cilindro","Cubo","Pirâmide","Prisma triangular"],1],D125_M:["Um cubo possui 8 vértices e 6 faces. Quantas arestas possui?",["8","10","12","14","16"],2]}[d];return q?{nome:"DESAFIO DO DESCRITOR",tipo:"descritor",descritor:d,pergunta:q[0],opcoes:q[1],correta:q[2],bonusXP:180}:null}
-window.lancarEventoEspecial=async(tipo,btn)=>{const a=arenaLocal();if(!a?.codigo){alert("Crie uma Arena primeiro.");return}let e=tipo==="descritor"?eventoDescritor(descritorEspecial.value):{...eventos[tipo]};if(!e){alert("Selecione um dos descritores com desafio especial disponível: D074_M, D088_M, D097_M, D111_M ou D125_M.");return}if(tipo==="cacada"){const l=Object.values(a.competidores||{}).sort((x,y)=>Number(y.xp||0)-Number(x.xp||0));if(!l.length){alert("A Caçada ao Líder exige competidores.");return}e.liderId=l[0].id||l[0].jogadorId;e.liderNome=l[0].nome||"Líder"}btn.disabled=true;try{await criarEventoEspecial(a.codigo,e);btn.textContent="✅ ACIONADO!";mensagem.innerHTML=`⚡ Evento iniciado: <strong>${e.nome}</strong>.`;setTimeout(()=>{btn.disabled=false;btn.textContent={relampago:"DISPARAR",bonus:"LIBERAR BÔNUS",descritor:"LANÇAR",cacada:"ATIVAR",escudo:"LIBERAR"}[tipo]},1300)}catch(err){console.error(err);btn.disabled=false;alert("Não foi possível iniciar o Evento Especial.")}}
+window.lancarEventoEspecial=async(tipo,btn)=>{const a=arenaLocal();if(!a?.codigo){alert("Crie ou retome uma Arena primeiro.");return}let e=tipo==="descritor"?eventoDescritor(descritorEspecial.value):{...eventos[tipo]};if(!e){alert("Este descritor ainda não possui desafio especial configurado.");return}if(tipo==="cacada"){const l=Object.values(a.competidores||{}).sort((x,y)=>Number(y.xp||0)-Number(x.xp||0));if(!l.length){alert("A Caçada ao Líder exige competidores.");return}e.liderId=l[0].id||l[0].jogadorId;e.liderNome=l[0].nome||"Líder"}btn.disabled=true;try{await criarEventoEspecial(a.codigo,e);btn.textContent="✅ ACIONADO!";mensagem.innerHTML=`⚡ Evento iniciado: <strong>${e.nome}</strong>.`;setTimeout(()=>{btn.disabled=false;btn.textContent={relampago:"DISPARAR",bonus:"LIBERAR BÔNUS",descritor:"LANÇAR",cacada:"ATIVAR",escudo:"LIBERAR"}[tipo]},1300)}catch(err){console.error(err);btn.disabled=false;alert("Não foi possível iniciar o Evento Especial.")}}
 
-montarMatriz();renderConfiguracaoDescritores();restaurarReuso();
+montarNucleos();montarMatriz();renderConfiguracaoDescritores();restaurarReuso();
 const salva=arenaLocal();if(salva?.codigo){restaurar(salva);conectarArena(salva.codigo)}
-console.log("🔥 Painel do professor final + acompanhamento ao vivo carregado.");
+console.log("🏛️ Arena Matemática — Professor Coliseu carregada.");
 </script>
 </body>
 </html>
