@@ -106,7 +106,7 @@ button:disabled,select:disabled{opacity:.42;cursor:not-allowed}
 <div class="actions"><button class="green" onclick="acao('iniciada')">▶ INICIAR</button><button class="gold" onclick="acao('pausada')">⏸ PAUSAR</button><button class="blue" onclick="acao('continuada')">▶ CONTINUAR</button><button class="primary" onclick="liberarBoss()">👑 LIBERAR BOSS FINAL</button><button class="red" onclick="acao('encerrada')">■ ENCERRAR</button><button id="btnReutilizarArena" class="primary" onclick="reutilizarArena()" style="display:none">♻️ REUTILIZAR ARENA</button></div>
 <div id="mensagem" class="status">Aguardando criação da Arena.</div><div id="bossStatusProfessor" class="status" style="display:none;border-left-color:#facc15"></div>
 <h3>🔐 Controle de acesso</h3><div class="actions"><button class="green" onclick="liberar()">🔓 Liberar estudantes</button><button class="red" onclick="bloquear()">🔒 Bloquear novas entradas</button><button class="gray" onclick="abrirGerenciamentoIndividual()">👤 Gerenciar individualmente</button></div>
-<div id="managePanel" class="managePanel"><h3>👤 Gerenciamento individual</h3><label>Competidor</label><select id="manageCompetidor"></select><div class="actions"><button class="red" onclick="bloquearCompetidorSelecionado()">🔒 BLOQUEAR</button><button class="green" onclick="liberarCompetidorSelecionado()">🔓 LIBERAR</button></div><div id="manageStatus" class="status">Selecione um competidor.</div></div>
+<div id="managePanel" class="managePanel"><h3>👤 Gerenciamento individual</h3><label>Competidor</label><select id="manageCompetidor"></select><div class="actions"><button class="red" onclick="bloquearCompetidorSelecionado()">🔒 BLOQUEAR</button><button class="green" onclick="liberarCompetidorSelecionado()">🔓 LIBERAR</button><button class="red" style="background:#7f1d1d" onclick="excluirCompetidorSelecionado()">🗑 EXCLUIR PARTICIPANTE</button></div><div id="manageStatus" class="status">Selecione um competidor.</div></div>
 </section>
 
 <!-- NOVO BLOCO: ACOMPANHAMENTO AO VIVO -->
@@ -162,7 +162,7 @@ button:disabled,select:disabled{opacity:.42;cursor:not-allowed}
 </div>
 
 <script type="module">
-import {iniciarFirebase,salvarArena,observarArena,observarCompetidores,liberarEntrada,bloquearEntrada,definirStatusArena,registrarEvento,criarDuelo,observarDueloAtual,liberarBossFinal,observarBossFinal,criarEventoEspecial,observarEventoEspecial,atualizarCompetidor,retomarArena} from "./js/firebase-service.js";
+import {iniciarFirebase,salvarArena,observarArena,observarCompetidores,liberarEntrada,bloquearEntrada,definirStatusArena,registrarEvento,criarDuelo,observarDueloAtual,liberarBossFinal,observarBossFinal,criarEventoEspecial,observarEventoEspecial,atualizarCompetidor,removerCompetidor,retomarArena} from "./js/firebase-service.js";
 import {gerarQuestoesArena,HABILIDADES_PAEBES} from "./js/question-bank.js";
 import {metaDiamante,observarHistoricoDiamante} from "./js/diamante-service.js";
 iniciarFirebase();
@@ -436,6 +436,25 @@ window.liberarBoss=async()=>{const a=arenaLocal();if(!a?.codigo){alert("Crie uma
 window.abrirGerenciamentoIndividual=()=>{const a=arenaLocal(),lista=Object.values(a?.competidores||{});if(!lista.length){alert("Ainda não há competidores.");return}manageCompetidor.innerHTML=lista.map(c=>`<option value="${c.id||c.jogadorId}">${c.nome||"Competidor"} — ${Number(c.xp||0)} XP</option>`).join("");managePanel.classList.toggle("ativo")}
 async function bloquearIndividual(v){const a=arenaLocal(),id=manageCompetidor.value;if(!a?.codigo||!id)return;await atualizarCompetidor(a.codigo,id,{bloqueado:v});manageStatus.textContent=v?"🔒 Competidor bloqueado.":"🔓 Competidor liberado."}
 window.bloquearCompetidorSelecionado=()=>bloquearIndividual(true);window.liberarCompetidorSelecionado=()=>bloquearIndividual(false);
+window.excluirCompetidorSelecionado=async()=>{
+  const a=arenaLocal(),id=manageCompetidor.value;
+  if(!a?.codigo||!id){alert("Selecione um participante.");return}
+  const j=(a.competidores||{})[id]||Object.values(a.competidores||{}).find(x=>String(x?.id||x?.jogadorId||"")===String(id));
+  if(!j){alert("Participante não encontrado.");return}
+  const nome=j.nome||"Participante";
+  if(!confirm(`EXCLUIR ${nome} da Arena?\n\nEsta ação remove este registro da lista de participantes e do ranking. Use principalmente para registros duplicados ou entradas indevidas.`))return;
+  try{
+    await removerCompetidor(a.codigo,id);
+    manageStatus.textContent=`🗑 ${nome} foi excluído da Arena.`;
+    const novaLista=Object.values((arenaLocal()?.competidores)||{}).filter(c=>String(c?.id||c?.jogadorId||"")!==String(id));
+    manageCompetidor.innerHTML=novaLista.map(c=>`<option value="${c.id||c.jogadorId}">${c.nome||"Competidor"} — ${Number(c.xp||0)} XP</option>`).join("");
+    if(!novaLista.length)managePanel.classList.remove("ativo");
+  }catch(e){
+    console.error(e);
+    alert(e?.message||"Não foi possível excluir o participante.");
+  }
+};
+
 window.liberarBossIndividual=async(id)=>{const a=arenaLocal();if(!a?.codigo||!id)return;const j=(a.competidores||{})[id]||Object.values(a.competidores||{}).find(x=>String(x?.id||x?.jogadorId||"")===String(id));if(!j){alert("Competidor não encontrado.");return}if(!confirm(`Liberar ${j.nome||"este estudante"} para participar do Boss Final mesmo sem atender automaticamente aos critérios?`))return;try{await atualizarCompetidor(a.codigo,id,{bossLiberadoIndividual:true,bossLiberadoEm:new Date().toISOString()});mensagem.innerHTML=`👑 <strong>${j.nome||"Estudante"}</strong> liberado individualmente para o Boss Final.`}catch(e){console.error(e);alert("Não foi possível liberar este estudante para o Boss.")}}
 
 
