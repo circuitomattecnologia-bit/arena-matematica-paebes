@@ -52,9 +52,77 @@ let aberturaEmExecucao=false,aberturaAssistida=false,arenaFoiIniciada=false; ini
 const safe=s=>String(s??"").replace(/[&<>'"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[m])); const nomeNorm=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Za-z ]+/g," ").replace(/\s+/g," ").trim().toUpperCase(); const primeiro=s=>String(s||"Competidor").trim().split(/\s+/)[0]||"Competidor"; const iniciais=s=>{const p=String(s||"?").trim().split(/\s+/).filter(Boolean);return ((p[0]?.[0]||"?")+(p.length>1?p.at(-1)[0]:"")).toUpperCase()}; const foto=j=>j?.fotoPerfil||j?.foto||j?.avatar||j?.fotoBase64||""; const questoes=()=>{const q=arenaAtual?.questoes||arenaAtual?.questions||[];return Array.isArray(q)?q:Object.values(q||{})}; const idxAtual=()=>Math.max(0,Number(jogador?.questaoAtual??jogador?.questionIndex??0)); const mostrarErro=m=>{const e=$("loginError");e.textContent=m||"";e.style.display=m?"block":"none"}; const senhaValida=s=>/^[A-Z]{3}$/.test(s); const chaveCred=c=>`arena_credencial_${String(c).trim().toUpperCase()}`;
 function guardarCred(){try{localStorage.setItem(chaveCred(codigoArena),JSON.stringify({codigo:codigoArena,nome:jogador?.nome||$("nome").value,jogadorId,senha:$("senha").value.toUpperCase()}))}catch{}}
 async function entrar(){mostrarErro("");const codigo=$("codigo").value.trim().toUpperCase(),nome=$("nome").value.trim(),senha=$("senha").value.trim().toUpperCase().replace(/[^A-Z]/g,"");if(!codigo||!nome||!senhaValida(senha))return mostrarErro("Informe o código da Arena, seu nome completo e uma senha pessoal com exatamente 3 letras.");try{const arena=await buscarArena(codigo);if(!arena)throw new Error("Arena não encontrada. Confira o código informado.");const comps=arena.competidores||arena.competitors||{};const achado=Object.entries(comps).find(([,j])=>nomeNorm(j?.nome||j?.name||"")===nomeNorm(nome));let cred=null;try{cred=JSON.parse(localStorage.getItem(chaveCred(codigo))||"null")}catch{}if(achado?.[1]?.senhaIdentificacao&&String(achado[1].senhaIdentificacao).toUpperCase()!==senha)throw new Error("Senha incorreta para este estudante. Use as 3 letras cadastradas no primeiro acesso.");if(achado&&!achado[1]?.senhaIdentificacao&&cred?.jogadorId===achado[0]&&cred?.senha&&String(cred.senha).toUpperCase()!==senha)throw new Error("Senha incorreta para este estudante neste dispositivo.");codigoArena=codigo;arenaAtual=arena;jogadorId=await entrarNaArena(codigo,{id:achado?.[0]||cred?.jogadorId||undefined,nome,senhaIdentificacao:achado?.[1]?.senhaIdentificacao||senha,online:true});const atualizado=await buscarArena(codigo);arenaAtual=atualizado||arena;jogador=(arenaAtual.competidores||{})[jogadorId]||achado?.[1]||{nome};if(!jogador.senhaIdentificacao)await atualizarCompetidor(codigoArena,jogadorId,{senhaIdentificacao:senha,online:true});jogador={...jogador,senhaIdentificacao:senha};guardarCred();if(foto(jogador))mostrarConvite();else await abrirCamera()}catch(e){mostrarErro(e?.message||"Não foi possível entrar na Arena.")}}
-async function abrirCamera(){$("photoModal").style.display="flex";$("video").style.display="block";$("photoPreview").style.display="none";$("captureBtn").classList.remove("hidden");$("retryBtn").classList.add("hidden");$("confirmPhotoBtn").classList.add("hidden");$("photoMsg").textContent="Abrindo câmera...";try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:{ideal:640},height:{ideal:480}},audio:false});$("video").srcObject=stream;$("photoMsg").textContent="Posicione seu rosto e toque em TIRAR FOTO."}catch{$("photoMsg").textContent="Não foi possível abrir a câmera. Use ENVIAR FOTO."}}
-function fecharCamera(){if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;$("video").srcObject=null}
-function capturar(){const v=$("video"),c=$("canvas"),n=240;c.width=n;c.height=n;const x=c.getContext("2d"),vw=v.videoWidth||640,vh=v.videoHeight||480,side=Math.min(vw,vh),sx=(vw-side)/2,sy=(vh-side)/2;x.save();x.translate(n,0);x.scale(-1,1);x.drawImage(v,sx,sy,side,side,0,0,n,n);x.restore();const data=c.toDataURL("image/jpeg",.68);mostrarPreview(data)} function mostrarPreview(data){$("photoPreview").src=data;$("photoPreview").dataset.data=data;$("photoPreview").style.display="block";$("video").style.display="none";$("captureBtn").classList.add("hidden");$("retryBtn").classList.remove("hidden");$("confirmPhotoBtn").classList.remove("hidden");$("photoMsg").textContent="Confira a foto e confirme."} function refazer(){$("photoPreview").style.display="none";$("video").style.display="block";$("captureBtn").classList.remove("hidden");$("retryBtn").classList.add("hidden");$("confirmPhotoBtn").classList.add("hidden")}
+let cameraPronta=false;
+async function abrirCamera(){
+  $("photoModal").style.display="flex";
+  $("video").style.display="block";
+  $("photoPreview").style.display="none";
+  $("captureBtn").classList.remove("hidden");
+  $("retryBtn").classList.add("hidden");
+  $("confirmPhotoBtn").classList.add("hidden");
+  $("captureBtn").textContent="ATIVAR CÂMERA";
+  $("photoMsg").textContent="Toque em ATIVAR CÂMERA. O navegador poderá pedir permissão para usar a câmera.";
+  cameraPronta=false;
+  fecharCamera();
+}
+async function ativarCamera(){
+  if(!navigator.mediaDevices?.getUserMedia){
+    $("photoMsg").textContent="Este navegador não disponibilizou a câmera. Use ENVIAR FOTO.";
+    return false;
+  }
+  $("captureBtn").disabled=true;
+  $("captureBtn").textContent="ABRINDO...";
+  $("photoMsg").textContent="Abrindo câmera... autorize o acesso se o navegador solicitar.";
+  fecharCamera();
+  const tentar=async(constraints)=>{
+    const pedido=navigator.mediaDevices.getUserMedia(constraints);
+    const limite=new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout-camera")),8000));
+    return Promise.race([pedido,limite]);
+  };
+  try{
+    try{
+      stream=await tentar({video:{facingMode:{ideal:"user"},width:{ideal:640},height:{ideal:480}},audio:false});
+    }catch(e){
+      if(String(e?.message||"").includes("timeout-camera"))throw e;
+      stream=await tentar({video:true,audio:false});
+    }
+    const v=$("video");
+    v.srcObject=stream;
+    v.muted=true;
+    v.playsInline=true;
+    await v.play().catch(()=>{});
+    await new Promise(resolve=>{
+      if(v.readyState>=2&&v.videoWidth>0)return resolve();
+      let feito=false;
+      const fim=()=>{if(!feito){feito=true;resolve()}};
+      v.addEventListener("loadedmetadata",fim,{once:true});
+      v.addEventListener("canplay",fim,{once:true});
+      setTimeout(fim,2500);
+    });
+    if(!v.videoWidth||!v.videoHeight)throw new Error("video-sem-imagem");
+    cameraPronta=true;
+    $("captureBtn").disabled=false;
+    $("captureBtn").textContent="TIRAR FOTO";
+    $("photoMsg").textContent="Câmera ativa. Posicione seu rosto e toque em TIRAR FOTO.";
+    return true;
+  }catch(e){
+    fecharCamera();
+    cameraPronta=false;
+    $("captureBtn").disabled=false;
+    $("captureBtn").textContent="TENTAR CÂMERA NOVAMENTE";
+    const nome=String(e?.name||"");
+    const msg=String(e?.message||"");
+    if(nome==="NotAllowedError"||nome==="PermissionDeniedError")$("photoMsg").textContent="A câmera foi bloqueada pelo navegador. Permita a câmera para este site e toque em TENTAR CÂMERA NOVAMENTE. Você também pode usar ENVIAR FOTO.";
+    else if(nome==="NotFoundError"||nome==="DevicesNotFoundError")$("photoMsg").textContent="Nenhuma câmera foi encontrada neste aparelho. Use ENVIAR FOTO.";
+    else if(nome==="NotReadableError"||nome==="TrackStartError")$("photoMsg").textContent="A câmera está ocupada por outro aplicativo. Feche Teams, Meet, Zoom ou outro app que esteja usando a câmera e tente novamente.";
+    else if(msg.includes("timeout-camera"))$("photoMsg").textContent="A câmera demorou para responder. Feche outro aplicativo que possa estar usando a câmera e toque em TENTAR CÂMERA NOVAMENTE.";
+    else $("photoMsg").textContent="Não foi possível mostrar a imagem da câmera. Toque em TENTAR CÂMERA NOVAMENTE ou use ENVIAR FOTO.";
+    return false;
+  }
+}
+function fecharCamera(){if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;const v=$("video");if(v){try{v.pause()}catch{}v.srcObject=null}}
+async function acaoCamera(){if(!cameraPronta){await ativarCamera();return}capturar()}
+function capturar(){const v=$("video");if(!cameraPronta||!v.videoWidth||!v.videoHeight){$("photoMsg").textContent="A câmera ainda não está pronta. Toque em ATIVAR CÂMERA e aguarde sua imagem aparecer.";return}const c=$("canvas"),n=240;c.width=n;c.height=n;const x=c.getContext("2d"),vw=v.videoWidth,vh=v.videoHeight,side=Math.min(vw,vh),sx=(vw-side)/2,sy=(vh-side)/2;x.save();x.translate(n,0);x.scale(-1,1);x.drawImage(v,sx,sy,side,side,0,0,n,n);x.restore();const data=c.toDataURL("image/jpeg",.68);mostrarPreview(data)} function mostrarPreview(data){$("photoPreview").src=data;$("photoPreview").dataset.data=data;$("photoPreview").style.display="block";$("video").style.display="none";$("captureBtn").classList.add("hidden");$("retryBtn").classList.remove("hidden");$("confirmPhotoBtn").classList.remove("hidden");$("photoMsg").textContent="Confira a foto e confirme."} function refazer(){$("photoPreview").style.display="none";$("video").style.display="block";$("captureBtn").classList.remove("hidden");$("retryBtn").classList.add("hidden");$("confirmPhotoBtn").classList.add("hidden");$("captureBtn").textContent=cameraPronta?"TIRAR FOTO":"ATIVAR CÂMERA";$("photoMsg").textContent=cameraPronta?"Câmera ativa. Posicione seu rosto e toque em TIRAR FOTO.":"Toque em ATIVAR CÂMERA."}
 function arquivoFoto(file){if(!file)return;const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{const c=$("canvas"),n=240;c.width=n;c.height=n;const x=c.getContext("2d"),side=Math.min(img.width,img.height),sx=(img.width-side)/2,sy=(img.height-side)/2;x.drawImage(img,sx,sy,side,side,0,0,n,n);mostrarPreview(c.toDataURL("image/jpeg",.68))};img.src=r.result};r.readAsDataURL(file)}
 async function confirmarFoto(){const data=$("photoPreview").dataset.data;if(!data)return;await atualizarCompetidor(codigoArena,jogadorId,{fotoPerfil:data,online:true});fecharCamera();$("photoModal").style.display="none";jogador={...jogador,fotoPerfil:data};mostrarConvite()}
 function mostrarConvite(){fecharCamera();$("login").style.display="none";$("arena").style.display="none";$("invite").style.display="grid";$("inviteName").textContent=primeiro(jogador?.nome||$("nome").value).toUpperCase();const f=foto(jogador);$("invitePhoto").style.display=f?"inline-block":"none";if(f)$("invitePhoto").src=f;$("inviteArena").textContent=`${arenaAtual?.nome||arenaAtual?.titulo||"Arena Matemática"} • Código ${codigoArena}`}
@@ -105,7 +173,7 @@ async function usarDiamante(){const alvo=$("diamondTarget").value;if(!alvo)retur
 async function processarBloqueio(){if(processandoBloqueio||!jogador?.diamanteBloqueioPendente)return;processandoBloqueio=true;try{const ok=await consumirBloqueioDiamante(codigoArena,jogadorId);if(ok){$("feedback").textContent="💎 Você recebeu um Poder de Bloqueio. Esta rodada foi temporariamente interrompida.";$("feedback").className="feedback no"}}finally{setTimeout(()=>processandoBloqueio=false,2100)}}
 function renderDuelo(){const d=dueloAtual;if(!d||d.status!=="ativo"||![d.competidor1Id,d.competidor2Id].includes(jogadorId)){ $("duelCard").classList.add("hidden");return}$("duelCard").classList.remove("hidden");if(d.respostas?.[jogadorId]){$("duelBody").innerHTML="Resposta do duelo já registrada.";return}const texto=d.text||d.enunciado||"Duelo em andamento.",ops=d.options||d.alternativas||[];$("duelBody").innerHTML=`<b>${safe(texto)}</b><div style="display:grid;gap:8px;margin-top:12px">${ops.map((o,i)=>`<button class="opt duelO" data-i="${i}">${String.fromCharCode(65+i)}) ${safe(typeof o==="string"?o:o?.text||o?.texto||"")}</button>`).join("")}</div>`;document.querySelectorAll(".duelO").forEach(x=>x.onclick=async()=>{try{const r=await responderDuelo(codigoArena,jogadorId,Number(x.dataset.i));document.querySelectorAll(".duelO").forEach(y=>y.disabled=true);$("duelBody").insertAdjacentHTML("beforeend",`<p>${r.vencedor?`🏆 Você venceu o duelo! +${r.bonusXP||0} XP`:r.correta?"✅ Resposta correta.":"❌ Resposta incorreta."}</p>`)}catch(e){alert(e?.message||"Falha no duelo.")}})}
 function renderStatus(){if(!arenaAtual||!jogador)return;const st=String(arenaAtual.status||"preparacao").toLowerCase();$("pauseOverlay").style.display=st==="pausada"?"flex":"none";$("blockOverlay").style.display=jogador.bloqueado===true?"flex":"none";$("endOverlay").style.display=st==="encerrada"?"flex":"none";$("arenaStatus").innerHTML=`<b>${safe(arenaAtual.nome||arenaAtual.titulo||"Arena Matemática")}</b><br>Código: <strong>${safe(codigoArena)}</strong><br>Status: <strong>${safe(st)}</strong>`;if(st==="encerrada"){const arr=Object.entries(competidores||{}).map(([id,j])=>({id,...j})).sort((a,b)=>Number(b.xp||0)-Number(a.xp||0)),p=arr.findIndex(x=>x.id===jogadorId),t=questoes().length,a=Number(jogador.acertos||0),pct=t?Math.round(a/t*100):0;$("endResult").textContent=`${p>=0?`${p+1}º lugar • `:""}${Number(jogador.xp||0)} XP`;$("endPedagogy").textContent=`Você concluiu a Arena com ${a} acertos em ${t} questões (${pct}%).`}}
-$("entrarBtn").onclick=entrar;$("senha").addEventListener("input",e=>e.target.value=e.target.value.toUpperCase().replace(/[^A-Z]/g,"").slice(0,3));$("captureBtn").onclick=capturar;$("retryBtn").onclick=refazer;$("confirmPhotoBtn").onclick=confirmarFoto;$("filePhoto").onchange=e=>arquivoFoto(e.target.files?.[0]);$("battleBtn").onclick=abrirArena;$("aberturaStartBtn").onclick=iniciarAberturaPorToque;$("aberturaSkipBtn").onclick=()=>finalizarAbertura(true);$("aberturaVideo").addEventListener("ended",()=>finalizarAbertura(true));$("aberturaVideo").addEventListener("error",()=>{$("aberturaOverlay").classList.remove("aberturaHiddenHud");$("aberturaTitulo").textContent="ABERTURA INDISPONÍVEL";$("aberturaTexto").textContent="O vídeo não pôde ser carregado. Use PULAR ABERTURA para continuar a competição.";$("aberturaSkipBtn").classList.remove("hidden")});$("confirmBtn").onclick=responderQuestao;$("bossBtn").onclick=responderBoss;$("eventBtn").onclick=responderEvento;$("diamondBtn").onclick=usarDiamante;window.addEventListener("beforeunload",()=>{fecharCamera();if(codigoArena&&jogadorId)atualizarCompetidor(codigoArena,jogadorId,{online:false}).catch(()=>{})});
+$("entrarBtn").onclick=entrar;$("senha").addEventListener("input",e=>e.target.value=e.target.value.toUpperCase().replace(/[^A-Z]/g,"").slice(0,3));$("captureBtn").onclick=acaoCamera;$("retryBtn").onclick=refazer;$("confirmPhotoBtn").onclick=confirmarFoto;$("filePhoto").onchange=e=>arquivoFoto(e.target.files?.[0]);$("battleBtn").onclick=abrirArena;$("aberturaStartBtn").onclick=iniciarAberturaPorToque;$("aberturaSkipBtn").onclick=()=>finalizarAbertura(true);$("aberturaVideo").addEventListener("ended",()=>finalizarAbertura(true));$("aberturaVideo").addEventListener("error",()=>{$("aberturaOverlay").classList.remove("aberturaHiddenHud");$("aberturaTitulo").textContent="ABERTURA INDISPONÍVEL";$("aberturaTexto").textContent="O vídeo não pôde ser carregado. Use PULAR ABERTURA para continuar a competição.";$("aberturaSkipBtn").classList.remove("hidden")});$("confirmBtn").onclick=responderQuestao;$("bossBtn").onclick=responderBoss;$("eventBtn").onclick=responderEvento;$("diamondBtn").onclick=usarDiamante;window.addEventListener("beforeunload",()=>{fecharCamera();if(codigoArena&&jogadorId)atualizarCompetidor(codigoArena,jogadorId,{online:false}).catch(()=>{})});
 </script>
 </body>
 </html>
