@@ -320,6 +320,7 @@ main{max-width:1500px;margin:auto;padding:30px 5% 80px}
 </div>
 </section>
 
+<section class="card full" id="novaFaseProfessor"><h2>🧭 Nova Fase — Histórico, Perfil e Evidências</h2><p class="small">Controles individuais. O histórico pedagógico é permanente; XP permanece separado do nível de aprendizagem.</p><div class="formGrid"><div><label>Estudante</label><select id="nfEstudante"><option value="">Aguardando competidores...</option></select></div><div><label>Perfil</label><div class="actions"><button class="primary" onclick="nfLiberarEdicao()">LIBERAR EDIÇÃO</button><button class="green" onclick="nfAutorizarGaleria()">AUTORIZAR GALERIA</button></div></div></div><div class="actions"><button class="blue" onclick="nfVerHistorico()">📊 VER HISTÓRICO</button></div><div id="nfStatus" class="status">Selecione um estudante.</div><div id="nfHistorico" class="status" style="display:none"></div><h3>📷 Problemas de câmera / evidência do caderno</h3><div id="nfProblemasCamera" class="status">Nenhum problema informado nesta Arena.</div></section>
 <section class="card full" id="mosaico">
 <h2>👥 Mosaico dos Competidores</h2>
 <p class="small">Quando atualizarmos a tela do estudante, a câmera será usada somente na entrada para uma única foto. Depois fecha. Aqui aparecerão os rostos dos participantes, como em uma reunião online — sem vídeo ao vivo.</p>
@@ -399,7 +400,8 @@ main{max-width:1500px;margin:auto;padding:30px 5% 80px}
 import {
   iniciarFirebase,salvarArena,observarArena,observarCompetidores,liberarEntrada,bloquearEntrada,
   definirStatusArena,criarDuelo,observarDueloAtual,liberarBossFinal,observarBossFinal,
-  criarEventoEspecial,observarEventoEspecial,atualizarCompetidor,removerCompetidor,retomarArena
+  criarEventoEspecial,observarEventoEspecial,atualizarCompetidor,removerCompetidor,retomarArena,
+  buscarHistoricoEstudante,liberarEdicaoPerfil,autorizarGaleriaPerfil,observarProblemasCamera,liberarQuestaoSemFoto
 } from "./js/firebase-service.js";
 import {gerarQuestoesArena,HABILIDADES_PAEBES} from "./js/question-bank.js";
 import {metaDiamante,observarHistoricoDiamante} from "./js/diamante-service.js";
@@ -419,7 +421,7 @@ const AMA=["D013_M","D039_M","D043_M","D049_M","D064_M","D074_M","D085_M","D087_
 const DESCRITORES_FIXOS=['D009_M','D033_M','D038_M','D039_M','D042_M','D043_M','D049_M','D051_M','D057_M','D058_M','D063_M','D064_M','D065_M','D071_M','D074_M','D076_M','D078_M','D080_M','D082_M','D085_M','D086_M','D087_M','D088_M','D096_M','D097_M','D111_M','D119_M','D124_M','D125_M','D126_M','D127_M','D129_M','D132_M','D133_M','D145_M'];
 
 const area=document.getElementById("descritores");
-let pararArena=null,pararCompetidores=null,pararDuelo=null,pararBoss=null,pararEspecial=null,pararHistoricoDiamante=null;
+let pararArena=null,pararCompetidores=null,pararDuelo=null,pararBoss=null,pararEspecial=null,pararHistoricoDiamante=null,pararProblemasCamera=null;
 let ultimoEventoEspecial=null,ultimoDuelo=null,ultimoBoss=null,relogioMonitor=null;
 
 function arenaLocal(){try{return JSON.parse(localStorage.getItem("arenaPAEBES"))}catch{return null}}
@@ -548,6 +550,7 @@ function detectarEventoJogador(j){const tipo=String(j?.eventoAtual?.tipo||j?.eve
 function situacaoJogador(j){if(j?.bloqueado===true||j?.diamanteBloqueioPendente===true)return{texto:"🔴 Bloqueado",classe:"sitBloqueado"};const ev=detectarEventoJogador(j);if(ev)return{texto:ev,classe:"sitEvento"};if(j?.regularConcluida===true)return{texto:"🟡 Aguardando Boss",classe:"sitAguardando"};if(j?.ativo===false||j?.online===false)return{texto:"⚪ Inativo",classe:"sitInativo"};return{texto:"🟢 Respondendo",classe:"sitRespondendo"}}
 
 function atualizarMonitor(cs={}){
+  atualizarNovaFaseEstudantes(cs||{});
   const a=arenaLocal()||{},lista=Object.values(cs||{}),qmax=Number(a.quantidade||qtd.value||40);
   const concluidos=lista.filter(j=>j?.regularConcluida===true).length,emEvento=lista.filter(j=>!!detectarEventoJogador(j)).length;
   const respondendo=lista.filter(j=>j?.regularConcluida!==true&&j?.bloqueado!==true&&j?.diamanteBloqueioPendente!==true&&!detectarEventoJogador(j)).length;
@@ -602,6 +605,7 @@ function conectarArena(cod){
   pararDuelo=observarDueloAtual(cod,d=>{ultimoDuelo=d||null;renderDueloProfessor(d);atualizarMonitor(arenaLocal()?.competidores||{})});
   pararBoss=observarBossFinal(cod,b=>{ultimoBoss=b||null;atualizarMonitor(arenaLocal()?.competidores||{});if(!b){bossStatusProfessor.style.display="none";return}const rs=Object.values(b.respostas||{});bossStatusProfessor.style.display="block";bossStatusProfessor.innerHTML=`👑 <strong>BOSS FINAL:</strong> ${rs.length} concluído(s) • ${rs.filter(x=>x.correta).length} acerto(s) • ${Number(b.bonusXP||300)} XP.`});
   pararEspecial=observarEventoEspecial(cod,e=>{ultimoEventoEspecial=e||null;if(!e){eventoEspecialStatusProfessor.textContent="⚡ Nenhum Evento Especial jogável ativo.";return}const rs=Object.values(e.respostas||{});eventoEspecialStatusProfessor.innerHTML=`⚡ <strong>${e.nome||"EVENTO ESPECIAL"}</strong> — ${rs.length} resposta(s), ${rs.filter(x=>x.correta).length} acerto(s) • bônus: ${Number(e.bonusXP||0)} XP`});
+  try{if(pararProblemasCamera)pararProblemasCamera();pararProblemasCamera=observarProblemasCamera(cod,p=>renderProblemasCamera(p||{}))}catch(e){console.warn(e)}
   acompanharHistoricoDiamanteProfessor(cod);if(relogioMonitor)clearInterval(relogioMonitor);relogioMonitor=setInterval(()=>atualizarMonitor(arenaLocal()?.competidores||{}),1000)
 }
 
@@ -618,7 +622,8 @@ window.criarArena=async()=>{
   const dist=lerDistribuicaoNiveis();if(Object.values(dist).reduce((a,b)=>a+b,0)!==100){alert("A distribuição dos níveis deve somar 100%.");return}
   let questoes;try{questoes=gerarQuestoesArena({quantidade,descritores:sel,configuracaoDescritores:lerConfiguracaoDescritores(),distribuicaoNiveis:dist})}catch(e){alert((e.message||"Erro ao gerar questões.")+"\n\nObservação: enquanto o question-bank.js antigo ainda estiver instalado, Arenas acima de 40 questões só funcionarão depois de substituirmos esse arquivo.");return}
   const cfgBoss={pctAcertos:Math.max(0,Math.min(100,Number(bossPctAcertos.value||0))),pctConcluidos:Math.max(0,Math.min(100,Number(bossPctConcluidos.value||0)))};
-  const cod=gerarCodigo(),dados={codigo:cod,nome:nomeArena.value||"Arena Matemática",turma:turma.value,quantidade:questoes.length,quantidadeSolicitada:quantidade,limite:Number(limite.value||60),descritores:sel,configuracaoDescritores:lerConfiguracaoDescritores(),distribuicaoNiveis:dist,configBoss:cfgBoss,questoes,status:"preparacao",entradaLiberada:false,aceitaNovos:false,questaoAtual:0,competidores:{},versaoArena:"3tri-2026-coliseu-v1",criadaEm:new Date().toISOString()};
+  const evidencia={};sel.forEach(d=>{const i=questoes.findIndex(q=>String(q?.descritor||q?.descriptor||"").toUpperCase()===String(d).toUpperCase());if(i>=0)evidencia[d]=i});
+  const cod=gerarCodigo(),dados={codigo:cod,nome:nomeArena.value||"Arena Matemática",turma:turma.value,quantidade:questoes.length,quantidadeSolicitada:quantidade,limite:Number(limite.value||60),descritores:sel,configuracaoDescritores:lerConfiguracaoDescritores(),distribuicaoNiveis:dist,configBoss:cfgBoss,questoes,questaoEvidenciaPorDescritor:evidencia,status:"preparacao",entradaLiberada:false,aceitaNovos:false,questaoAtual:0,competidores:{},novaFase:true,versaoArena:"nova-fase-2026-v1",criadaEm:new Date().toISOString()};
   try{await salvarArena(cod,dados);salvarLocal(dados);restaurar(dados);conectarArena(cod);mensagem.innerHTML=`🏛️ Arena criada. Código <strong>${cod}</strong>. Agora libere os estudantes.`}catch(e){console.error(e);alert("Erro ao criar Arena no Firebase.")}
 }
 window.liberar=async()=>{const a=arenaLocal();if(!a?.codigo){alert("Crie ou retome uma Arena primeiro.");return}await liberarEntrada(a.codigo);mensagem.innerHTML="🔓 Entrada dos estudantes <strong>LIBERADA</strong>."}
@@ -635,6 +640,14 @@ async function bloquearIndividual(v){const a=arenaLocal(),id=manageCompetidor.va
 window.bloquearCompetidorSelecionado=()=>bloquearIndividual(true);window.liberarCompetidorSelecionado=()=>bloquearIndividual(false);
 window.excluirCompetidorSelecionado=async()=>{const a=arenaLocal(),id=manageCompetidor.value;if(!a?.codigo||!id)return;const j=(a.competidores||{})[id]||Object.values(a.competidores||{}).find(x=>String(x?.id||x?.jogadorId||"")===String(id));if(!j)return;if(!confirm(`Excluir ${j.nome||"participante"} da Arena?`))return;await removerCompetidor(a.codigo,id);manageStatus.textContent="🗑 Participante excluído."}
 window.liberarBossIndividual=async(id)=>{const a=arenaLocal();if(!a?.codigo||!id)return;const j=(a.competidores||{})[id]||Object.values(a.competidores||{}).find(x=>String(x?.id||x?.jogadorId||"")===String(id));if(!j)return;if(!confirm(`Liberar ${j.nome||"este estudante"} para o Boss Final?`))return;await atualizarCompetidor(a.codigo,id,{bossLiberadoIndividual:true,bossLiberadoEm:new Date().toISOString()});mensagem.innerHTML=`👑 ${j.nome||"Estudante"} liberado individualmente para o Boss.`}
+
+function atualizarNovaFaseEstudantes(cs={}){const el=document.getElementById("nfEstudante");if(!el)return;const atual=el.value;const lista=Object.entries(cs||{}).map(([id,j])=>({id,...j}));el.innerHTML=lista.length?lista.sort((a,b)=>String(a.nome||"").localeCompare(String(b.nome||""),"pt-BR")).map(j=>`<option value="${j.id}">${j.nome||"Competidor"}</option>`).join(""):'<option value="">Aguardando competidores...</option>';if(lista.some(x=>x.id===atual))el.value=atual}
+function nfSelecionado(){const a=arenaLocal(),id=document.getElementById("nfEstudante")?.value;if(!a?.codigo||!id)return null;const j=(a.competidores||{})[id];return j?{a,id,j}:null}
+window.nfLiberarEdicao=async()=>{const x=nfSelecionado();if(!x)return alert("Selecione um estudante.");await liberarEdicaoPerfil(x.id,{arenaCodigo:x.a.codigo,usoUnico:true});nfStatus.innerHTML=`✏️ <strong>${x.j.nome}</strong> autorizado a editar o perfil uma vez.`}
+window.nfAutorizarGaleria=async()=>{const x=nfSelecionado();if(!x)return alert("Selecione um estudante.");await autorizarGaleriaPerfil(x.id,{arenaCodigo:x.a.codigo,usoUnico:true});nfStatus.innerHTML=`📷 <strong>${x.j.nome}</strong> autorizado individualmente a usar a galeria.`}
+window.nfVerHistorico=async()=>{const x=nfSelecionado();if(!x)return alert("Selecione um estudante.");nfHistorico.style.display="block";nfHistorico.textContent="Carregando...";try{const h=await buscarHistoricoEstudante(x.id)||{},ds=h.descritores||h?.historico?.descritores||{};const linhas=Object.entries(ds).map(([d,v])=>`<tr><td>${d}</td><td>${v?.nivelAtual||"—"}</td><td>${Number(v?.tentativas||0)}</td><td>${Number(v?.acertos||0)}</td><td>${Number(v?.percentual||0)}%</td></tr>`).join("");nfHistorico.innerHTML=`<strong>Histórico — ${x.j.nome}</strong><div class="monitorWrap"><table class="monitorTable"><thead><tr><th>Descritor</th><th>Nível</th><th>Tentativas</th><th>Acertos</th><th>%</th></tr></thead><tbody>${linhas||'<tr><td colspan="5">Sem histórico consolidado.</td></tr>'}</tbody></table></div>`}catch(e){console.error(e);nfHistorico.textContent="Não foi possível carregar o histórico."}}
+function renderProblemasCamera(p={}){const box=document.getElementById("nfProblemasCamera");if(!box)return;const itens=[];for(const [id,v] of Object.entries(p||{})){if(!v)continue;const est=v.nome||v.estudanteNome||id,q=v.questaoIndex??v.questao??null;if(q!==null)itens.push(`<div>📷 <strong>${est}</strong> — questão ${Number(q)+1}. <button class="monitorBtn" onclick="nfLiberarSemFoto('${v.estudanteId||id}',${Number(q)})">LIBERAR SEM FOTO</button></div>`);else itens.push(`<div>📷 <strong>${est}</strong> — problema na foto de perfil. Autorize a galeria individualmente.</div>`)}box.innerHTML=itens.join("")||"Nenhum problema informado nesta Arena."}
+window.nfLiberarSemFoto=async(id,q)=>{const a=arenaLocal();if(!a?.codigo)return;await liberarQuestaoSemFoto(a.codigo,id,Number(q),{autorizadoPor:"Professor Leopoldo"});nfStatus.textContent="Questão liberada individualmente sem foto."}
 
 const questoesDuelo=[{descritor:"D111_M",texto:"Um cubo possui quantas faces?",opcoes:["4","5","6","8","12"],correta:2},{descritor:"D074_M",texto:"Qual expressão representa uma função exponencial crescente de base 3?",opcoes:["3x","x³","(1/3)^x","3^x","x+3"],correta:3},{descritor:"D097_M",texto:"Numa PG 2, 6, 18, ... qual é o próximo termo?",opcoes:["24","36","48","54","72"],correta:3}];
 window.abrirDuelo=()=>{const a=arenaLocal(),cs=Object.values(a?.competidores||{}).filter(c=>c&&(c.id||c.jogadorId));if(cs.length<2){alert("São necessários pelo menos 2 competidores.");return}const h=cs.map(c=>`<option value="${c.id||c.jogadorId}">${c.nome||"Competidor"} — ${Number(c.xp||0)} XP</option>`).join("");dueloCompetidor1.innerHTML=h;dueloCompetidor2.innerHTML=h;if(dueloCompetidor2.options.length>1)dueloCompetidor2.selectedIndex=1;dueloPanel.classList.add("ativo")}
