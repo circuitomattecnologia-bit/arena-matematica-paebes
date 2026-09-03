@@ -54,8 +54,7 @@ export const HABILIDADES_PAEBES = {
   "D157_M":"Resolver e interpretar situações envolvendo matrizes e sistemas lineares."
 };
 
-export const DESCRITORES_COM_BANCO =
-  Object.keys(HABILIDADES_PAEBES);
+export const DESCRITORES_COM_BANCO = Object.keys(HABILIDADES_PAEBES);
 
 export const NIVEIS = [
   "ABAIXO DO BÁSICO",
@@ -65,102 +64,43 @@ export const NIVEIS = [
 ];
 
 export const NUCLEOS_APRENDIZAGEM = {
-
   "plano-retas":{
     nome:"Plano Cartesiano e Retas",
-    descritores:[
-      "D009_M",
-      "D043_M",
-      "D085_M",
-      "D124_M"
-    ]
+    descritores:["D009_M","D043_M","D085_M","D124_M"]
   },
-
   "circunferencia":{
     nome:"Circunferência no Plano Cartesiano",
-    descritores:[
-      "D043_M",
-      "D155_M"
-    ]
+    descritores:["D043_M","D155_M"]
   },
-
   "sistemas-matrizes":{
     nome:"Sistemas Lineares e Matrizes",
-    descritores:[
-      "D043_M",
-      "D085_M",
-      "D154_M",
-      "D127_M",
-      "D157_M"
-    ]
+    descritores:["D043_M","D085_M","D154_M","D127_M","D157_M"]
   },
-
   "exponencial-pg":{
     nome:"Exponencial e PG",
-    descritores:[
-      "D074_M",
-      "D088_M",
-      "D097_M"
-    ]
+    descritores:["D074_M","D088_M","D097_M"]
   },
-
   "geometria-espacial":{
     nome:"Geometria Espacial",
-    descritores:[
-      "D111_M",
-      "D125_M",
-      "D129_M"
-    ]
+    descritores:["D111_M","D125_M","D129_M"]
   },
-
   "trigonometria":{
     nome:"Trigonometria",
-    descritores:[
-      "D039_M",
-      "D049_M",
-      "D051_M"
-    ]
+    descritores:["D039_M","D049_M","D051_M"]
   },
-
   "funcoes-trig":{
     nome:"Funções Trigonométricas",
-    descritores:[
-      "D043_M",
-      "D051_M",
-      "D071_M",
-      "D126_M"
-    ]
+    descritores:["D043_M","D051_M","D071_M","D126_M"]
   },
-
   "fundamentos":{
     nome:"Fundamentos e Recuperação",
-    descritores:[
-      "D013_M",
-      "D038_M",
-      "D039_M",
-      "D049_M",
-      "D058_M",
-      "D064_M",
-      "D087_M"
-    ]
+    descritores:["D013_M","D038_M","D039_M","D049_M","D058_M","D064_M","D087_M"]
   }
 };
 
 export const PRIORIDADE_AMA_3TRI = [
-  "D013_M",
-  "D039_M",
-  "D043_M",
-  "D049_M",
-  "D064_M",
-  "D074_M",
-  "D085_M",
-  "D087_M",
-  "D088_M",
-  "D097_M",
-  "D111_M",
-  "D124_M",
-  "D125_M",
-  "D129_M"
+  "D013_M","D039_M","D043_M","D049_M","D064_M","D074_M","D085_M",
+  "D087_M","D088_M","D097_M","D111_M","D124_M","D125_M","D129_M"
 ];
 
 const XP_NIVEL = {
@@ -170,330 +110,943 @@ const XP_NIVEL = {
   "AVANÇADO":240
 };
 
-const HIST_KEY =
-  "arenaPAEBES_historicoQuestoes_v3";
+const HIST_KEY = "arenaPAEBES_historicoQuestoes_v3";
+const ROUND_KEY = "arenaPAEBES_rodadaBanco";
 
-const ROUND_KEY =
-  "arenaPAEBES_rodadaBanco";
-
-function clamp(n,min,max){
-  return Math.max(
-    min,
-    Math.min(max,n)
-  );
-}
+function clamp(n,min,max){ return Math.max(min,Math.min(max,n)); }
 
 function fmt(n){
-
-  const x =
-    Math.round(
-      Number(n) * 100
-    ) / 100;
-
-  return Number.isInteger(x)
-    ? String(x)
-    : String(x).replace(".",",");
+  const x=Math.round(Number(n)*100)/100;
+  return Number.isInteger(x)?String(x):String(x).replace(".",",");
 }
 
-function pick(a,s=0){
-
-  return a[
-    Math.abs(
-      Number(s) || 0
-    ) % a.length
-  ];
-
-}
+function pick(a,s=0){ return a[Math.abs(Number(s)||0)%a.length]; }
 
 function hash(str=""){
-
-  let h =
-    2166136261;
-
-  for(
-    let i=0;
-    i<str.length;
-    i++
-  ){
-
-    h ^=
-      str.charCodeAt(i);
-
-    h =
-      Math.imul(
-        h,
-        16777619
-      );
-
+  let h=2166136261;
+  for(let i=0;i<str.length;i++){
+    h^=str.charCodeAt(i);
+    h=Math.imul(h,16777619);
   }
-
-  return (
-    h >>> 0
-  ).toString(36);
-
+  return (h>>>0).toString(36);
 }
 
 function norm(v=""){
-
-  return String(v)
-    .normalize("NFD")
-    .replace(
-      /[\u0300-\u036f]/g,
-      ""
-    )
-    .toLowerCase()
-    .replace(
-      /<[^>]*>/g,
-      " "
-    )
-    .replace(
-      /[^a-z0-9]+/g,
-      " "
-    )
-    .trim();
-
+  return String(v).normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .toLowerCase().replace(/<[^>]*>/g," ").replace(/[^a-z0-9]+/g," ").trim();
 }
 
-function shuffle(
-  arr,
-  seed=1
-){
+function shuffle(arr,seed=1){
+  const a=[...arr]; let s=Math.abs(Number(seed)||1);
+  for(let i=a.length-1;i>0;i--){
+    s=(s*9301+49297)%233280;
+    const j=Math.floor((s/233280)*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
 
-  const a =
-    [...arr];
+function alternativas(correta,distratores,seed){
+  const resposta=String(correta);
+  const unicos=[];
+  [resposta,...distratores.map(String),"0","1","2","3","4","5","6","8","10","12","15","20","25","30","40","50","60","100"]
+    .forEach(x=>{ if(!unicos.includes(x)) unicos.push(x); });
+  const opts=shuffle(unicos.slice(0,5),seed);
+  return {options:opts,correct:opts.indexOf(resposta)};
+}
 
-  let s =
-    Math.abs(
-      Number(seed) || 1
-    );
+function svg(inner,label="Representação matemática"){
+  return `<svg viewBox="0 0 520 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${label}">
+  <rect width="520" height="280" rx="18" fill="#07182d"/>${inner}</svg>`;
+}
 
-  for(
-    let i=a.length-1;
-    i>0;
-    i--
-  ){
+function plano({pontos=[],retas=[]}={}){
+  let c="";
+  for(let i=-5;i<=5;i++){
+    const x=260+i*42,y=140-i*22;
+    c+=`<line x1="${x}" y1="20" x2="${x}" y2="255" stroke="#153552"/>
+        <line x1="35" y1="${y}" x2="485" y2="${y}" stroke="#153552"/>`;
+  }
+  c+=`<line x1="35" y1="140" x2="485" y2="140" stroke="#dbeafe" stroke-width="2"/>
+      <line x1="260" y1="20" x2="260" y2="255" stroke="#dbeafe" stroke-width="2"/>`;
+  retas.forEach((r,idx)=>{
+    const pts=[];
+    for(let x=-5;x<=5;x+=.25){
+      const y=r.m*x+r.b;
+      pts.push(`${260+x*42},${140-y*22}`);
+    }
+    c+=`<polyline points="${pts.join(" ")}" fill="none" stroke="${idx?"#facc15":"#ff6fab"}" stroke-width="4"/>`;
+  });
+  pontos.forEach(p=>{
+    c+=`<circle cx="${260+p.x*42}" cy="${140-p.y*22}" r="6" fill="#22d3ee"/>
+        <text x="${270+p.x*42}" y="${132-p.y*22}" fill="#fff" font-size="14">${p.label||""}</text>`;
+  });
+  return svg(c,"Plano cartesiano");
+}
 
-    s =
-      (
-        s*9301 +
-        49297
-      ) % 233280;
+function barras(vals,labels=["A","B","C","D"],titulo="Dados"){
+  const max=Math.max(...vals,1); let c=`<text x="260" y="30" text-anchor="middle" fill="#fff">${titulo}</text>`;
+  vals.forEach((v,i)=>{
+    const h=145*v/max,x=70+i*105;
+    c+=`<rect x="${x}" y="${220-h}" width="60" height="${h}" rx="5" fill="#3e8cff"/>
+        <text x="${x+30}" y="${208-h}" text-anchor="middle" fill="#fff">${v}</text>
+        <text x="${x+30}" y="245" text-anchor="middle" fill="#cbd5e1">${labels[i]}</text>`;
+  });
+  return svg(c,"Gráfico de barras");
+}
 
-    const j =
-      Math.floor(
-        (
-          s/233280
-        ) * (i+1)
+function tabela(headers,rows){
+  const w=440/headers.length; let c="";
+  headers.forEach((h,i)=>{
+    c+=`<rect x="${40+i*w}" y="45" width="${w}" height="42" fill="#12385a" stroke="#8bdcff"/>
+        <text x="${40+i*w+w/2}" y="72" text-anchor="middle" fill="#fff">${h}</text>`;
+  });
+  rows.forEach((row,r)=>row.forEach((v,i)=>{
+    c+=`<rect x="${40+i*w}" y="${87+r*42}" width="${w}" height="42" fill="#0d2743" stroke="#2b5b7a"/>
+        <text x="${40+i*w+w/2}" y="${114+r*42}" text-anchor="middle" fill="#dcecff">${v}</text>`;
+  }));
+  return svg(c,"Tabela");
+}
+
+function cubo(){
+  return svg(`<g fill="none" stroke="#8bdcff" stroke-width="5">
+  <path d="M150 65 L285 65 L365 125 L230 125 Z"/>
+  <path d="M150 65 L150 185 L230 245 L230 125"/>
+  <path d="M230 125 L365 125 L365 245 L230 245 Z"/>
+  <path d="M285 65 L285 185 L365 245"/><path d="M150 185 L285 185"/></g>`,"Cubo");
+}
+
+function cilindro(){
+  return svg(`<ellipse cx="260" cy="62" rx="95" ry="28" fill="#17456d" stroke="#8bdcff" stroke-width="4"/>
+  <path d="M165 62 L165 205 M355 62 L355 205" stroke="#8bdcff" stroke-width="4"/>
+  <ellipse cx="260" cy="205" rx="95" ry="28" fill="#17456d" stroke="#8bdcff" stroke-width="4"/>`,"Cilindro");
+}
+
+function planCubo(){
+  const q=(x,y)=>`<rect x="${x}" y="${y}" width="58" height="58" fill="#17456d" stroke="#8bdcff" stroke-width="3"/>`;
+  return svg(q(202,42)+q(144,100)+q(202,100)+q(260,100)+q(318,100)+q(202,158),"Planificação de cubo");
+}
+
+function tri(a,b,c){
+  return svg(`<polygon points="120,220 410,220 120,60" fill="rgba(62,140,255,.16)" stroke="#8bdcff" stroke-width="4"/>
+  <rect x="120" y="198" width="22" height="22" fill="none" stroke="#facc15" stroke-width="3"/>
+  <text x="265" y="246" fill="#fff" text-anchor="middle">${a}</text>
+  <text x="93" y="145" fill="#fff" text-anchor="middle">${b}</text>
+  <text x="290" y="130" fill="#fff" text-anchor="middle">${c}</text>`,"Triângulo retângulo");
+}
+
+function meta(descriptor,level,task,contexto="problema",recurso="texto"){
+  return {
+    habilidade:HABILIDADES_PAEBES[descriptor]||"",
+    expectativa:task,
+    tarefa:task,
+    contexto,
+    recurso,
+    nivelPedagogico:level,
+    nucleo:Object.entries(NUCLEOS_APRENDIZAGEM)
+      .filter(([,n])=>n.descritores.includes(descriptor))
+      .map(([,n])=>n.nome),
+    prioridadeAMA:PRIORIDADE_AMA_3TRI.includes(descriptor),
+    origem:"Questão autoral alinhada à Matriz de Referência PAEBES/AMA."
+  };
+}
+
+function gerar(descriptor,level,seed,variante=0){
+  const s=Math.abs(Number(seed)||1), k=Math.abs(Number(variante)||0);
+  const mod=k%6;
+
+  if(descriptor==="D009_M"){
+    const den=pick([2,4,5,10],s+k),num=1+(s+k)%Math.max(2,den*3),v=num/den;
+    return {modeloId:`reta-racional-${mod}`,text:`Na reta numérica, um ponto está localizado em ${fmt(v)}. Qual número racional representa essa posição?`,
+      ...alternativas(fmt(v),[fmt(v+1),fmt(v-1),`${num}/${den+1}`,fmt(den/num)],s)};
+  }
+
+  if(descriptor==="D013_M"){
+    const den=pick([2,4,5,10],s),num=1+(s+k)%(den-1),dec=num/den;
+    return {modeloId:`rep-racional-${mod}`,text:`Qual representação decimal corresponde à fração ${num}/${den}?`,
+      ...alternativas(fmt(dec),[fmt(num+den),fmt(den/num),fmt(dec+0.1),fmt(dec*10)],s)};
+  }
+
+  if(descriptor==="D033_M"){
+    const n=pick([2,3,5,7,8,10,11,13,17],s+k),r=Math.sqrt(n);
+    return {modeloId:`irracional-${mod}`,text:`Entre quais números inteiros consecutivos está localizado √${n}?`,
+      ...alternativas(`${Math.floor(r)} e ${Math.ceil(r)}`,["0 e 1","1 e 2","2 e 3","3 e 4","4 e 5"],s)};
+  }
+
+  if(descriptor==="D038_M"){
+    const preco=80+((s+k)%11)*20,p=pick([10,15,20,25,30,40],s+k),d=preco*p/100;
+    return {modeloId:`porcentagem-${mod}`,text:`Um produto custa R$ ${preco}. Em uma promoção, recebe desconto de ${p}%. Qual é o valor do desconto?`,
+      ...alternativas(fmt(d),[fmt(preco-d),fmt(d+10),fmt(preco*p/10),fmt(p)],s)};
+  }
+
+  if(descriptor==="D039_M"){
+    const a=2+(s%5),b=3+((s+k)%7),c=a+2,r=b*c/a;
+    return {modeloId:`proporcao-${mod}`,text:`${a} pessoas consomem ${b} litros de água em uma atividade. Mantendo a mesma proporção, quantos litros serão necessários para ${c} pessoas?`,
+      ...alternativas(fmt(r),[fmt(b+2),fmt(b*a),fmt(r+2),fmt(r-2)],s)};
+  }
+
+  if(descriptor==="D042_M"){
+    const a=3+s%5,b=2+(s+k)%5,t=a*b;
+    return {modeloId:`contagem-${mod}`,text:`Uma loja oferece ${a} modelos de camisa e ${b} modelos de calça. Quantos conjuntos diferentes podem ser formados escolhendo uma camisa e uma calça?`,
+      ...alternativas(t,[a+b,t+2,t-2,a*2],s)};
+  }
+
+  if(descriptor==="D043_M"){
+    const x=-4+(s+k)%9,y=-4+(s*3+k)%9;
+    return {modeloId:`plano-ponto-${mod}`,text:`Observe o ponto A no plano cartesiano. Quais são suas coordenadas?`,
+      ...alternativas(`(${x}, ${y})`,[`(${y}, ${x})`,`(${-x}, ${y})`,`(${x}, ${-y})`,`(${-x}, ${-y})`],s),
+      visual:plano({pontos:[{x,y,label:"A"}]})};
+  }
+
+  if(descriptor==="D049_M"){
+    const pares=[[3,4],[5,12],[6,8],[8,15],[7,24]],p=pick(pares,s+k),a=p[0],b=p[1],h=Math.sqrt(a*a+b*b);
+    return {modeloId:`pitagoras-${mod}`,text:`Um triângulo retângulo possui catetos de ${a} cm e ${b} cm. Qual é a medida da hipotenusa?`,
+      ...alternativas(fmt(h),[fmt(a+b),fmt(a*b),fmt(Math.abs(a-b)),fmt(h+2)],s),visual:tri(a,b,"?")};
+  }
+
+  if(descriptor==="D051_M"){
+    const ang=pick([30,45,60],s+k),hip=10+(s%5)*2,seno=ang===30?.5:ang===45?Math.SQRT1_2:Math.sqrt(3)/2,op=hip*seno;
+    return {modeloId:`trig-${mod}`,text:`Em um triângulo retângulo, a hipotenusa mede ${hip} cm e um ângulo agudo mede ${ang}°. Qual é aproximadamente o cateto oposto?`,
+      ...alternativas(fmt(op),[fmt(hip-op),fmt(hip),fmt(op+2),fmt(Math.max(1,op-2))],s),visual:tri("adj.","?",hip)};
+  }
+
+  if(descriptor==="D057_M"){
+    const a=5+s%9,b=3+(s+k)%7,p=2*(a+b);
+    return {modeloId:`perimetro-${mod}`,text:`Um terreno retangular mede ${a} m por ${b} m. Quantos metros de cerca são necessários para contorná-lo?`,
+      ...alternativas(p,[a*b,a+b,2*a+b,a+2*b],s)};
+  }
+
+  if(descriptor==="D058_M"){
+    const a=6+s%8,b=4+(s+k)%7,A=a*b;
+    return {modeloId:`area-${mod}`,text:`O piso retangular de uma sala mede ${a} m por ${b} m. Qual é sua área?`,
+      ...alternativas(`${A} m²`,[`${2*(a+b)} m²`,`${a+b} m²`,`${A+a} m²`,`${A-b} m²`],s)};
+  }
+
+  if(descriptor==="D063_M"||descriptor==="D064_M"){
+    const v=[12+s%8,18+(s+k)%8,10+(s+2*k)%8,22+(s+3*k)%8];
+
+    if(descriptor==="D063_M"){
+      const idx=v.indexOf(Math.max(...v)),labs=["A","B","C","D"];
+      return {modeloId:`grafico-corresp-${mod}`,text:"Observe o gráfico. Qual categoria apresenta o maior valor?",
+        ...alternativas(labs[idx],labs.filter(x=>x!==labs[idx]),s),visual:barras(v,labs,"Resultados")};
+    }
+
+    const soma=v.reduce((a,b)=>a+b,0);
+    return {modeloId:`grafico-info-${mod}`,text:"O gráfico apresenta dados de quatro grupos. Qual é o total registrado?",
+      ...alternativas(soma,[soma-10,soma+10,Math.max(...v),v[0]+v[1]],s),visual:barras(v,["A","B","C","D"],"Quantidade")};
+  }
+
+  if(descriptor==="D065_M"){
+    const a=2+s%6,b=3+(s+k)%6,t=a+b;
+    return {modeloId:`probabilidade-${mod}`,text:`Uma urna contém ${a} bolas vermelhas e ${b} azuis. Qual é a probabilidade de retirar uma vermelha?`,
+      ...alternativas(`${a}/${t}`,[`${b}/${t}`,`${a}/${b}`,`${t}/${a}`,`1/${t}`],s)};
+  }
+
+  if(descriptor==="D071_M"){
+    const m=pick([-3,-2,-1,1,2,3],s+k),b=-2+(s+k)%5;
+    return {modeloId:`crescimento-${mod}`,text:"Observe o gráfico da função. Ela é:",
+      ...alternativas(m>0?"crescente":"decrescente",[m>0?"decrescente":"crescente","constante","periódica","sem domínio"],s),
+      visual:plano({retas:[{m,b}]})};
+  }
+
+  if(descriptor==="D074_M"){
+    const base=pick([2,3,4,5],s+k);
+    return {modeloId:`exp-rep-${mod}`,text:`Qual expressão representa uma função exponencial de base ${base}?`,
+      ...alternativas(`f(x)=${base}^x`,[`f(x)=${base}x`,`f(x)=x^${base}`,`f(x)=x+${base}`,`f(x)=${base}-x`],s)};
+  }
+
+  if(descriptor==="D076_M"){
+    const a=1+s%6,b=2+(s+k)%7;
+    return {modeloId:`polinomio-${mod}`,text:`Quais são as raízes de P(x)=(x-${a})(x-${b})?`,
+      ...alternativas(`${a} e ${b}`,[`${-a} e ${-b}`,`${a+b} e ${a*b}`,`0 e ${a+b}`,`${a} e ${-b}`],s)};
+  }
+
+  if(descriptor==="D078_M"||descriptor==="D145_M"){
+    const m=pick([-3,-2,-1,1,2,3],s+k),b=-2+(s+k)%5,eq=`y=${m}x${b>=0?"+":""}${b}`;
+    return {modeloId:`reta-grafico-${mod}`,text:descriptor==="D078_M"?"Observe o gráfico. Qual expressão representa a reta?":`Considere f(x)=${m}x${b>=0?"+":""}${b}. Qual afirmação está correta?`,
+      ...(descriptor==="D078_M"
+        ? alternativas(eq,[`y=${b}x+${m}`,`y=${m+1}x${b>=0?"+":""}${b}`,`y=${m}x`,`y=x${b>=0?"+":""}${b}`],s)
+        : alternativas(m>0?"É uma reta crescente.":"É uma reta decrescente.",[
+            m>0?"É uma reta decrescente.":"É uma reta crescente.",
+            "É uma parábola.",
+            "É exponencial.",
+            "É horizontal."
+          ],s)
+      ),
+      visual:plano({retas:[{m,b}]})};
+  }
+
+  if(descriptor==="D080_M"){
+    const base=pick([2,3,10],s+k);
+    return {modeloId:`log-${mod}`,text:`A função f(x)=log${base}(x) é inversa de qual função?`,
+      ...alternativas(`f(x)=${base}^x`,[`f(x)=${base}x`,`f(x)=x^${base}`,`f(x)=x+${base}`,"f(x)=1/x"],s)};
+  }
+
+  if(descriptor==="D082_M"){
+    return {modeloId:`situacao-grafico-${mod}`,text:"A altura de uma bola lançada para cima aumenta, atinge um máximo e depois diminui. Qual gráfico representa melhor essa situação?",
+      ...alternativas("Uma parábola com concavidade para baixo",[
+        "Uma reta crescente",
+        "Uma reta decrescente",
+        "Uma função constante",
+        "Uma parábola com concavidade para cima"
+      ],s)};
+  }
+
+  if(descriptor==="D085_M"){
+    const m=pick([-3,-2,-1,1,2,3],s+k),b=-3+(s+k)%7;
+    return {modeloId:`coef-reta-${mod}`,text:`Na equação y=${m}x${b>=0?"+":""}${b}, qual é o coeficiente angular?`,
+      ...alternativas(m,[b,-m,m+b,1],s),visual:plano({retas:[{m,b}]})};
+  }
+
+  if(descriptor==="D086_M"){
+    const a=1+s%4,b=1+(s+k)%5,rows=[0,1,2,3].map(x=>[x,a*x+b]);
+    return {modeloId:`tabela-funcao-${mod}`,text:"Observe a tabela. Qual função representa a relação entre x e y?",
+      ...alternativas(`y=${a}x+${b}`,[`y=${b}x+${a}`,`y=${a+1}x+${b}`,`y=${a}x`,`y=x+${b}`],s),
+      visual:tabela(["x","y"],rows)};
+  }
+
+  if(descriptor==="D087_M"){
+    const r1=1+s%6,r2=2+(s+k)%7,S=r1+r2,P=r1*r2;
+    return {modeloId:`eq2-${mod}`,text:`Quais são as soluções de x²-${S}x+${P}=0?`,
+      ...alternativas(`${r1} e ${r2}`,[`${-r1} e ${-r2}`,`${S} e ${P}`,`0 e ${S}`,`${r1} e ${-r2}`],s)};
+  }
+
+  if(descriptor==="D088_M"){
+    const ini=pick([50,100,200,500],s+k),f=pick([2,3],s+2*k),n=2+(s+k)%5,total=ini*Math.pow(f,n);
+    return {modeloId:`exp-problema-${mod}`,text:`Uma população inicial de ${ini} unidades é multiplicada por ${f} a cada período. Qual será a quantidade após ${n} períodos?`,
+      ...alternativas(total,[ini*f*n,ini+f*n,total/f,total+ini],s)};
+  }
+
+  if(descriptor==="D096_M"){
+    const a1=2+s%8,r=2+(s+k)%6,n=5+(s+k)%6,an=a1+(n-1)*r;
+    return {modeloId:`pa-${mod}`,text:`Em uma PA, a₁=${a1} e r=${r}. Qual é o ${n}º termo?`,
+      ...alternativas(an,[a1+n*r,a1*r,an-r,an+r],s)};
+  }
+
+  if(descriptor==="D097_M"){
+    const a1=pick([1,2,3,5],s),q=pick([2,3],s+k),n=4+(s+k)%4,an=a1*Math.pow(q,n-1);
+    return {modeloId:`pg-${mod}`,text:`Em uma PG, a₁=${a1} e q=${q}. Qual é o ${n}º termo?`,
+      ...alternativas(an,[a1+(n-1)*q,a1*q*n,an/q,an+q],s)};
+  }
+
+  if(descriptor==="D111_M"){
+    if(mod%3===0) return {
+      modeloId:"planificacao-cubo",
+      text:"Observe a planificação. Qual sólido é formado ao dobrá-la?",
+      ...alternativas("Cubo",["Cilindro","Cone","Prisma triangular","Pirâmide"],s),
+      visual:planCubo()
+    };
+
+    if(mod%3===1) return {
+      modeloId:"reconhece-cilindro",
+      text:"O sólido possui duas bases circulares paralelas e superfície lateral curva. Qual é esse sólido?",
+      ...alternativas("Cilindro",["Cone","Cubo","Pirâmide","Prisma triangular"],s),
+      visual:cilindro()
+    };
+
+    return {
+      modeloId:"reconhece-cubo",
+      text:"O sólido apresentado possui seis faces quadradas congruentes. Qual é seu nome?",
+      ...alternativas("Cubo",["Prisma triangular","Cilindro","Cone","Pirâmide"],s),
+      visual:cubo()
+    };
+  }
+
+  if(descriptor==="D119_M"){
+    const a=3+s%5,f=2+(s+k)%3,b=4+(s*2+k)%6,r=b*f;
+    return {modeloId:`semelhanca-${mod}`,text:`Dois triângulos semelhantes têm lados correspondentes ${a} cm e ${a*f} cm. Se outro lado do menor mede ${b} cm, quanto mede o correspondente no maior?`,
+      ...alternativas(r,[b+f,r+f,r-f,a*f],s)};
+  }
+
+  if(descriptor==="D124_M"){
+    const m=1+s%4,x1=1+(s+k)%3,y1=2+(s*2+k)%6,b=y1-m*x1,eq=`y=${m}x${b>=0?"+":""}${b}`;
+    return {modeloId:`equacao-reta-${mod}`,text:`Uma reta passa pelo ponto (${x1}, ${y1}) e tem coeficiente angular ${m}. Qual é sua equação?`,
+      ...alternativas(eq,[`y=${x1}x+${y1}`,`y=${m+1}x${b>=0?"+":""}${b}`,`y=${m}x+${y1}`,`y=x${b>=0?"+":""}${b}`],s),
+      visual:plano({pontos:[{x:x1,y:y1,label:"A"}],retas:[{m,b}]})};
+  }
+
+  if(descriptor==="D125_M"){
+    const V=6+2*(s%4),A=V+3+(k%5),F=2-V+A;
+    return {modeloId:`euler-${mod}`,text:`Um poliedro possui ${V} vértices e ${A} arestas. Pela relação de Euler V - A + F = 2, quantas faces possui?`,
+      ...alternativas(F,[F-1,F+1,V,A],s)};
+  }
+
+  if(descriptor==="D126_M"){
+    const alvo=pick(["seno","cosseno"],s+k);
+    return {modeloId:`trig-grafico-${mod}`,text:`Uma função periódica oscila regularmente entre -1 e 1. Qual função pode apresentar esse comportamento?`,
+      ...alternativas(alvo==="seno"?"f(x)=sen(x)":"f(x)=cos(x)",["f(x)=2^x","f(x)=x²","f(x)=3x+1","f(x)=log(x)"],s)};
+  }
+
+  if(descriptor==="D127_M"||descriptor==="D154_M"){
+    const x=1+s%4,y=1+(s+k)%5,m1=1,b1=y-x,m2=-1,b2=y+x;
+    return {modeloId:`sistema-grafico-${mod}`,text:descriptor==="D127_M"
+        ? `Duas retas se intersectam em (${x}, ${y}). Esse ponto representa:`
+        : "Observe as duas retas do sistema. O ponto de interseção representa:",
+      ...alternativas("a solução que satisfaz simultaneamente as duas equações",[
+        "o coeficiente angular das duas retas",
+        "o valor máximo do sistema",
+        "o produto das equações",
+        "um ponto que satisfaz apenas uma equação"
+      ],s),
+      visual:plano({pontos:[{x,y,label:"P"}],retas:[{m:m1,b:b1},{m:m2,b:b2}]})};
+  }
+
+  if(descriptor==="D129_M"){
+    if(mod%3===0){
+      const l=2+s%7,V=l**3;
+      return {modeloId:"volume-cubo",text:`Um reservatório cúbico possui aresta interna de ${l} m. Qual é seu volume?`,
+        ...alternativas(`${V} m³`,[`${l*l} m³`,`${6*l*l} m³`,`${3*l} m³`,`${V+l} m³`],s),
+        visual:cubo()};
+    }
+
+    if(mod%3===1){
+      const r=2+s%5,h=4+(s+k)%7,V=3.14*r*r*h;
+      return {modeloId:"volume-cilindro",text:`Um cilindro possui raio ${r} cm e altura ${h} cm. Use π≈3,14. Qual é aproximadamente o volume?`,
+        ...alternativas(`${fmt(V)} cm³`,[
+          `${fmt(3.14*r*h)} cm³`,
+          `${fmt(2*3.14*r*h)} cm³`,
+          `${fmt(3.14*r*r)} cm³`,
+          `${fmt(V/2)} cm³`
+        ],s),
+        visual:cilindro()};
+    }
+
+    const l=3+s%6,A=6*l*l;
+    return {modeloId:"area-cubo",text:`Um cubo possui aresta de ${l} cm. Qual é sua área total?`,
+      ...alternativas(`${A} cm²`,[
+        `${l**3} cm²`,
+        `${l*l} cm²`,
+        `${4*l*l} cm²`,
+        `${6*l} cm²`
+      ],s),
+      visual:cubo()};
+  }
+
+  if(descriptor==="D132_M"){
+    const taxa=2+s%8,fixa=5+(s+k)%15,x=3+(s*2+k)%8,total=taxa*x+fixa;
+    return {modeloId:`funcao1-${mod}`,text:`Um serviço cobra taxa fixa de R$ ${fixa} mais R$ ${taxa} por unidade. Qual o valor para ${x} unidades?`,
+      ...alternativas(total,[taxa*x,fixa+x,total+taxa,total-taxa],s)};
+  }
+
+  if(descriptor==="D133_M"){
+    const h=1+s%5,kmax=4+(s+k)%8;
+    return {modeloId:`maximo-${mod}`,text:`Uma parábola com concavidade para baixo tem vértice em (${h}, ${kmax}). Qual é o valor máximo da função?`,
+      ...alternativas(kmax,[h,-kmax,h+kmax,0],s)};
+  }
+
+  if(descriptor==="D155_M"){
+    const h=-3+(s+k)%7,kk=-3+(s*2+k)%7,r=2+(s+k)%5;
+    const eq=`(x${h>=0?"-":"+"}${Math.abs(h)})²+(y${kk>=0?"-":"+"}${Math.abs(kk)})²=${r*r}`;
+    return {modeloId:`circunferencia-${mod}`,text:`Uma circunferência tem centro C(${h}, ${kk}) e raio ${r}. Qual é sua equação?`,
+      ...alternativas(eq,[
+        `(x-${r})²+(y-${r})²=${h*h+kk*kk}`,
+        `x²+y²=${r}`,
+        `(x${h>=0?"+":"-"}${Math.abs(h)})²+(y${kk>=0?"+":"-"}${Math.abs(kk)})²=${r*r}`,
+        `x+y=${r*r}`
+      ],s),
+      visual:plano({pontos:[{x:h,y:kk,label:"C"}]})};
+  }
+
+  if(descriptor==="D157_M"){
+    const a=1+s%4,b=2+(s+k)%5,c=2+(s*2+k)%5,d=1+(s*3+k)%4;
+    const det=a*d-b*c;
+    return {modeloId:`matriz-det-${mod}`,text:`Considere a matriz A = [[${a}, ${b}], [${c}, ${d}]]. Qual é o determinante de A?`,
+      ...alternativas(det,[a*d+b*c,a+b+c+d,b*c-a*d,a*d],s),
+      visual:tabela(["","C1","C2"],[["L1",a,b],["L2",c,d]])};
+  }
+
+  throw new Error(`Descritor ${descriptor} ainda não possui gerador configurado.`);
+}
+
+function assinatura(q){
+  return hash([
+    q.descriptor||"",
+    q.level||"",
+    norm(q.text),
+    (q.options||[]).map(norm).sort().join("|"),
+    norm(q.visual?.svg||q.visual||"")
+  ].join("|||"));
+}
+
+function questaoValida(q){
+  if(!q||!String(q.text||"").trim()) return false;
+  if(!Array.isArray(q.options)||q.options.length<4) return false;
+  if(new Set(q.options.map(norm)).size!==q.options.length) return false;
+  return Number.isInteger(q.correct)&&q.correct>=0&&q.correct<q.options.length;
+}
+
+function lerHist(){
+  try{
+    const x=JSON.parse(localStorage.getItem(HIST_KEY)||"{}");
+    return {
+      assinaturas:Array.isArray(x.assinaturas)?x.assinaturas:[],
+      modelos:Array.isArray(x.modelos)?x.modelos:[]
+    };
+  }catch(e){
+    return {
+      assinaturas:[],
+      modelos:[]
+    };
+  }
+}
+
+function salvarHist(h){
+  try{
+    localStorage.setItem(HIST_KEY,JSON.stringify({
+      assinaturas:[...new Set(h.assinaturas||[])].slice(-12000),
+      modelos:[...new Set(h.modelos||[])].slice(-12000),
+      atualizadoEm:new Date().toISOString()
+    }));
+  }catch(e){}
+}
+
+function rodada(){
+  try{
+    const n=Number(localStorage.getItem(ROUND_KEY)||0)+1;
+    localStorage.setItem(ROUND_KEY,String(n));
+    return n;
+  }catch(e){
+    return Math.floor(Date.now()/1000);
+  }
+}
+
+function filaDescritores(validos,cfg,qtd){
+  const pesos=Object.fromEntries(
+    validos.map(d=>[
+      d,
+      clamp(Number(cfg[d]?.peso||1),1,4)
+    ])
+  );
+
+  const cont=Object.fromEntries(validos.map(d=>[d,0]));
+  const fila=[];
+
+  for(const d of validos){
+    if(fila.length>=qtd) break;
+    fila.push(d);
+    cont[d]++;
+  }
+
+  while(fila.length<qtd){
+    const ultimo=fila[fila.length-1];
+
+    const cands=validos
+      .map(d=>({
+        d,
+        idx:cont[d]/pesos[d],
+        c:cont[d]
+      }))
+      .sort(
+        (a,b)=>
+          a.idx-b.idx ||
+          a.c-b.c ||
+          validos.indexOf(a.d)-validos.indexOf(b.d)
       );
 
-    [
-      a[i],
-      a[j]
-    ] = [
-      a[j],
-      a[i]
-    ];
+    const d=(cands.find(x=>x.d!==ultimo)||cands[0]).d;
 
+    fila.push(d);
+    cont[d]++;
   }
 
-  return a;
-
+  return {fila,pesos};
 }
 
-function alternativas(
-  correta,
-  distratores,
-  seed
-){
-
-  const resposta =
-    String(correta);
-
-  const unicos =
-    [];
-
-  [
-    resposta,
-    ...distratores.map(String),
-    "0","1","2","3","4",
-    "5","6","8","10","12",
-    "15","20","25","30",
-    "40","50","60","100"
-  ].forEach(
-    x => {
-
-      if(
-        !unicos.includes(x)
-      ){
-        unicos.push(x);
-      }
-
-    }
-  );
-
-  const opts =
-    shuffle(
-      unicos.slice(0,5),
-      seed
-    );
-
-  return {
-    options:opts,
-    correct:
-      opts.indexOf(
-        resposta
-      )
+function niveisDistrib(dis,qtd){
+  const v={
+    abb:Number(dis?.abb??40),
+    basico:Number(dis?.basico??35),
+    proficiente:Number(dis?.proficiente??25),
+    avancado:Number(dis?.avancado??0)
   };
 
-}
+  const t=v.abb+v.basico+v.proficiente+v.avancado||100;
 
-function svg(
-  inner,
-  label="Representação matemática"
-){
+  const metas={
+    "ABAIXO DO BÁSICO":Math.round(qtd*v.abb/t),
+    "BÁSICO":Math.round(qtd*v.basico/t),
+    "PROFICIENTE":Math.round(qtd*v.proficiente/t),
+    "AVANÇADO":Math.round(qtd*v.avancado/t)
+  };
 
-  return `
-  <svg
-    viewBox="0 0 520 280"
-    xmlns="http://www.w3.org/2000/svg"
-    role="img"
-    aria-label="${label}"
-  >
-    <rect
-      width="520"
-      height="280"
-      rx="18"
-      fill="#07182d"
-    />
-    ${inner}
-  </svg>
-  `;
+  let soma=Object.values(metas).reduce((a,b)=>a+b,0);
 
-}
-
-function plano({
-  pontos=[],
-  retas=[]
-}={}){
-
-  let c="";
-
-  for(
-    let i=-5;
-    i<=5;
-    i++
-  ){
-
-    const x =
-      260 + i*42;
-
-    const y =
-      140 - i*22;
-
-    c += `
-      <line
-        x1="${x}"
-        y1="20"
-        x2="${x}"
-        y2="255"
-        stroke="#153552"
-      />
-
-      <line
-        x1="35"
-        y1="${y}"
-        x2="485"
-        y2="${y}"
-        stroke="#153552"
-      />
-    `;
-
+  while(soma<qtd){
+    metas["ABAIXO DO BÁSICO"]++;
+    soma++;
   }
 
-  c += `
-    <line
-      x1="35"
-      y1="140"
-      x2="485"
-      y2="140"
-      stroke="#dbeafe"
-      stroke-width="2"
-    />
+  while(soma>qtd){
+    for(const n of ["AVANÇADO","PROFICIENTE","BÁSICO","ABAIXO DO BÁSICO"]){
+      if(metas[n]>0&&soma>qtd){
+        metas[n]--;
+        soma--;
+      }
+    }
+  }
 
-    <line
-      x1="260"
-      y1="20"
-      x2="260"
-      y2="255"
-      stroke="#dbeafe"
-      stroke-width="2"
-    />
-  `;
+  const out=[];
+  const ordem=[
+    "ABAIXO DO BÁSICO",
+    "BÁSICO",
+    "PROFICIENTE",
+    "AVANÇADO"
+  ];
 
-  retas.forEach(
-    (r,idx) => {
-
-      const pts=[];
-
-      for(
-        let x=-5;
-        x<=5;
-        x+=0.25
-      ){
-
-        const y =
-          r.m*x +
-          r.b;
-
-        pts.push(
-          `${260+x*42},${140-y*22}`
-        );
-
+  while(out.length<qtd){
+    for(const n of ordem){
+      if(metas[n]>0){
+        out.push(n);
+        metas[n]--;
       }
 
-      c += `
-        <polyline
-          points="${pts.join(" ")}"
-          fill="none"
-          stroke="${
-            idx
-              ? "#facc15"
-              : "#ff6fab"
-          }"
-          stroke-width="4"
-        />
-      `;
-
+      if(out.length>=qtd) break;
     }
-  );
+  }
 
-  pontos.forEach(
-    p => {
-
-      c += `
-        <circle
-          cx="${260+p.x*42}"
-          cy="${140-p.y*22}"
-          r="6"
-          fill="#22d3ee"
-        />
-
-        <text
-          x="${270+p.x*42}"
-          y="${132-p.y*22}"
-          fill="#ffffff"
-          font-size="14"
-        >
-          ${p.label || ""}
-        </text>
-      `;
-
-    }
-  );
-
-  return svg(
-    c,
-    "Plano cartesiano"
-  );
-
+  return out;
 }
+
+function preparar(descriptor,level,g,peso,index,round){
+  const visual=
+    typeof g.visual==="string"
+      ? {svg:g.visual}
+      : g.visual?.svg
+        ? g.visual
+        : null;
+
+  const m=meta(
+    descriptor,
+    level,
+    HABILIDADES_PAEBES[descriptor]||""
+  );
+
+  return {
+    id:`${descriptor}-${index+1}-${round}-${Date.now().toString(36)}-${hash(g.text+index)}`,
+    questaoId:`Q-${descriptor}-${hash(g.text+"|"+(g.modeloId||""))}`,
+    descriptor,
+    habilidade:HABILIDADES_PAEBES[descriptor]||"",
+    expectativa:m.expectativa,
+    tarefa:m.tarefa,
+    level,
+    text:String(g.text||"").trim(),
+    options:(g.options||[]).map(String),
+    correct:Number(g.correct),
+    visual,
+    pesoDescritor:peso,
+    baseXP:Math.round((XP_NIVEL[level]||120)*peso),
+    modeloId:g.modeloId||null,
+    nucleo:m.nucleo,
+    prioridadeAMA:m.prioridadeAMA,
+    contexto:m.contexto,
+    recurso:visual?"visual":"texto",
+    origem:m.origem,
+    versaoBanco:"coliseu-3tri-2026-v3"
+  };
+}
+
+export function habilidadeDoDescritor(descritor){
+  return HABILIDADES_PAEBES[descritor]||"";
+}
+
+export function gerarQuestaoDescritor(
+  descritor,
+  nivel="BÁSICO",
+  seed=Date.now()
+){
+  if(!HABILIDADES_PAEBES[descritor]){
+    throw new Error("Descritor não pertence à matriz configurada.");
+  }
+
+  const g=gerar(
+    descritor,
+    nivel,
+    seed,
+    Math.abs(Number(seed)||0)
+  );
+
+  const q=preparar(
+    descritor,
+    nivel,
+    g,
+    1,
+    0,
+    rodada()
+  );
+
+  if(!questaoValida(q)){
+    throw new Error("Questão especial inválida.");
+  }
+
+  return q;
+}
+
+export function gerarQuestoesArena({
+  quantidade=15,
+  descritores=[],
+  configuracaoDescritores={},
+  distribuicaoNiveis={
+    abb:40,
+    basico:35,
+    proficiente:25,
+    avancado:0
+  }
+}={}){
+  quantidade=Math.max(
+    5,
+    Math.floor(Number(quantidade)||15)
+  );
+
+  const validos=[
+    ...new Set(
+      descritores.filter(
+        d=>HABILIDADES_PAEBES[d]
+      )
+    )
+  ];
+
+  if(!validos.length){
+    throw new Error("Selecione pelo menos um descritor.");
+  }
+
+  const {fila,pesos}=filaDescritores(
+    validos,
+    configuracaoDescritores,
+    quantidade
+  );
+
+  const nivs=niveisDistrib(
+    distribuicaoNiveis,
+    quantidade
+  );
+
+  const round=rodada();
+
+  const seedArena=
+    round*10007+
+    (Date.now()%1000003);
+
+  const hist=lerHist();
+
+  const histA=new Set(hist.assinaturas);
+  const histM=new Set(hist.modelos);
+
+  const usadasA=new Set();
+  const usadasTexto=new Set();
+  const usadasModelo=new Set();
+
+  const novasA=[];
+  const novasM=[];
+  const questoes=[];
+  const uso={};
+
+  for(let i=0;i<quantidade;i++){
+    const d=fila[i];
+    const cfg=configuracaoDescritores[d]||{};
+
+    const level=
+      cfg.nivel &&
+      cfg.nivel!=="MISTO"
+        ? cfg.nivel
+        : (nivs[i]||"BÁSICO");
+
+    const chave=`${d}|${level}`;
+    const base=Number(uso[chave]||0);
+
+    let escolhida=null;
+
+    // 1ª fase:
+    // tenta gerar questão inédita também no histórico local.
+    for(let tentativa=0;tentativa<500;tentativa++){
+      const seed=
+        seedArena+
+        (i+1)*7919+
+        validos.indexOf(d)*104729+
+        tentativa*15485863;
+
+      const variante=
+        base+
+        round+
+        tentativa+
+        i*7;
+
+      let g;
+
+      try{
+        g=gerar(
+          d,
+          level,
+          seed,
+          variante
+        );
+      }catch(e){
+        continue;
+      }
+
+      const q=preparar(
+        d,
+        level,
+        g,
+        pesos[d],
+        i,
+        round
+      );
+
+      if(!questaoValida(q)){
+        continue;
+      }
+
+      const a=assinatura(q);
+      const txt=norm(q.text);
+
+      const mk=
+        `${d}|${level}|${q.modeloId||""}`;
+
+      if(
+        usadasA.has(a) ||
+        usadasTexto.has(txt)
+      ){
+        continue;
+      }
+
+      if(
+        histA.has(a) ||
+        histM.has(mk) ||
+        usadasModelo.has(mk)
+      ){
+        continue;
+      }
+
+      escolhida=q;
+
+      usadasA.add(a);
+      usadasTexto.add(txt);
+      usadasModelo.add(mk);
+
+      novasA.push(a);
+
+      if(q.modeloId){
+        novasM.push(mk);
+      }
+
+      break;
+    }
+
+    // 2ª fase:
+    // se o histórico estiver esgotado,
+    // permite reutilizar modelo antigo,
+    // mas nunca repete a mesma questão/texto
+    // dentro da Arena atual.
+    if(!escolhida){
+      for(
+        let tentativa=500;
+        tentativa<2500;
+        tentativa++
+      ){
+        const seed=
+          seedArena+
+          i*99991+
+          tentativa*32452843+
+          Date.now();
+
+        let g;
+
+        try{
+          g=gerar(
+            d,
+            level,
+            seed,
+            base+
+            tentativa+
+            17+
+            i*13
+          );
+        }catch(e){
+          continue;
+        }
+
+        const q=preparar(
+          d,
+          level,
+          g,
+          pesos[d],
+          i,
+          round
+        );
+
+        if(!questaoValida(q)){
+          continue;
+        }
+
+        const a=assinatura(q);
+        const txt=norm(q.text);
+
+        const mk=
+          `${d}|${level}|${q.modeloId||""}`;
+
+        if(
+          usadasA.has(a) ||
+          usadasTexto.has(txt)
+        ){
+          continue;
+        }
+
+        escolhida=q;
+
+        usadasA.add(a);
+        usadasTexto.add(txt);
+
+        novasA.push(a);
+
+        if(q.modeloId){
+          novasM.push(mk);
+        }
+
+        break;
+      }
+    }
+
+    if(!escolhida){
+      throw new Error(
+        `Não foi possível gerar uma questão inédita para ${d}. Acrescente outros descritores ou reduza a quantidade.`
+      );
+    }
+
+    uso[chave]=base+1;
+    questoes.push(escolhida);
+  }
+
+  if(
+    questoes.length!==
+    quantidade
+  ){
+    throw new Error(
+      "A quantidade final de questões não corresponde à configuração da Arena."
+    );
+  }
+
+  salvarHist({
+    assinaturas:[
+      ...hist.assinaturas,
+      ...novasA
+    ],
+    modelos:[
+      ...hist.modelos,
+      ...novasM
+    ]
+  });
+
+  return questoes;
+}
+
+export function descritoresSemBanco(
+  descritores=[]
+){
+  return descritores.filter(
+    d=>!HABILIDADES_PAEBES[d]
+  );
+}
+
+console.log(
+  "🏛️ Banco Coliseu 3º trimestre carregado — quantidade ampliada e proteção anti-repetição ativa."
+);
