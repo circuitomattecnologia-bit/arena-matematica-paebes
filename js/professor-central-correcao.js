@@ -963,3 +963,194 @@ const espera=
     },
     100
   );
+// ======================================================
+// HOTFIX — BOTÕES PRINCIPAIS DO PROFESSOR
+// ======================================================
+
+const AMA_HOTFIX=[
+  "D013_M","D039_M","D043_M","D049_M","D064_M",
+  "D074_M","D085_M","D087_M","D088_M","D097_M",
+  "D111_M","D124_M","D125_M","D129_M"
+];
+
+window.marcarAMA=function(){
+  document.querySelectorAll(".desc input").forEach(x=>{
+    if(!x.disabled){
+      x.checked=AMA_HOTFIX.includes(x.value);
+    }
+  });
+
+  if(typeof window.renderConfiguracaoDescritores==="function"){
+    window.renderConfiguracaoDescritores();
+  }
+
+  alert("🎯 Descritores prioritários da AMA selecionados.");
+};
+
+window.limpar=function(){
+  document.querySelectorAll(".desc input").forEach(x=>{
+    x.checked=false;
+  });
+
+  document.querySelectorAll(".selNucleo").forEach(x=>{
+    x.checked=false;
+  });
+
+  alert("Seleção de descritores limpa.");
+};
+
+window.criarArena=async function(){
+
+  try{
+
+    const sel=[
+      ...document.querySelectorAll(".desc input:checked")
+    ].map(x=>x.value);
+
+    if(!sel.length){
+      alert("Selecione pelo menos um descritor.");
+      return;
+    }
+
+    const quantidade=Math.max(
+      10,
+      Number(document.getElementById("qtd")?.value || 10)
+    );
+
+    const dist={
+      abb:Number(document.getElementById("pctAbb")?.value || 40),
+      basico:Number(document.getElementById("pctBasico")?.value || 35),
+      proficiente:Number(document.getElementById("pctProficiente")?.value || 25),
+      avancado:Number(document.getElementById("pctAvancado")?.value || 0)
+    };
+
+    if(
+      Object.values(dist).reduce((a,b)=>a+b,0)!==100
+    ){
+      alert("A distribuição dos níveis deve somar 100%.");
+      return;
+    }
+
+    const banco=await import("./question-bank.js");
+    const firebase=await import("./firebase-service.js");
+
+    const configuracao={};
+
+    document.querySelectorAll(".configLinha").forEach(l=>{
+      configuracao[l.dataset.desc]={
+        peso:Number(
+          l.querySelector(".pesoDesc")?.value || 1
+        ),
+        nivel:
+          l.querySelector(".nivelDesc")?.value ||
+          "MISTO"
+      };
+    });
+
+    const questoes=banco.gerarQuestoesArena({
+      quantidade,
+      descritores:sel,
+      configuracaoDescritores:configuracao,
+      distribuicaoNiveis:dist
+    });
+
+    const evidencia={};
+
+    sel.forEach(d=>{
+      const i=questoes.findIndex(q=>
+        String(
+          q?.descritor ||
+          q?.descriptor ||
+          ""
+        ).toUpperCase()===d
+      );
+
+      if(i>=0){
+        evidencia[d]=i;
+      }
+    });
+
+    const cod=
+      "MAT-"+Math.floor(1000+Math.random()*9000);
+
+    const dados={
+      codigo:cod,
+      nome:
+        document.getElementById("nomeArena")?.value ||
+        "Arena Matemática",
+      turma:
+        document.getElementById("turma")?.value ||
+        "",
+      quantidade:questoes.length,
+      quantidadeSolicitada:quantidade,
+      limite:Number(
+        document.getElementById("limite")?.value || 60
+      ),
+      descritores:sel,
+      configuracaoDescritores:configuracao,
+      distribuicaoNiveis:dist,
+      configBoss:{
+        pctAcertos:Number(
+          document.getElementById("bossPctAcertos")?.value || 60
+        ),
+        pctConcluidos:Number(
+          document.getElementById("bossPctConcluidos")?.value || 70
+        )
+      },
+      questoes,
+      questaoEvidenciaPorDescritor:evidencia,
+      status:"preparacao",
+      entradaLiberada:false,
+      aceitaNovos:false,
+      questaoAtual:0,
+      competidores:{},
+      novaFase:true,
+      versaoArena:"nova-fase-2026-v1",
+      criadaEm:new Date().toISOString()
+    };
+
+    await firebase.salvarArena(cod,dados);
+
+    localStorage.setItem(
+      "arenaPAEBES",
+      JSON.stringify(dados)
+    );
+
+    const codigo=
+      document.getElementById("codigo");
+
+    if(codigo){
+      codigo.textContent=cod;
+    }
+
+    const mensagem=
+      document.getElementById("mensagem");
+
+    if(mensagem){
+      mensagem.innerHTML=
+        `🏛️ Arena criada com sucesso. Código <strong>${cod}</strong>. Agora libere os estudantes.`;
+    }
+
+    alert(
+      `✅ ARENA CRIADA!\n\nCódigo: ${cod}\nQuestões: ${questoes.length}`
+    );
+
+    location.reload();
+
+  }catch(e){
+
+    console.error(
+      "ERRO AO CRIAR ARENA:",
+      e
+    );
+
+    alert(
+      "Não foi possível criar a Arena.\n\n"+
+      (e?.message || e)
+    );
+  }
+};
+
+console.log(
+  "✅ Hotfix dos botões do Professor instalado."
+);
