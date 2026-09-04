@@ -1935,3 +1935,19 @@ iniciarFirebase();
 console.log(
   "🔥 Serviço Firebase da Arena Matemática — Nova Fase 2026 carregado."
 );
+
+// ======================================================
+// RESPOSTAS — CENTRAL DE CORREÇÃO AO VIVO
+// ======================================================
+
+export function observarRespostas(codigo, callback) {
+  const database = banco();
+  const arenaId = caminhoSeguro(codigo);
+
+  return onValue(
+    ref(database, `${RAIZ}/arenas/${arenaId}/respostas`),
+    snapshot => {
+      callback(snapshot.exists() ? snapshot.val() : {});
+    }
+  );
+}
