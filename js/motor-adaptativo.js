@@ -4,7 +4,7 @@ import {
   NUCLEOS_APRENDIZAGEM
 } from "./question-bank.js";
 
-export const VERSAO_MOTOR_ADAPTATIVO = "arena-adaptativa-2026-v1";
+export const VERSAO_MOTOR_ADAPTATIVO = "arena-adaptativa-2026-v2";
 
 export const NIVEIS_ORDEM = [
   "ABAIXO DO BÁSICO",
@@ -25,8 +25,7 @@ export const ESCADA_CONSOLIDACAO = [
 ];
 
 // Política interna da Arena.
-// NÃO representa cortes oficiais de proficiência do PAEBES.
-// Poderá ser alterada posteriormente pelo Professor.
+// NÃO representa corte oficial do PAEBES.
 export const POLITICA_CONSOLIDACAO_PADRAO = Object.freeze({
   minimoRespostasNoNivel:4,
   percentualParaConsolidar:75,
@@ -35,13 +34,19 @@ export const POLITICA_CONSOLIDACAO_PADRAO = Object.freeze({
   naoApagarConsolidacao:true
 });
 
-function numero(v, padrao=0){
+function numero(v,padrao=0){
   const n=Number(v);
   return Number.isFinite(n)?n:padrao;
 }
 
 function limitar(n,min,max){
   return Math.max(min,Math.min(max,n));
+}
+
+function arraySeguro(v){
+  if(Array.isArray(v)) return v;
+  if(v&&typeof v==="object") return Object.values(v);
+  return [];
 }
 
 function normalizarTexto(v=""){
@@ -63,7 +68,10 @@ export function normalizarNivel(nivel="ABAIXO DO BÁSICO"){
     return "PROFICIENTE";
   }
 
-  if(n.includes("BASICO") && !n.includes("ABAIXO")){
+  if(
+    n.includes("BASICO") &&
+    !n.includes("ABAIXO")
+  ){
     return "BÁSICO";
   }
 
@@ -73,59 +81,95 @@ export function normalizarNivel(nivel="ABAIXO DO BÁSICO"){
 export function normalizarSituacao(
   situacao="EM DESENVOLVIMENTO"
 ){
-  const s=normalizarTexto(situacao);
-
-  return s.includes("CONSOLID")
-    ? "CONSOLIDADO"
-    : "EM DESENVOLVIMENTO";
+  return normalizarTexto(situacao)
+    .includes("CONSOLID")
+      ? "CONSOLIDADO"
+      : "EM DESENVOLVIMENTO";
 }
 
 function hashInteiro(texto=""){
   let h=2166136261;
-  const str=String(texto);
 
-  for(let i=0;i<str.length;i++){
-    h^=str.charCodeAt(i);
+  for(const ch of String(texto)){
+    h^=ch.charCodeAt(0);
     h=Math.imul(h,16777619);
   }
 
   return h>>>0;
 }
 
-function assinaturaQuestao(q){
+function descritorQuestao(q={}){
+  return String(
+    q?.descriptor ||
+    q?.descritor ||
+    ""
+  )
+  .trim()
+  .toUpperCase();
+}
+
+function textoQuestao(q={}){
+  return String(
+    q?.text ||
+    q?.texto ||
+    q?.enunciado ||
+    q?.pergunta ||
+    ""
+  );
+}
+
+function opcoesQuestao(q={}){
+  return arraySeguro(
+    q?.options ||
+    q?.opcoes ||
+    q?.alternativas ||
+    []
+  );
+}
+
+function assinaturaQuestao(q={}){
   return normalizarTexto(
     `${
-      q?.descriptor||
-      q?.descritor||
+      descritorQuestao(q)
+    }|${
+      q?.level ||
+      q?.nivel ||
       ""
     }|${
-      q?.level||
-      q?.nivel||
-      ""
+      textoQuestao(q)
     }|${
-      q?.text||
-      q?.texto||
-      ""
-    }|${
-      (
-        q?.options||
-        q?.opcoes||
-        []
-      ).join("|")
+      opcoesQuestao(q)
+        .map(
+          o =>
+            typeof o==="string"
+              ? o
+              : o?.texto ||
+                o?.text ||
+                ""
+        )
+        .join("|")
     }`
   );
 }
 
 function nucleoDoDescritor(descritor){
   return (
-    Object.values(
-      NUCLEOS_APRENDIZAGEM||{}
-    )
-    .find(
-      n=>
-        Array.isArray(n?.descritores) &&
-        n.descritores.includes(descritor)
-    )?.nome
+    Object
+      .values(
+        NUCLEOS_APRENDIZAGEM ||
+        {}
+      )
+      .find(
+        n =>
+          Array.isArray(
+            n?.descritores
+          ) &&
+          n.descritores
+            .includes(
+              descritor
+            )
+      )
+      ?.nome
   ) || "Recomposição e Consolidação";
 }
 
@@ -133,18 +177,24 @@ function etapaPorNivelSituacao(
   nivel,
   situacao
 ){
-  const n=normalizarNivel(nivel);
-  const s=normalizarSituacao(situacao);
+  const n=
+    normalizarNivel(
+      nivel
+    );
+
+  const s=
+    normalizarSituacao(
+      situacao
+    );
 
   return (
-    ESCADA_CONSOLIDACAO.find(
-      e=>
-        e.nivel===n &&
-        e.situacao===s
-    )
-    ||
-    ESCADA_CONSOLIDACAO[0]
-  );
+    ESCADA_CONSOLIDACAO
+      .find(
+        e =>
+          e.nivel===n &&
+          e.situacao===s
+      )
+  ) || ESCADA_CONSOLIDACAO[0];
 }
 
 export function obterEtapaAtual(
@@ -152,34 +202,41 @@ export function obterEtapaAtual(
 ){
   if(
     Number.isInteger(
-      historicoDescritor?.etapaConsolidacao
+      historicoDescritor
+        ?.etapaConsolidacao
     )
   ){
     return ESCADA_CONSOLIDACAO[
       limitar(
-        historicoDescritor.etapaConsolidacao,
+        historicoDescritor
+          .etapaConsolidacao,
         0,
-        ESCADA_CONSOLIDACAO.length-1
+        ESCADA_CONSOLIDACAO
+          .length-1
       )
     ];
   }
 
   const nivel=
-    historicoDescritor?.nivelAtual ||
-    historicoDescritor?.nivel ||
-    historicoDescritor?.nivelAlcancado ||
+    historicoDescritor
+      ?.nivelAtual ||
+    historicoDescritor
+      ?.nivel ||
+    historicoDescritor
+      ?.nivelAlcancado ||
     "ABAIXO DO BÁSICO";
 
-  let situacao=
-    historicoDescritor?.situacaoAtual ||
-    historicoDescritor?.situacao;
-
-  if(!situacao){
-    situacao=
-      historicoDescritor?.consolidado===true
+  const situacao=
+    historicoDescritor
+      ?.situacaoAtual ||
+    historicoDescritor
+      ?.situacao ||
+    (
+      historicoDescritor
+        ?.consolidado===true
         ? "CONSOLIDADO"
-        : "EM DESENVOLVIMENTO";
-  }
+        : "EM DESENVOLVIMENTO"
+    );
 
   return etapaPorNivelSituacao(
     nivel,
@@ -190,16 +247,20 @@ export function obterEtapaAtual(
 export function proximaEtapa(
   etapaAtual
 ){
-  const indice=limitar(
-    numero(
-      etapaAtual?.indice,
-      0
-    )+1,
-    0,
-    ESCADA_CONSOLIDACAO.length-1
-  );
+  const indice=
+    limitar(
+      numero(
+        etapaAtual?.indice,
+        0
+      )+1,
+      0,
+      ESCADA_CONSOLIDACAO
+        .length-1
+    );
 
-  return ESCADA_CONSOLIDACAO[indice];
+  return ESCADA_CONSOLIDACAO[
+    indice
+  ];
 }
 
 export function nivelAlvoDoHistorico(
@@ -211,32 +272,164 @@ export function nivelAlvoDoHistorico(
     );
 
   if(
-    atual.situacao==="CONSOLIDADO" &&
+    atual.situacao===
+      "CONSOLIDADO"
+    &&
     atual.indice<
-      ESCADA_CONSOLIDACAO.length-1
+      ESCADA_CONSOLIDACAO
+        .length-1
   ){
-    return proximaEtapa(atual).nivel;
+    return proximaEtapa(
+      atual
+    ).nivel;
   }
 
   return atual.nivel;
+}
+
+function temHistoricoSuficiente(
+  h={}
+){
+  const respostas=
+    arraySeguro(
+      h?.respostas
+    );
+
+  const tentativas=
+    numero(
+      h?.tentativas ??
+      h?.questoes ??
+      h?.respondidas,
+      0
+    );
+
+  const acertos=
+    numero(
+      h?.acertos,
+      0
+    );
+
+  const possuiNivel=
+    Boolean(
+      h?.nivelAtual ||
+      h?.nivel ||
+      h?.nivelAlcancado
+    );
+
+  const possuiEtapa=
+    Number.isInteger(
+      h?.etapaConsolidacao
+    );
+
+  return (
+    possuiEtapa ||
+    possuiNivel ||
+    respostas.length>0 ||
+    tentativas>0 ||
+    acertos>0
+  );
+}
+
+function nivelDaConfiguracaoProfessor(
+  descritor,
+  configuracaoDescritores={}
+){
+  const nivel=
+    configuracaoDescritores
+      ?.[descritor]
+      ?.nivel;
+
+  if(
+    !nivel ||
+    normalizarTexto(nivel)==="MISTO"
+  ){
+    return null;
+  }
+
+  return normalizarNivel(
+    nivel
+  );
+}
+
+function indiceNivel(nivel){
+  return Math.max(
+    0,
+    NIVEIS_ORDEM
+      .indexOf(
+        normalizarNivel(
+          nivel
+        )
+      )
+  );
+}
+
+function nivelParaQuestao(
+  descritor,
+  historicoPorDescritor={},
+  configuracaoDescritores={}
+){
+  const historico=
+    historicoPorDescritor
+      ?.[descritor] ||
+    {};
+
+  // REGRA PRINCIPAL:
+  // sem histórico suficiente,
+  // a sondagem sempre inicia em ABB.
+  if(
+    !temHistoricoSuficiente(
+      historico
+    )
+  ){
+    return "ABAIXO DO BÁSICO";
+  }
+
+  const adaptativo=
+    nivelAlvoDoHistorico(
+      historico
+    );
+
+  const professor=
+    nivelDaConfiguracaoProfessor(
+      descritor,
+      configuracaoDescritores
+    );
+
+  if(
+    !professor
+  ){
+    return adaptativo;
+  }
+
+  // O nível configurado pelo professor
+  // funciona como teto/prioridade,
+  // e não como autorização para
+  // pular etapas.
+  return NIVEIS_ORDEM[
+    Math.min(
+      indiceNivel(
+        adaptativo
+      ),
+      indiceNivel(
+        professor
+      )
+    )
+  ];
 }
 
 function respostasDoNivel(
   historicoDescritor={},
   nivel
 ){
-  const respostas=
-    Array.isArray(
-      historicoDescritor?.respostas
-    )
-      ? historicoDescritor.respostas
-      : [];
-
-  return respostas.filter(
-    r=>
+  return arraySeguro(
+    historicoDescritor
+      ?.respostas
+  )
+  .filter(
+    r =>
       normalizarNivel(
-        r?.nivel||
-        r?.level||
+        r?.nivel ||
+        r?.level ||
         nivel
       )===nivel
   );
@@ -244,19 +437,22 @@ function respostasDoNivel(
 
 function acertouResposta(r){
   if(
-    typeof r?.acertou==="boolean"
+    typeof r?.acertou===
+    "boolean"
   ){
     return r.acertou;
   }
 
   if(
-    typeof r?.correta==="boolean"
+    typeof r?.correta===
+    "boolean"
   ){
     return r.correta;
   }
 
   if(
-    typeof r?.isCorrect==="boolean"
+    typeof r?.isCorrect===
+    "boolean"
   ){
     return r.isCorrect;
   }
@@ -280,9 +476,13 @@ export function avaliarConsolidacao(
     );
 
   const nivelTrabalhado=
-    atual.situacao==="CONSOLIDADO" &&
+    atual.situacao===
+      "CONSOLIDADO"
+    &&
     atual.indice<7
-      ? proximaEtapa(atual).nivel
+      ? proximaEtapa(
+          atual
+        ).nivel
       : atual.nivel;
 
   const anteriores=
@@ -292,17 +492,17 @@ export function avaliarConsolidacao(
     );
 
   const novas=
-    (
-      Array.isArray(respostasNovas)
-        ? respostasNovas
-        : []
-    ).filter(
-      r=>
+    arraySeguro(
+      respostasNovas
+    )
+    .filter(
+      r =>
         normalizarNivel(
-          r?.nivel||
-          r?.level||
+          r?.nivel ||
+          r?.level ||
           nivelTrabalhado
-        )===nivelTrabalhado
+        )===
+        nivelTrabalhado
     );
 
   const todas=[
@@ -322,15 +522,17 @@ export function avaliarConsolidacao(
     );
 
   const acertos=
-    janela.filter(
-      acertouResposta
-    ).length;
+    janela
+      .filter(
+        acertouResposta
+      )
+      .length;
 
   const percentual=
     janela.length
       ? Math.round(
           (
-            acertos/
+            acertos /
             janela.length
           )*100
         )
@@ -348,9 +550,11 @@ export function avaliarConsolidacao(
     );
 
   const acertosRecentes=
-    ultimas.filter(
-      acertouResposta
-    ).length;
+    ultimas
+      .filter(
+        acertouResposta
+      )
+      .length;
 
   const consolidou=
     janela.length>=
@@ -381,11 +585,15 @@ export function avaliarConsolidacao(
         )
       );
 
-  let etapaDepois=atual;
-  let evoluiu=false;
+  let etapaDepois=
+    atual;
 
-  if(consolidou){
+  let evoluiu=
+    false;
 
+  if(
+    consolidou
+  ){
     if(
       atual.situacao===
       "EM DESENVOLVIMENTO"
@@ -453,15 +661,96 @@ function pesoDescritor(
   );
 }
 
+function fraquezaDescritor(
+  descritor,
+  historicoPorDescritor={}
+){
+  const h=
+    historicoPorDescritor
+      ?.[descritor] ||
+    {};
+
+  if(
+    !temHistoricoSuficiente(
+      h
+    )
+  ){
+    return -1;
+  }
+
+  return obterEtapaAtual(
+    h
+  ).indice;
+}
+
 function montarFilaDescritores(
   descritores,
   quantidade,
   configuracaoDescritores,
+  historicoPorDescritor,
   identificador
 ){
-  const expandidos=[];
+  const validos=[
+    ...descritores
+  ];
 
-  descritores.forEach(
+  // Primeiro trabalha os descritores
+  // de menor domínio.
+  validos.sort(
+    (a,b)=>{
+      const fa=
+        fraquezaDescritor(
+          a,
+          historicoPorDescritor
+        );
+
+      const fb=
+        fraquezaDescritor(
+          b,
+          historicoPorDescritor
+        );
+
+      if(
+        fa!==fb
+      ){
+        return fa-fb;
+      }
+
+      return (
+        hashInteiro(
+          `${identificador}|${a}`
+        )
+        -
+        hashInteiro(
+          `${identificador}|${b}`
+        )
+      );
+    }
+  );
+
+  const fila=[];
+
+  // Garante pelo menos uma questão
+  // de cada descritor.
+  for(
+    const d
+    of validos
+  ){
+    if(
+      fila.length>=
+      quantidade
+    ){
+      break;
+    }
+
+    fila.push(
+      d
+    );
+  }
+
+  const ponderada=[];
+
+  validos.forEach(
     d=>{
       const peso=
         pesoDescritor(
@@ -474,127 +763,297 @@ function montarFilaDescritores(
         i<peso;
         i++
       ){
-        expandidos.push(d);
+        ponderada.push(
+          d
+        );
       }
     }
   );
 
   const deslocamento=
-    expandidos.length
+    ponderada.length
       ? hashInteiro(
           identificador
         )%
-        expandidos.length
+        ponderada.length
       : 0;
 
-  const rotacionados=[
-    ...expandidos.slice(
+  const rotacionada=[
+    ...ponderada.slice(
       deslocamento
     ),
-    ...expandidos.slice(
+    ...ponderada.slice(
       0,
       deslocamento
     )
   ];
 
-  const fila=[];
+  let i=0;
 
-  for(
-    let i=0;
-    i<quantidade;
-    i++
+  while(
+    fila.length<
+    quantidade
   ){
     fila.push(
-      rotacionados[
+      rotacionada[
         i%
-        rotacionados.length
+        rotacionada.length
       ]
     );
+
+    i++;
   }
 
   return fila;
 }
 
-function configuracaoNivelProfessor(
-  descritor,
-  configuracaoDescritores={}
+function posicoesEvidencia(
+  total,
+  quantidadeEvidencias
 ){
-  const nivel=
-    configuracaoDescritores
-      ?.[descritor]
-      ?.nivel;
-
   if(
-    !nivel ||
-    normalizarTexto(nivel)==="MISTO"
+    quantidadeEvidencias<=0
   ){
-    return null;
+    return [];
   }
 
-  return normalizarNivel(
-    nivel
+  /*
+  Para impedir duas fotos seguidas,
+  precisamos de pelo menos:
+  E + (E - 1) questões.
+  */
+  if(
+    total<
+    (
+      quantidadeEvidencias*2 -
+      1
+    )
+  ){
+    throw new Error(
+      `Para manter 1 foto por descritor sem duas fotos consecutivas, ${quantidadeEvidencias} descritores exigem pelo menos ${quantidadeEvidencias*2-1} questões.`
+    );
+  }
+
+  const posicoes=[];
+
+  for(
+    let i=0;
+    i<quantidadeEvidencias;
+    i++
+  ){
+    let pos=
+      Math.round(
+        (
+          (i+1)*
+          (total+1)
+        )
+        /
+        (
+          quantidadeEvidencias+1
+        )
+      )
+      -
+      1;
+
+    pos=
+      limitar(
+        pos,
+        0,
+        total-1
+      );
+
+    while(
+      posicoes.includes(
+        pos
+      )
+      ||
+      posicoes.some(
+        p =>
+          Math.abs(
+            p-pos
+          )<=1
+      )
+    ){
+      pos++;
+
+      if(
+        pos>=total
+      ){
+        pos=0;
+      }
+    }
+
+    posicoes.push(
+      pos
+    );
+  }
+
+  return posicoes.sort(
+    (a,b)=>a-b
   );
 }
 
-function nivelParaQuestao(
-  descritor,
-  historicoPorDescritor,
-  configuracaoDescritores
-){
-  const historico=
-    historicoPorDescritor
-      ?.[descritor]
-    || {};
-
-  const adaptativo=
-    nivelAlvoDoHistorico(
-      historico
-    );
-
-  const fixado=
-    configuracaoNivelProfessor(
-      descritor,
-      configuracaoDescritores
-    );
-
-  // Se o Professor fixa explicitamente
-  // um nível, a Arena respeita.
-  // Em MISTO, o histórico individual decide.
-  return fixado||adaptativo;
-}
-
-function marcarEvidencias(
+function distribuirEvidencias(
   questoes,
-  descritores
+  descritores,
+  identificador
 ){
-  const primeiraPorDescritor=
+  const candidatos=[];
+  const usados=
     new Set();
 
-  return questoes.map(
-    q=>{
-      const d=
-        q.descriptor||
-        q.descritor;
+  /*
+  Reserva exatamente uma questão
+  para cada descritor.
+  */
+  for(
+    let i=0;
+    i<questoes.length;
+    i++
+  ){
+    const d=
+      descritorQuestao(
+        questoes[i]
+      );
 
-      const deve=
-        descritores.includes(d)
-        &&
-        !primeiraPorDescritor.has(d);
+    if(
+      descritores.includes(
+        d
+      )
+      &&
+      !usados.has(
+        d
+      )
+    ){
+      candidatos.push(
+        questoes[i]
+      );
 
-      if(deve){
-        primeiraPorDescritor.add(d);
-      }
+      usados.add(
+        d
+      );
+    }
+  }
 
-      return {
-        ...q,
-        exigeEvidenciaCaderno:deve,
+  if(
+    candidatos.length!==
+    descritores.length
+  ){
+    const faltantes=
+      descritores.filter(
+        d =>
+          !usados.has(
+            d
+          )
+      );
+
+    throw new Error(
+      `Não foi possível reservar uma questão de evidência para: ${faltantes.join(", ")}.`
+    );
+  }
+
+  const idsCandidatos=
+    new Set(
+      candidatos
+    );
+
+  const normais=
+    questoes.filter(
+      q =>
+        !idsCandidatos.has(
+          q
+        )
+    );
+
+  const ordemCandidatos=[
+    ...candidatos
+  ]
+  .sort(
+    (a,b)=>
+      hashInteiro(
+        `${identificador}|E|${descritorQuestao(a)}`
+      )
+      -
+      hashInteiro(
+        `${identificador}|E|${descritorQuestao(b)}`
+      )
+  );
+
+  const posicoes=
+    posicoesEvidencia(
+      questoes.length,
+      ordemCandidatos.length
+    );
+
+  const saida=
+    new Array(
+      questoes.length
+    );
+
+  posicoes.forEach(
+    (pos,i)=>{
+      saida[pos]={
+        ...ordemCandidatos[i],
+
+        exigeEvidenciaCaderno:
+          true,
+
         evidenciaCadernoTipo:
-          deve
-            ? "CAMERA_AO_VIVO"
-            : null
+          "CAMERA_AO_VIVO"
       };
     }
   );
+
+  let n=0;
+
+  for(
+    let i=0;
+    i<saida.length;
+    i++
+  ){
+    if(
+      saida[i]
+    ){
+      continue;
+    }
+
+    const q=
+      normais[n++];
+
+    saida[i]={
+      ...q,
+
+      exigeEvidenciaCaderno:
+        false,
+
+      evidenciaCadernoTipo:
+        null
+    };
+  }
+
+  /*
+  Defesa final:
+  nunca duas evidências consecutivas.
+  */
+  for(
+    let i=1;
+    i<saida.length;
+    i++
+  ){
+    if(
+      saida[i-1]
+        ?.exigeEvidenciaCaderno
+      &&
+      saida[i]
+        ?.exigeEvidenciaCaderno
+    ){
+      throw new Error(
+        "Falha ao espaçar as questões de evidência. Gere novamente a Arena."
+      );
+    }
+  }
+
+  return saida;
 }
 
 export function gerarQuestoesAdaptativas({
@@ -619,28 +1078,48 @@ export function gerarQuestoesAdaptativas({
   const validos=[
     ...new Set(
       (descritores||[])
+        .map(
+          d =>
+            String(d)
+              .toUpperCase()
+        )
         .filter(
-          d=>
-            HABILIDADES_PAEBES[d]
+          d =>
+            HABILIDADES_PAEBES[
+              d
+            ]
         )
     )
   ];
 
-  if(!validos.length){
+  if(
+    !validos.length
+  ){
     throw new Error(
       "Selecione pelo menos um descritor válido para gerar a trajetória adaptativa."
     );
   }
 
-  if(!estudanteId){
+  if(
+    !estudanteId
+  ){
     throw new Error(
       "O estudante precisa estar identificado antes da geração adaptativa."
     );
   }
 
+  if(
+    total<
+    validos.length
+  ){
+    throw new Error(
+      `A Arena possui ${validos.length} descritores e apenas ${total} questões. Para garantir ao menos 1 questão por descritor, aumente a quantidade.`
+    );
+  }
+
   const identidade=
     `${
-      codigoArena||
+      codigoArena ||
       "ARENA"
     }|${estudanteId}`;
 
@@ -649,6 +1128,7 @@ export function gerarQuestoesAdaptativas({
       validos,
       total,
       configuracaoDescritores,
+      historicoPorDescritor,
       identidade
     );
 
@@ -675,15 +1155,16 @@ export function gerarQuestoesAdaptativas({
     const etapaAntes=
       obterEtapaAtual(
         historicoPorDescritor
-          ?.[descritor]
-        || {}
+          ?.[descritor] ||
+        {}
       );
 
-    let escolhida=null;
+    let escolhida=
+      null;
 
     for(
       let tentativa=0;
-      tentativa<120;
+      tentativa<160;
       tentativa++
     ){
       const seed=
@@ -699,7 +1180,9 @@ export function gerarQuestoesAdaptativas({
         );
 
       const assinatura=
-        assinaturaQuestao(q);
+        assinaturaQuestao(
+          q
+        );
 
       if(
         usadas.has(
@@ -716,18 +1199,28 @@ export function gerarQuestoesAdaptativas({
       escolhida={
         ...q,
 
+        descritor:
+          q?.descritor ||
+          q?.descriptor ||
+          descritor,
+
+        descriptor:
+          q?.descriptor ||
+          q?.descritor ||
+          descritor,
+
         nivel,
         level:nivel,
 
         habilidade:
-          q.habilidade||
+          q?.habilidade ||
           HABILIDADES_PAEBES[
             descritor
-          ]||
+          ] ||
           "",
 
         nucleo:
-          q.nucleo||
+          q?.nucleo ||
           nucleoDoDescritor(
             descritor
           ),
@@ -752,14 +1245,23 @@ export function gerarQuestoesAdaptativas({
             nivel,
 
           ordemIndividual:
-            i+1
+            i+1,
+
+          sondagemInicial:
+            !temHistoricoSuficiente(
+              historicoPorDescritor
+                ?.[descritor] ||
+              {}
+            )
         }
       };
 
       break;
     }
 
-    if(!escolhida){
+    if(
+      !escolhida
+    ){
       throw new Error(
         `Não foi possível gerar questão adaptativa inédita para ${descritor}.`
       );
@@ -771,9 +1273,10 @@ export function gerarQuestoesAdaptativas({
   }
 
   const comEvidencias=
-    marcarEvidencias(
+    distribuirEvidencias(
       questoes,
-      validos
+      validos,
+      identidade
     );
 
   if(
@@ -785,6 +1288,38 @@ export function gerarQuestoesAdaptativas({
     );
   }
 
+  /*
+  Defesa pedagógica:
+  estudante sem histórico não pode
+  iniciar a sondagem em Proficiente
+  ou Avançado.
+  */
+  const primeira=
+    comEvidencias[0];
+
+  const histPrimeira=
+    historicoPorDescritor
+      ?.[
+        descritorQuestao(
+          primeira
+        )
+      ] ||
+    {};
+
+  if(
+    !temHistoricoSuficiente(
+      histPrimeira
+    )
+    &&
+    indiceNivel(
+      primeira?.nivel
+    )>0
+  ){
+    throw new Error(
+      "Falha pedagógica: a sondagem inicial deveria começar em Abaixo do Básico."
+    );
+  }
+
   return comEvidencias;
 }
 
@@ -793,34 +1328,45 @@ export function criarRegistroRespostaAdaptativa({
   respostaSelecionada,
   acertou,
   dataHora=
-    new Date().toISOString(),
+    new Date()
+      .toISOString(),
   tempoSegundos=null
 }={}){
   const descritor=
-    questao?.descriptor||
-    questao?.descritor||
-    "";
+    descritorQuestao(
+      questao
+    );
 
   const nivel=
     normalizarNivel(
-      questao?.level||
-      questao?.nivel||
+      questao?.level ||
+      questao?.nivel ||
       "ABAIXO DO BÁSICO"
     );
 
   return {
     questaoId:
-      questao?.questaoId||
-      questao?.id||
+      questao?.questaoId ||
+      questao?.id ||
       null,
 
     descritor,
     nivel,
 
     acertou:
-      Boolean(acertou),
+      Boolean(
+        acertou
+      ),
+
+    correta:
+      Boolean(
+        acertou
+      ),
 
     respostaSelecionada,
+
+    alternativa:
+      respostaSelecionada,
 
     respostaCorreta:
       questao?.correct ??
@@ -837,30 +1383,34 @@ export function criarRegistroRespostaAdaptativa({
 
     dataHora,
 
+    timestampCliente:
+      Date.now(),
+
     habilidade:
-      questao?.habilidade||
+      questao?.habilidade ||
       HABILIDADES_PAEBES[
         descritor
-      ]||
+      ] ||
       "",
 
     parteHabilidade:
-      questao?.parteHabilidade||
-      questao?.tarefa||
+      questao?.parteHabilidade ||
+      questao?.tarefa ||
       "",
 
     nucleo:
-      questao?.nucleo||
+      questao?.nucleo ||
       nucleoDoDescritor(
         descritor
       ),
 
     origem:
-      questao?.origem||
+      questao?.origem ||
+      questao?.origemTipo ||
       "",
 
     fonteReferencia:
-      questao?.fonteReferencia||
+      questao?.fonteReferencia ||
       "",
 
     exigeEvidenciaCaderno:
@@ -885,13 +1435,13 @@ export function montarResumoConsolidacao({
   descritores.forEach(
     d=>{
       const respostas=
-        (
-          respostasDaArena||
-          []
-        ).filter(
-          r=>
+        arraySeguro(
+          respostasDaArena
+        )
+        .filter(
+          r =>
             (
-              r?.descritor||
+              r?.descritor ||
               r?.descriptor
             )===d
         );
@@ -899,8 +1449,8 @@ export function montarResumoConsolidacao({
       porDescritor[d]=
         avaliarConsolidacao(
           historicoPorDescritor
-            ?.[d]
-          || {},
+            ?.[d] ||
+          {},
           respostas,
           politica
         );
@@ -920,39 +1470,39 @@ export function montarPacotePDFIndividual({
 }={}){
   return {
     versao:
-      "pdf-individual-arena-2026-v1",
+      "pdf-individual-arena-2026-v2",
 
     liberadoSomenteComArenaEncerrada:
       true,
 
     arena:{
       codigo:
-        arena?.codigo||
+        arena?.codigo ||
         "",
 
       nome:
-        arena?.nome||
+        arena?.nome ||
         "Arena Matemática — Coliseu do Conhecimento",
 
       dataEncerramento:
-        arena?.dataEncerramento||
-        arena?.encerradaEm||
+        arena?.dataEncerramento ||
+        arena?.encerradaEm ||
         null
     },
 
     estudante:{
       id:
-        estudante?.estudanteId||
-        estudante?.id||
+        estudante?.estudanteId ||
+        estudante?.id ||
         "",
 
       nome:
-        estudante?.nomeCompleto||
-        estudante?.nome||
+        estudante?.nomeCompleto ||
+        estudante?.nome ||
         "",
 
       turma:
-        estudante?.turma||
+        estudante?.turma ||
         ""
     },
 
@@ -965,94 +1515,106 @@ export function montarPacotePDFIndividual({
     },
 
     questoes:
-      (questoes||[])
-        .map(
-          (q,index)=>({
+      arraySeguro(
+        questoes
+      )
+      .map(
+        (q,index)=>{
+          const ops=
+            opcoesQuestao(
+              q
+            );
+
+          const gab=
+            q?.correct ??
+            q?.correta ??
+            null;
+
+          return {
             ordem:
               index+1,
 
             questaoId:
-              q?.questaoId||
-              q?.id||
+              q?.questaoId ||
+              q?.id ||
               null,
 
             descritor:
-              q?.descriptor||
-              q?.descritor||
-              "",
+              descritorQuestao(
+                q
+              ),
 
             habilidade:
-              q?.habilidade||
+              q?.habilidade ||
               "",
 
             parteHabilidade:
-              q?.parteHabilidade||
-              q?.tarefa||
+              q?.parteHabilidade ||
+              q?.tarefa ||
               "",
 
             nivel:
-              q?.level||
-              q?.nivel||
+              q?.level ||
+              q?.nivel ||
               "",
 
             texto:
-              q?.text||
-              q?.texto||
-              "",
+              textoQuestao(
+                q
+              ),
 
             alternativas:
-              q?.options||
-              q?.opcoes||
-              [],
+              ops,
 
             gabaritoIndice:
-              q?.correct ??
-              q?.correta ??
-              null,
+              gab,
 
             gabaritoTexto:
-              (
-                q?.options||
-                q?.opcoes||
-                []
-              )[
-                q?.correct ??
-                q?.correta
-              ]
-              ??
-              "",
+              Number.isInteger(
+                Number(
+                  gab
+                )
+              )
+                ? ops[
+                    Number(
+                      gab
+                    )
+                  ] ?? ""
+                : "",
 
             resolucao:
-              q?.solucao||
+              q?.solucao ||
               "",
 
             origem:
-              q?.origem||
+              q?.origem ||
+              q?.origemTipo ||
               "",
 
             fonteReferencia:
-              q?.fonteReferencia||
+              q?.fonteReferencia ||
               "",
 
             respostaEstudante:
-              (
-                respostas||
-                []
-              ).find(
-                r=>
+              arraySeguro(
+                respostas
+              )
+              .find(
+                r =>
                   r?.questaoId===
                   (
-                    q?.questaoId||
+                    q?.questaoId ||
                     q?.id
                   )
               )
               ||
               null
-          })
-        )
+          };
+        }
+      )
   };
 }
 
 console.log(
-  "🧭 Motor Adaptativo v1 carregado — consolidação crescente ABB → Básico → Proficiente → Avançado."
+  "🧭 Motor Adaptativo v2 carregado — sondagem inicia em ABB sem histórico, evolução cumulativa e evidências espaçadas."
 );
