@@ -855,6 +855,19 @@ video{
   font-weight:900
 }
 
+.timerRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0 16px}
+.timerBox{display:inline-flex;gap:8px;align-items:center;padding:10px 14px;border:1px solid #42516b;border-radius:12px;background:#0c1728;font-weight:900}
+.timerBox strong{color:var(--gold2);font-size:20px}
+.photoBonus{display:none;padding:9px 12px;border:1px solid rgba(57,194,255,.45);border-radius:999px;background:rgba(57,194,255,.1);color:#bfeeff;font-weight:900}
+#timerAlert{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:250;display:none;padding:14px 20px;border:2px solid #ffd34d;border-radius:14px;background:#3a2d00;color:#fff3a8;font-weight:1000;box-shadow:0 12px 40px rgba(0,0,0,.55);text-align:center}
+#timerAlert.flash{display:block;animation:timerFlash .7s ease-in-out infinite alternate}
+@keyframes timerFlash{from{box-shadow:0 0 0 rgba(255,211,77,0),0 12px 40px rgba(0,0,0,.55)}to{box-shadow:0 0 28px rgba(255,211,77,.75),0 12px 40px rgba(0,0,0,.55)}}
+#evidenceModal{overflow:hidden;padding:10px}
+.evidenceBox{max-height:calc(100dvh - 20px);overflow-y:auto;overscroll-behavior:contain;padding:18px}
+.evidenceBox video{max-height:42dvh;object-fit:contain}
+.evidencePreview{max-height:min(42dvh,360px)}
+.evidenceBtns{position:sticky;bottom:0;z-index:2;background:linear-gradient(180deg,rgba(16,24,39,.82),rgba(16,24,39,1) 28%);padding-top:10px;padding-bottom:4px}
+
 @media(max-width:900px){
   .loginGrid,.main{grid-template-columns:1fr}
   .coliseum{height:180px}
@@ -1064,8 +1077,8 @@ video{
     <p>
       Esta questão foi escolhida para registrar seu raciocínio.
       Fotografe a resolução feita no caderno.
-      As alternativas serão liberadas somente após o envio da foto
-      ou autorização individual do professor.
+      As alternativas permanecem visíveis; a confirmação será liberada
+      após o envio da foto ou autorização individual do professor.
     </p>
 
     <video
@@ -1353,6 +1366,11 @@ video{
 
         </div>
 
+        <div class="timerRow">
+          <div id="questionTimer" class="timerBox">TEMPO <strong id="timerValue">--:--</strong></div>
+          <div id="photoTimeBonus" class="photoBonus">+60s FOTO</div>
+        </div>
+
         <div class="notebook">
           Resolva no caderno.
           Registre seu raciocínio antes de marcar a alternativa.
@@ -1565,6 +1583,8 @@ video{
 
 </section>
 
+<div id="timerAlert">ATENÇÃO — TEMPO EXTRA <strong id="extraTimerValue">30s</strong></div>
+
 <div
   id="pauseOverlay"
   class="overlay"
@@ -1712,6 +1732,12 @@ let resultadoHistoricoRegistrado = false;
 
 let cameraPronta = false;
 let cameraTentativa = 0;
+
+const selecoesPorQuestao = new Map();
+let cronometroQuestao = null;
+let cronometroInterval = null;
+let questaoFinalizando = false;
+let renderQuestaoToken = 0;
 
 iniciarFirebase();
 
@@ -2417,7 +2443,7 @@ async function permissaoCamera() {
 
 function getUserMediaSeguro(
   constraints,
-  ms = 15000
+  ms = 8000
 ) {
 
   return new Promise(
@@ -2508,7 +2534,7 @@ function getUserMediaSeguro(
 
 async function esperarImagem(
   v,
-  ms = 7000
+  ms = 4000
 ) {
 
   const inicio =
@@ -2664,7 +2690,7 @@ async function conectarStreamCamera(
   const ok =
     await esperarImagem(
       v,
-      7000
+      4000
     );
 
   if (!ok) {
@@ -2711,236 +2737,50 @@ async function conectarStreamCamera(
 }
 
 async function ativarCamera() {
-
-  if (
-    !window
-      .isSecureContext
-  ) {
-
-    $("photoMsg")
-      .textContent =
-      "A câmera exige conexão HTTPS. Relate o problema ao professor.";
-
+  if (!window.isSecureContext) {
+    $("photoMsg").textContent = "A câmera exige conexão HTTPS. Relate o problema ao professor.";
     return false;
-
   }
-
-  if (
-    !navigator
-      .mediaDevices
-      ?.getUserMedia
-  ) {
-
-    $("photoMsg")
-      .textContent =
-      "Este navegador não disponibilizou a câmera. Relate o problema ao professor.";
-
+  if (!navigator.mediaDevices?.getUserMedia) {
+    $("photoMsg").textContent = "Este navegador não disponibilizou a câmera. Relate o problema ao professor.";
     return false;
-
   }
-
-  const estado =
-    await permissaoCamera();
-
-  if (
-    estado ===
-    "denied"
-  ) {
-
-    $("photoMsg")
-      .textContent =
-      "A câmera está bloqueada para este site. Permita a câmera no navegador e tente novamente.";
-
-    $("captureBtn")
-      .textContent =
-      "TENTAR CÂMERA NOVAMENTE";
-
+  const estado = await permissaoCamera();
+  if (estado === "denied") {
+    $("photoMsg").textContent = "A câmera está bloqueada para este site. Permita a câmera no navegador e tente novamente.";
+    $("captureBtn").disabled = false;
+    $("captureBtn").textContent = "TENTAR CÂMERA NOVAMENTE";
     return false;
-
   }
-
   fecharCamera();
-
-  const tentativaAtual =
-    ++cameraTentativa;
-
-  $("captureBtn")
-    .disabled =
-    true;
-
-  $("captureBtn")
-    .textContent =
-    "CONECTANDO...";
-
-  $("photoMsg")
-    .textContent =
-    "Conectando à câmera do aparelho...";
-
-  let ultimoErro =
-    null;
-
+  const tentativaAtual = ++cameraTentativa;
+  $("captureBtn").disabled = true;
+  $("captureBtn").textContent = "CONECTANDO...";
+  $("photoMsg").textContent = "Conectando à câmera do aparelho...";
+  let ultimoErro = null;
   const tentativas = [
-    {
-      video:true,
-      audio:false
-    },
-    {
-      video:{
-        facingMode:"user"
-      },
-      audio:false
-    },
-    {
-      video:{
-        width:{
-          ideal:640
-        },
-        height:{
-          ideal:480
-        }
-      },
-      audio:false
-    }
+    {video:{facingMode:"user"},audio:false},
+    {video:true,audio:false}
   ];
-
-  for (
-    const constraints
-    of tentativas
-  ) {
-
+  for (const constraints of tentativas) {
     try {
-
-      const s =
-        await getUserMediaSeguro(
-          constraints,
-          15000
-        );
-
-      if (
-        await conectarStreamCamera(
-          s,
-          tentativaAtual
-        )
-      ) {
-
-        cameraPronta =
-          true;
-
-        $("captureBtn")
-          .disabled =
-          false;
-
-        $("captureBtn")
-          .textContent =
-          "TIRAR FOTO";
-
-        $("photoMsg")
-          .textContent =
-          "Câmera ativa. Posicione seu rosto e toque em TIRAR FOTO.";
-
+      const novo = await getUserMediaSeguro(constraints,8000);
+      if (await conectarStreamCamera(novo,tentativaAtual)) {
+        cameraPronta = true;
+        $("captureBtn").disabled = false;
+        $("captureBtn").textContent = "TIRAR FOTO";
+        $("photoMsg").textContent = "Câmera ativa. Posicione seu rosto e toque em TIRAR FOTO.";
         return true;
-
       }
-
-      ultimoErro =
-        new Error(
-          "video-sem-imagem"
-        );
-
-    } catch (erro) {
-
-      ultimoErro =
-        erro;
-
-    }
-
+      ultimoErro = new Error("video-sem-imagem");
+    } catch (erro) { ultimoErro = erro; }
   }
-
-  const cams =
-    await camerasDisponiveis();
-
-  for (
-    const cam
-    of cams
-  ) {
-
-    if (
-      !cam.deviceId
-    ) {
-      continue;
-    }
-
-    try {
-
-      const s =
-        await getUserMediaSeguro(
-          {
-            video:{
-              deviceId:{
-                exact:
-                  cam.deviceId
-              }
-            },
-            audio:false
-          },
-          12000
-        );
-
-      if (
-        await conectarStreamCamera(
-          s,
-          tentativaAtual
-        )
-      ) {
-
-        cameraPronta =
-          true;
-
-        $("captureBtn")
-          .disabled =
-          false;
-
-        $("captureBtn")
-          .textContent =
-          "TIRAR FOTO";
-
-        $("photoMsg")
-          .textContent =
-          "Câmera ativa. Posicione seu rosto e toque em TIRAR FOTO.";
-
-        return true;
-
-      }
-
-    } catch (erro) {
-
-      ultimoErro =
-        erro;
-
-    }
-
-  }
-
   fecharCamera();
-
-  $("captureBtn")
-    .disabled =
-    false;
-
-  $("captureBtn")
-    .textContent =
-    "TENTAR CÂMERA NOVAMENTE";
-
-  $("photoMsg")
-    .textContent =
-    "Não foi possível obter imagem da câmera. Feche outros aplicativos que estejam usando a câmera e tente novamente. Se persistir, relate o problema ao professor.";
-
-  console.error(
-    ultimoErro
-  );
-
+  $("captureBtn").disabled = false;
+  $("captureBtn").textContent = "TENTAR CÂMERA NOVAMENTE";
+  $("photoMsg").textContent = "Não foi possível conectar à câmera. Tente novamente ou relate o problema ao professor.";
+  console.warn("Falha de câmera de perfil:",ultimoErro);
   return false;
-
 }
 
 async function acaoCamera() {
@@ -3282,58 +3122,23 @@ async function confirmarFoto() {
 }
 
 async function relatarCameraPerfil() {
-
+  fecharCamera();
+  $("captureBtn").disabled = false;
+  $("captureBtn").textContent = "TENTAR CÂMERA NOVAMENTE";
   try {
-
-    await relatarProblemaCameraPerfil(
-      codigoArena,
-      jogadorId,
-      {
-        nome:
-          jogador?.nome ||
-          $("nome").value
-      }
-    );
-
-    $("photoMsg")
-      .textContent =
-      "Problema enviado ao professor. Quando ele autorizar, toque novamente neste botão para verificar a liberação.";
-
-    const autorizado =
-      await consumirAutorizacaoGaleriaPerfil(
-        jogadorId
-      )
-      .catch(
-        () => false
-      );
-
-    if (
-      autorizado
-    ) {
-
-      $("galleryLabel")
-        .style.display =
-        "inline-flex";
-
-      $("cameraReportBtn")
-        .style.display =
-        "none";
-
-      $("photoMsg")
-        .textContent =
-        "Professor autorizou. Agora você pode escolher a foto da galeria.";
-
+    await relatarProblemaCameraPerfil(codigoArena,jogadorId,{nome:jogador?.nome || $("nome").value});
+    $("photoMsg").textContent = "Problema enviado ao professor. Verificando autorização para usar a galeria...";
+    const autorizado = await consumirAutorizacaoGaleriaPerfil(jogadorId).catch(()=>false);
+    if (autorizado) {
+      $("galleryLabel").style.display = "inline-flex";
+      $("cameraReportBtn").style.display = "none";
+      $("photoMsg").textContent = "Professor autorizou. Agora você pode escolher a foto da galeria.";
+    } else {
+      $("photoMsg").textContent = "Problema enviado ao professor. Você pode tentar a câmera novamente; a galeria só aparecerá após autorização.";
     }
-
   } catch (erro) {
-
-    $("photoMsg")
-      .textContent =
-      erro?.message ||
-      "Não foi possível enviar o aviso ao professor.";
-
+    $("photoMsg").textContent = erro?.message || "Não foi possível enviar o aviso ao professor.";
   }
-
 }
 
 async function verificarGaleriaPerfil() {
@@ -3586,115 +3391,34 @@ async function abrirEvidenceCamera() {
 }
 
 async function acaoEvidenceCamera() {
-
-  if (
-    evidenceCameraPronta
-  ) {
-
-    capturarEvidencia();
+  if (evidenceCameraPronta) { capturarEvidencia(); return; }
+  if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+    $("evidenceMsg").textContent = "Câmera indisponível. Relate o problema ao professor.";
     return;
-
   }
-
-  if (
-    !window
-      .isSecureContext ||
-    !navigator
-      .mediaDevices
-      ?.getUserMedia
-  ) {
-
-    $("evidenceMsg")
-      .textContent =
-      "Câmera indisponível. Relate o problema ao professor.";
-
-    return;
-
-  }
-
-  $("evidenceCaptureBtn")
-    .disabled =
-    true;
-
-  $("evidenceCaptureBtn")
-    .textContent =
-    "CONECTANDO...";
-
+  $("evidenceCaptureBtn").disabled = true;
+  $("evidenceCaptureBtn").textContent = "CONECTANDO...";
+  pararEvidenceStream();
+  const tentativaAtual = ++evidenceTentativa;
   try {
-
-    evidenceStream =
-      await getUserMediaSeguro(
-        {
-          video:{
-            facingMode:{
-              ideal:
-                "environment"
-            }
-          },
-          audio:false
-        },
-        15000
-      );
-
-    const v =
-      $("evidenceVideo");
-
-    v.srcObject =
-      evidenceStream;
-
-    v.muted =
-      true;
-
-    v.playsInline =
-      true;
-
-    const ok =
-      await esperarImagem(
-        v,
-        7000
-      );
-
-    if (!ok) {
-
-      throw new Error(
-        "sem-imagem"
-      );
-
-    }
-
-    evidenceCameraPronta =
-      true;
-
-    $("evidenceCaptureBtn")
-      .disabled =
-      false;
-
-    $("evidenceCaptureBtn")
-      .textContent =
-      "TIRAR FOTO";
-
-    $("evidenceMsg")
-      .textContent =
-      "Enquadre a resolução no caderno e toque em TIRAR FOTO.";
-
-  } catch {
-
+    const novo = await getUserMediaSeguro({video:{facingMode:{ideal:"environment"}},audio:false},8000);
+    if (tentativaAtual !== evidenceTentativa) { pararStream(novo); return; }
+    evidenceStream = novo;
+    const v = $("evidenceVideo");
+    v.srcObject = evidenceStream; v.muted = true; v.playsInline = true;
+    const ok = await esperarImagem(v,4000);
+    if (!ok) throw new Error("sem-imagem");
+    evidenceCameraPronta = true;
+    $("evidenceCaptureBtn").disabled = false;
+    $("evidenceCaptureBtn").textContent = "TIRAR FOTO";
+    $("evidenceMsg").textContent = "Enquadre a resolução no caderno e toque em TIRAR FOTO.";
+  } catch (erro) {
     pararEvidenceStream();
-
-    $("evidenceCaptureBtn")
-      .disabled =
-      false;
-
-    $("evidenceCaptureBtn")
-      .textContent =
-      "TENTAR CÂMERA NOVAMENTE";
-
-    $("evidenceMsg")
-      .textContent =
-      "Não foi possível usar a câmera. Relate o problema ao professor.";
-
+    $("evidenceCaptureBtn").disabled = false;
+    $("evidenceCaptureBtn").textContent = "TENTAR CÂMERA NOVAMENTE";
+    $("evidenceMsg").textContent = "Não foi possível conectar à câmera. Tente novamente ou relate o problema ao professor.";
+    console.warn("Falha de câmera da evidência:",erro);
   }
-
 }
 
 function capturarEvidencia() {
@@ -3916,7 +3640,7 @@ async function relatarCameraQuestaoAtual() {
 
   $("evidenceMsg")
     .textContent =
-    "Problema enviado ao professor. A questão continuará bloqueada até ele liberar esta questão sem foto.";
+    "Problema enviado ao professor. Você pode continuar com a alternativa marcada; CONFIRMAR será liberado quando o professor autorizar esta questão sem foto.";
 
   const sem =
     await verificarQuestaoLiberadaSemFoto(
@@ -4471,6 +4195,77 @@ async function abrirArena() {
 
 }
 
+
+function normalizarTexto(v="") { return String(v).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase(); }
+function tempoBasePorNivel(q) {
+  const n=normalizarTexto(q?.nivel || q?.nivelPedagogico || q?.level || "");
+  if (n.includes("ABB")) return 90;
+  if (n.includes("BASICO")) return 120;
+  if (n.includes("PROFICIENTE")) return 150;
+  if (n.includes("AVANCADO")) return 180;
+  return 120;
+}
+function chaveQuestaoAtual(q,idx) { return `${questaoId(q,idx)}::${idx}`; }
+function arenaRodando() {
+  const st=String(arenaAtual?.status || "").toLowerCase();
+  return st === "iniciada" || st === "continuada";
+}
+function formatarTempo(seg) {
+  const v=Math.max(0,Math.ceil(seg));
+  return `${String(Math.floor(v/60)).padStart(2,"0")}:${String(v%60).padStart(2,"0")}`;
+}
+function pararCronometroQuestao() {
+  if (cronometroInterval) clearInterval(cronometroInterval);
+  cronometroInterval=null;
+}
+function atualizarCronometroUI() {
+  if (!cronometroQuestao) return;
+  const extra=cronometroQuestao.fase === "extra";
+  $("timerValue").textContent = formatarTempo(extra ? cronometroQuestao.extraRestante : cronometroQuestao.normalRestante);
+  $("timerAlert").classList.toggle("flash",extra);
+  $("extraTimerValue").textContent = `${Math.max(0,Math.ceil(cronometroQuestao.extraRestante))}s`;
+}
+function iniciarCronometroQuestao(q,idx,precisaFoto) {
+  const chave=chaveQuestaoAtual(q,idx);
+  if (cronometroQuestao?.chave === chave) {
+    $("photoTimeBonus").style.display = precisaFoto ? "inline-flex" : "none";
+    atualizarCronometroUI();
+    return;
+  }
+  pararCronometroQuestao();
+  questaoFinalizando=false;
+  const base=tempoBasePorNivel(q);
+  const bonus=precisaFoto ? 60 : 0;
+  cronometroQuestao={chave,base,bonus,normalRestante:base+bonus,extraRestante:30,fase:"normal",decorrido:0,ultimoTick:Date.now()};
+  $("photoTimeBonus").style.display = precisaFoto ? "inline-flex" : "none";
+  $("timerAlert").classList.remove("flash");
+  atualizarCronometroUI();
+  cronometroInterval=setInterval(async()=>{
+    if (!cronometroQuestao || cronometroQuestao.chave !== chave || questaoFinalizando) return;
+    const agora=Date.now();
+    if (!arenaRodando()) { cronometroQuestao.ultimoTick=agora; return; }
+    const delta=Math.min(1.5,Math.max(0,(agora-cronometroQuestao.ultimoTick)/1000));
+    cronometroQuestao.ultimoTick=agora;
+    cronometroQuestao.decorrido+=delta;
+    if (cronometroQuestao.fase === "normal") {
+      cronometroQuestao.normalRestante-=delta;
+      if (cronometroQuestao.normalRestante <= 0) {
+        cronometroQuestao.normalRestante=0; cronometroQuestao.fase="extra"; cronometroQuestao.extraRestante=30;
+      }
+    } else {
+      cronometroQuestao.extraRestante-=delta;
+      if (cronometroQuestao.extraRestante <= 0) {
+        cronometroQuestao.extraRestante=0; atualizarCronometroUI(); await responderQuestao(true); return;
+      }
+    }
+    atualizarCronometroUI();
+  },250);
+}
+function metadadosTempo(esgotado=false) {
+  const c=cronometroQuestao;
+  return {tempoBaseSeg:c?.base ?? 0,bonusFotoSeg:c?.bonus ?? 0,tempoExtraSeg:30,tempoDecorridoSeg:Math.round(c?.decorrido ?? 0),tempoEsgotado:Boolean(esgotado),naoRespondida:Boolean(esgotado)};
+}
+
 function renderTudo() {
 
   renderCab();
@@ -4657,638 +4452,70 @@ function renderRanking() {
 }
 
 async function renderQuestao() {
-
-  if (
-    !arenaAtual ||
-    !jogador
-  ) {
-    return;
-  }
-
-  const lista =
-    questoes();
-
-  const idx =
-    idxAtual();
-
-  const total =
-    lista.length;
-
-  if (
-    !total
-  ) {
-
-    $("qText")
-      .textContent =
-      "Aguardando questões da Arena.";
-
-    $("options")
-      .innerHTML =
-      "";
-
-    $("confirmBtn")
-      .disabled =
-      true;
-
-    return;
-
-  }
-
-  if (
-    idx >=
-    total
-  ) {
-
-    $("qText")
-      .textContent =
-      "Etapa regular concluída!";
-
-    $("options")
-      .innerHTML =
-      "";
-
-    $("confirmBtn")
-      .disabled =
-      true;
-
-    $("progressTxt")
-      .textContent =
-      `${total} de ${total}`;
-
-    $("progressPct")
-      .textContent =
-      "100%";
-
-    $("progressBar")
-      .style.width =
-      "100%";
-
-    return;
-
-  }
-
-  const q =
-    lista[idx];
-
-  const pct =
-    Math.round(
-      idx /
-      Math.max(
-        1,
-        total
-      )
-      *
-      100
-    );
-
-  $("progressTxt")
-    .textContent =
-    `Questão ${idx+1} de ${total}`;
-
-  $("progressPct")
-    .textContent =
-    `${pct}%`;
-
-  $("progressBar")
-    .style.width =
-    `${pct}%`;
-
-  $("qDesc")
-    .textContent =
-    q.descritor ||
-    q.descriptor ||
-    "DESCRITOR";
-
-  $("qLevel")
-    .textContent =
-    q.nivel ||
-    q.level ||
-    "";
-
-  $("qText")
-    .textContent =
-    q.enunciado ||
-    q.text ||
-    q.texto ||
-    q.pergunta ||
-    "";
-
-  const vis =
-    q.visual ||
-    q.svg ||
-    "";
-
-  $("qVisual")
-    .innerHTML =
-    vis;
-
-  $("qVisual")
-    .style.display =
-    vis
-      ? "block"
-      : "none";
-
-  selecionada =
-    null;
-
-  $("confirmBtn")
-    .disabled =
-    true;
-
-  $("feedback")
-    .className =
-    "feedback";
-
-  const precisa =
-    questaoExigeEvidencia(
-      q,
-      idx
-    );
-
-  let liberada =
-    true;
-
-  if (
-    precisa
-  ) {
-
-    liberada =
-      await prepararEvidencia(
-        q,
-        idx
-      );
-
-  }
-
-  $("evidenceGate")
-    .style.display =
-    (
-      precisa &&
-      !liberada
-    )
-      ? "block"
-      : "none";
-
-  if (
-    precisa &&
-    !liberada
-  ) {
-
-    $("evidenceGateText")
-      .textContent =
-      "As alternativas serão liberadas depois da foto da resolução ou autorização individual do professor.";
-
-    $("options")
-      .innerHTML =
-      "";
-
-    return;
-
-  }
-
-  const ops =
-    q.alternativas ||
-    q.options ||
-    q.opcoes ||
-    [];
-
-  $("options")
-    .innerHTML =
-    ops
-      .map(
-        (o,i) =>
-          `<button class="opt" data-i="${i}">
-            ${String.fromCharCode(65+i)})
-            ${safe(
-              typeof o === "string"
-                ? o
-                : o?.texto ||
-                  o?.text ||
-                  ""
-            )}
-          </button>`
-      )
-      .join("");
-
-  document
-    .querySelectorAll(
-      "#options .opt"
-    )
-    .forEach(
-      b => {
-
-        b.onclick =
-          () => {
-
-            selecionada =
-              Number(
-                b.dataset.i
-              );
-
-            document
-              .querySelectorAll(
-                "#options .opt"
-              )
-              .forEach(
-                x =>
-                  x.classList
-                    .remove(
-                      "sel"
-                    )
-              );
-
-            b.classList
-              .add(
-                "sel"
-              );
-
-            $("confirmBtn")
-              .disabled =
-              false;
-
-          };
-
-      }
-    );
-
+  if (!arenaAtual || !jogador) return;
+  const token=++renderQuestaoToken;
+  const lista=questoes(); const idx=idxAtual(); const total=lista.length;
+  if (!total) { pararCronometroQuestao(); $("timerAlert").classList.remove("flash"); $("qText").textContent="Aguardando questões da Arena."; $("options").innerHTML=""; $("confirmBtn").disabled=true; return; }
+  if (idx>=total) { pararCronometroQuestao(); $("timerAlert").classList.remove("flash"); $("qText").textContent="Etapa regular concluída!"; $("options").innerHTML=""; $("confirmBtn").disabled=true; $("progressTxt").textContent=`${total} de ${total}`; $("progressPct").textContent="100%"; $("progressBar").style.width="100%"; return; }
+  const q=lista[idx]; const chave=chaveQuestaoAtual(q,idx);
+  const pct=Math.round(idx/Math.max(1,total)*100);
+  $("progressTxt").textContent=`Questão ${idx+1} de ${total}`; $("progressPct").textContent=`${pct}%`; $("progressBar").style.width=`${pct}%`;
+  $("qDesc").textContent=q.descritor||q.descriptor||"DESCRITOR"; $("qLevel").textContent=q.nivel||q.level||""; $("qText").textContent=q.enunciado||q.text||q.texto||q.pergunta||"";
+  const vis=q.visual||q.svg||""; $("qVisual").innerHTML=vis; $("qVisual").style.display=vis?"block":"none";
+  selecionada=selecoesPorQuestao.has(chave)?selecoesPorQuestao.get(chave):null;
+  $("feedback").className="feedback";
+  const precisa=questaoExigeEvidencia(q,idx); iniciarCronometroQuestao(q,idx,precisa);
+  const ops=q.alternativas||q.options||q.opcoes||[];
+  $("options").innerHTML=ops.map((o,i)=>`<button class="opt ${selecionada===i?"sel":""}" data-i="${i}">${String.fromCharCode(65+i)}) ${safe(typeof o==="string"?o:o?.texto||o?.text||"")}</button>`).join("");
+  let liberada=!precisa;
+  if (precisa) liberada=await prepararEvidencia(q,idx);
+  if (token!==renderQuestaoToken || chave!==chaveQuestaoAtual(questoes()[idxAtual()]||{},idxAtual())) return;
+  $("evidenceGate").style.display=(precisa&&!liberada)?"block":"none";
+  if (precisa&&!liberada) $("evidenceGateText").textContent="As alternativas permanecem visíveis. Você pode marcar sua resposta agora; CONFIRMAR será liberado depois da foto da resolução ou autorização individual do professor.";
+  document.querySelectorAll("#options .opt").forEach(b=>{
+    b.onclick=()=>{
+      selecionada=Number(b.dataset.i); selecoesPorQuestao.set(chave,selecionada);
+      document.querySelectorAll("#options .opt").forEach(x=>x.classList.remove("sel")); b.classList.add("sel");
+      $("confirmBtn").disabled = precisa ? !evidenciaLiberadaAtual : false;
+    };
+  });
+  $("confirmBtn").disabled = selecionada===null || (precisa&&!liberada);
 }
 
-async function responderQuestao() {
-
-  if (
-    selecionada ===
-    null
-  ) {
-    return;
-  }
-
-  const lista =
-    questoes();
-
-  const idx =
-    idxAtual();
-
-  const q =
-    lista[idx];
-
-  if (!q) {
-    return;
-  }
-
-  $("confirmBtn")
-    .disabled =
-    true;
-
-  const ok =
-    selecionada ===
-    correta(q);
-
-  const ganho =
-    ok
-      ? Number(
-          q.baseXP ??
-          q.pontos ??
-          q.xp ??
-          100
-        )
-      : 0;
-
-  const pontosReg =
-    Number(
-      jogador
-        .pontosRegulares ||
-      0
-    )
-    +
-    ganho;
-
-  const prox =
-    idx + 1;
-
-  const terminou =
-    prox >=
-    lista.length;
-
-  const descritor =
-    String(
-      q.descritor ||
-      q.descriptor ||
-      ""
-    );
-
+async function responderQuestao(porTempo=false) {
+  if (questaoFinalizando) return;
+  if (!porTempo && selecionada===null) return;
+  const lista=questoes(); const idx=idxAtual(); const q=lista[idx]; if (!q) return;
+  const precisa=questaoExigeEvidencia(q,idx);
+  if (!porTempo && precisa && !evidenciaLiberadaAtual) { $("feedback").textContent="Envie a foto da resolução ou aguarde a liberação do professor antes de confirmar."; $("feedback").className="feedback no"; return; }
+  questaoFinalizando=true; pararCronometroQuestao(); $("timerAlert").classList.remove("flash"); $("confirmBtn").disabled=true;
+  const alternativa=porTempo?null:selecionada; const ok=!porTempo && alternativa===correta(q);
+  const ganho=ok?Number(q.baseXP??q.pontos??q.xp??100):0; const pontosReg=Number(jogador.pontosRegulares||0)+ganho;
+  const prox=idx+1; const terminou=prox>=lista.length; const descritor=String(q.descritor||q.descriptor||""); const tempo=metadadosTempo(porTempo);
   try {
-
-    const respostaAdaptativa =
-      criarRespostaDoEstudante({
-        questao:
-          q,
-        indiceQuestao:
-          idx,
-        alternativa:
-          selecionada,
-        correta:
-          ok
-      });
-
-    respostasAdaptativasLocais =
-      adicionarRespostaLocal(
-        respostasAdaptativasLocais,
-        respostaAdaptativa
-      );
-
-    await salvarResposta(
-      codigoArena,
-      jogadorId,
-      {
-        ...respostaAdaptativa,
-        questaoId:
-          questaoId(
-            q,
-            idx
-          ),
-        indiceQuestao:
-          idx,
-        alternativa:
-          selecionada,
-        correta:
-          ok,
-        descritor,
-        nivel:
-          q.nivel ||
-          q.level ||
-          "",
-        tipo:
-          "regular",
-        timestampCliente:
-          Date.now()
-      }
-    );
-
-    const atuais = {
-      ...(
-        jogador
-          .resultadosDescritores ||
-        {}
-      )
-    };
-
-    const r =
-      atuais[descritor]
-      ||
-      {
-        tentativas:0,
-        acertos:0
-      };
-
-    if (
-      descritor
-    ) {
-
-      r.tentativas =
-        Number(
-          r.tentativas ||
-          0
-        )
-        +
-        1;
-
-      r.acertos =
-        Number(
-          r.acertos ||
-          0
-        )
-        +
-        (
-          ok
-            ? 1
-            : 0
-        );
-
-      r.erros =
-        r.tentativas -
-        r.acertos;
-
-      r.percentual =
-        Math.round(
-          (
-            r.acertos /
-            r.tentativas
-          )
-          *
-          100
-        );
-
-      atuais[descritor] =
-        r;
-
-    }
-
-    consolidacaoAdaptativaAtual =
-      calcularConsolidacaoArena({
-        conjunto:
-          conjuntoAdaptativoAtual
-          ||
-          {
-            questoes:
-              lista,
-            descritores:
-              [
-                ...new Set(
-                  lista
-                    .map(
-                      item =>
-                        item.descritor ||
-                        item.descriptor
-                    )
-                    .filter(
-                      Boolean
-                    )
-                )
-              ]
-          },
-        historico:
-          historicoEstudante ||
-          {},
-        respostas:
-          respostasAdaptativasLocais
-      });
-
-    const consolidacaoDescritor =
-      consolidacaoAdaptativaAtual
-        ?.[descritor];
-
-    const nivelAntes =
-      historicoEstudante
-        ?.descritores
-        ?.[descritor]
-        ?.nivelAtual
-      ||
-      q?.motorAdaptativo
-        ?.nivelAntes
-      ||
-      null;
-
-    const nivelDepois =
-      consolidacaoDescritor
-        ?.etapaDepois
-        ?.nivel
-      ||
-      nivelAntes;
-
-    await atualizarCompetidor(
-      codigoArena,
-      jogadorId,
-      {
-        xp:
-          Number(
-            jogador.xp ||
-            0
-          )
-          +
-          ganho,
-        acertos:
-          Number(
-            jogador.acertos ||
-            0
-          )
-          +
-          (
-            ok
-              ? 1
-              : 0
-          ),
-        questaoAtual:
-          prox,
-        questionIndex:
-          prox,
-        pontosRegulares:
-          pontosReg,
-        regularConcluida:
-          terminou,
-        resultadosDescritores:
-          atuais,
-        respostasAdaptativasLocais,
-        consolidacaoAdaptativaAtual,
-        online:true
-      }
-    );
-
-    jogador = {
-      ...jogador,
-      xp:
-        Number(
-          jogador.xp ||
-          0
-        )
-        +
-        ganho,
-      acertos:
-        Number(
-          jogador.acertos ||
-          0
-        )
-        +
-        (
-          ok
-            ? 1
-            : 0
-        ),
-      questaoAtual:
-        prox,
-      questionIndex:
-        prox,
-      pontosRegulares:
-        pontosReg,
-      regularConcluida:
-        terminou,
-      resultadosDescritores:
-        atuais,
-      respostasAdaptativasLocais,
-      consolidacaoAdaptativaAtual
-    };
-
-    if (
-      descritor
-    ) {
-
-      await registrarDesempenhoDescritor({
-        estudanteId:
-          jogadorId,
-        codigoArena,
-        descritor,
-        correta:
-          ok,
-        nivelAntes,
-        nivelDepois,
-        questaoId:
-          questaoId(
-            q,
-            idx
-          ),
-        evidenciaId:
-          questaoExigeEvidencia(
-            q,
-            idx
-          )
-            ? questaoId(
-                q,
-                idx
-              )
-            : null
-      })
-      .catch(
-        () => {}
-      );
-
-    }
-
-    await concederDiamanteSeAtingiu(
-      codigoArena,
-      jogadorId,
-      pontosReg,
-      lista
-    );
-
-    $("feedback")
-      .textContent =
-      ok
-        ? `Acertou! +${ganho} XP`
-        : "Não foi desta vez. Continue na disputa.";
-
-    $("feedback")
-      .className =
-      `feedback ${
-        ok
-          ? "ok"
-          : "no"
-      }`;
-
-    setTimeout(
-      () => {
-
-        renderTudo();
-
-      },
-      650
-    );
-
+    let respostaAdaptativa;
+    try { respostaAdaptativa=criarRespostaDoEstudante({questao:q,indiceQuestao:idx,alternativa,correta:ok}); }
+    catch { respostaAdaptativa={questaoId:questaoId(q,idx),indiceQuestao:idx,descritor,nivel:q.nivel||q.level||"",alternativa,correta:ok}; }
+    respostaAdaptativa={...respostaAdaptativa,...tempo,alternativa,correta:ok};
+    respostasAdaptativasLocais=adicionarRespostaLocal(respostasAdaptativasLocais,respostaAdaptativa);
+    await salvarResposta(codigoArena,jogadorId,{...respostaAdaptativa,questaoId:questaoId(q,idx),indiceQuestao:idx,alternativa,correta:ok,descritor,nivel:q.nivel||q.level||"",tipo:"regular",...tempo,timestampCliente:Date.now()});
+    const atuais={...(jogador.resultadosDescritores||{})}; const r=atuais[descritor]||{tentativas:0,acertos:0};
+    if (descritor) { r.tentativas=Number(r.tentativas||0)+1; r.acertos=Number(r.acertos||0)+(ok?1:0); r.erros=r.tentativas-r.acertos; r.percentual=Math.round((r.acertos/r.tentativas)*100); atuais[descritor]=r; }
+    consolidacaoAdaptativaAtual=calcularConsolidacaoArena({conjunto:conjuntoAdaptativoAtual||{questoes:lista,descritores:[...new Set(lista.map(item=>item.descritor||item.descriptor).filter(Boolean))]},historico:historicoEstudante||{},respostas:respostasAdaptativasLocais});
+    const consolidacaoDescritor=consolidacaoAdaptativaAtual?.[descritor]; const nivelAntes=historicoEstudante?.descritores?.[descritor]?.nivelAtual||q?.motorAdaptativo?.nivelAntes||null; const nivelDepois=consolidacaoDescritor?.etapaDepois?.nivel||nivelAntes;
+    const dados={xp:Number(jogador.xp||0)+ganho,acertos:Number(jogador.acertos||0)+(ok?1:0),questaoAtual:prox,questionIndex:prox,pontosRegulares:pontosReg,regularConcluida:terminou,resultadosDescritores:atuais,respostasAdaptativasLocais,consolidacaoAdaptativaAtual,online:true};
+    await atualizarCompetidor(codigoArena,jogadorId,dados); jogador={...jogador,...dados};
+    if (descritor) await registrarDesempenhoDescritor({estudanteId:jogadorId,codigoArena,descritor,correta:ok,nivelAntes,nivelDepois,questaoId:questaoId(q,idx),evidenciaId:precisa?questaoId(q,idx):null}).catch(()=>{});
+    if (!porTempo) await concederDiamanteSeAtingiu(codigoArena,jogadorId,pontosReg,lista);
+    selecoesPorQuestao.delete(chaveQuestaoAtual(q,idx));
+    $("feedback").textContent=porTempo?"Tempo encerrado. Questão registrada como não respondida.":(ok?`Acertou! +${ganho} XP`:"Não foi desta vez. Continue na disputa.");
+    $("feedback").className=`feedback ${ok?"ok":"no"}`;
+    setTimeout(()=>{ questaoFinalizando=false; renderTudo(); },650);
   } catch (erro) {
-
-    $("feedback")
-      .textContent =
-      erro?.message ||
-      "Não foi possível registrar a resposta.";
-
-    $("feedback")
-      .className =
-      "feedback no";
-
-    $("confirmBtn")
-      .disabled =
-      false;
-
+    questaoFinalizando=false; $("feedback").textContent=erro?.message||"Não foi possível registrar a resposta."; $("feedback").className="feedback no";
+    if (!porTempo) $("confirmBtn").disabled=precisa?!evidenciaLiberadaAtual:false;
+    const atual=questoes()[idxAtual()]; if (atual) iniciarCronometroQuestao(atual,idxAtual(),questaoExigeEvidencia(atual,idxAtual()));
   }
-
 }
 
 function renderBoss() {
