@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ARENA MATEMÁTICA — ESTUDANTE FINAL v6.6 — VÍDEO FINAL + MOSAICO DINÂMICO
+<!-- ARENA MATEMÁTICA — ESTUDANTE FINAL v6.7 — CORREÇÃO VISUAL + VÍDEO FINAL + MOSAICO DINÂMICO
 Abertura: vídeo sem contagem → fotos/confetes → mosaico → espada/comandante → nome da Arena → começou.
 Motor adaptativo: arena-adaptativa-2026-v3.
 -->
@@ -5564,7 +5564,22 @@ async function renderQuestao() {
   const pct=Math.round(idx/Math.max(1,total)*100);
   $("progressTxt").textContent=`Questão ${idx+1} de ${total}`; $("progressPct").textContent=`${pct}%`; $("progressBar").style.width=`${pct}%`;
   $("qDesc").textContent=q.descritor||q.descriptor||"DESCRITOR"; $("qLevel").textContent=q.nivel||q.level||""; $("qText").textContent=q.enunciado||q.text||q.texto||q.pergunta||"";
-  const vis=q.visual||q.svg||""; $("qVisual").innerHTML=vis; $("qVisual").style.display=vis?"block":"none";
+  const visualBruto=q?.visual ?? q?.svg ?? "";
+  let vis="";
+  if (typeof visualBruto === "string") {
+    vis=visualBruto;
+  } else if (visualBruto && typeof visualBruto === "object") {
+    if (typeof visualBruto.svg === "string") vis=visualBruto.svg;
+    else if (typeof visualBruto.html === "string") vis=visualBruto.html;
+    else if (typeof visualBruto.src === "string" || typeof visualBruto.url === "string") {
+      const src=String(visualBruto.src||visualBruto.url||"").trim();
+      if (/^(https?:\/\/|data:image\/|\.\.?\/)/i.test(src)) {
+        vis=`<img src="${safe(src)}" alt="Representação visual da questão" style="max-width:100%;height:auto;display:block;margin:auto">`;
+      }
+    }
+  }
+  $("qVisual").innerHTML=vis;
+  $("qVisual").style.display=vis?"block":"none";
   selecionada=selecoesPorQuestao.has(chave)?selecoesPorQuestao.get(chave):null;
   $("feedback").className="feedback";
   const precisa=questaoExigeEvidencia(q,idx); iniciarCronometroQuestao(q,idx,precisa);
