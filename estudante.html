@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ARENA MATEMÁTICA — ESTUDANTE FINAL v6.5 — ABERTURA DEFINITIVA APROVADA
+<!-- ARENA MATEMÁTICA — ESTUDANTE FINAL v6.6 — VÍDEO FINAL + MOSAICO DINÂMICO
 Abertura: vídeo sem contagem → fotos/confetes → mosaico → espada/comandante → nome da Arena → começou.
 Motor adaptativo: arena-adaptativa-2026-v3.
 -->
@@ -1574,7 +1574,7 @@ video{
       playsinline
     >
       <source
-        src="./Arena_Matematica_Abertura_SEM_CONTAGEM%20(5).mp4"
+        src="./Arena_Matematica_Coliseu_do_Conhecimento_FINAL.mp4"
         type="video/mp4"
       >
     </video>
@@ -2191,6 +2191,10 @@ let aberturaEmExecucao = false;
 let aberturaAssistida = false;
 let cerimoniaPosVideoEmExecucao = false;
 let cerimoniaTimers = [];
+// Ponto do MP4 FINAL: contagem já terminou e a espada ainda não entrou.
+const ABERTURA_PONTO_MOSAICO = 24.35;
+let aberturaIntervaloInserido = false;
+let aberturaIntervaloDisparado = false;
 
 let historicoEstudante = {};
 
@@ -4677,6 +4681,8 @@ async function executarContagemArena(){
 }
 
 async function executarCerimoniaPosVideo(){
+  // v6.6 — Esta função agora é o INTERVALO DINÂMICO entre a contagem
+  // já existente no MP4 e a descida da espada também existente no MP4.
   if(cerimoniaPosVideoEmExecucao || aberturaAssistida) return;
 
   cerimoniaPosVideoEmExecucao=true;
@@ -4685,8 +4691,8 @@ async function executarCerimoniaPosVideo(){
 
   const v=$("aberturaVideo");
   try{v.pause()}catch{}
-  if(v) v.style.display="none";
 
+  // Mantemos o último quadro do Coliseu como fundo e colocamos os estudantes por cima.
   $("aberturaOverlay").classList.add("aberturaHiddenHud");
 
   const cena=$("cerimoniaPosVideo");
@@ -4696,16 +4702,11 @@ async function executarCerimoniaPosVideo(){
   $("contagemArena")?.classList.remove("ativo");
   $("mosaicoCerimoniaWrap").classList.remove("visivel");
   $("mosaicoTitulo").classList.remove("visivel");
-  $("comandanteCena").classList.remove("ativo","impacto");
-  $("inicioArenaCena").classList.remove("ativo");
+  $("comandanteCena")?.classList.remove("ativo","impacto");
+  $("inicioArenaCena")?.classList.remove("ativo");
 
-  // 1) Nova contagem cinematográfica, independente do vídeo original.
-  await executarContagemArena();
-  if(aberturaAssistida) return;
-
-  // 2) Participantes: cada estudante tem tempo real para se reconhecer.
+  // Participantes: foto grande → 1,5 s de reconhecimento → redução → mosaico.
   criarConfetesCerimonia(125);
-
   const lista=participanteCerimoniaLista();
   criarMosaicoCerimoniaBase(lista);
 
@@ -4714,45 +4715,35 @@ async function executarCerimoniaPosVideo(){
     await mostrarParticipanteCerimonia(p);
   }
 
-  // 3) Mosaico 100% formado.
+  // Mosaico completo antes da espada.
   $("mosaicoCerimoniaWrap").classList.add("visivel");
   $("mosaicoTitulo").classList.add("visivel");
   tocarImpactoCerimonia("impacto");
   await esperarCerimonia(2300);
-
   if(aberturaAssistida) return;
 
-  // 4) Só depois do mosaico: espada desce com energia em movimento.
+  // Sai o mosaico e RETOMA O MESMO MP4 exatamente antes da espada.
   $("mosaicoTitulo").classList.remove("visivel");
-  const comandante=$("comandanteCena");
-  comandante.classList.remove("impacto");
-  comandante.classList.add("ativo");
-  await esperarCerimonia(1350);
-
-  // 5) EXATO MOMENTO EM QUE A ESPADA TOCA A ARENA:
-  // impacto metálico + estrondo + clarão + tremor + frase COMEÇOU A ARENA!
-  comandante.classList.add("impacto");
-  tocarImpactoCerimonia("espada");
-  await esperarCerimonia(2600);
-
-  if(aberturaAssistida) return;
-
-  // 6) Nome dinâmico da Arena criada pelo professor.
-  comandante.classList.remove("ativo","impacto");
-
-  const nomeArena=
-    arenaAtual?.nome ||
-    arenaAtual?.titulo ||
-    "ARENA MATEMÁTICA";
-
-  $("inicioArenaNome").innerHTML=
-    `${safe(nomeArena)}<span>RUMO AO PAEBES</span>`;
-
-  $("inicioArenaCena").classList.add("ativo");
-  await esperarCerimonia(2400);
+  $("mosaicoCerimoniaWrap").classList.remove("visivel");
+  cena.classList.remove("ativo");
+  cena.setAttribute("aria-hidden","true");
 
   cerimoniaPosVideoEmExecucao=false;
-  await finalizarAbertura(true);
+  aberturaEmExecucao=true;
+  aberturaIntervaloInserido=true;
+
+  if(v){
+    v.style.display="block";
+    try{
+      // Pequena antecipação para a retomada ficar cinematográfica e a espada entrar naturalmente.
+      v.currentTime=Math.max(0,ABERTURA_PONTO_MOSAICO-0.12);
+      v.muted=false;
+      v.volume=1;
+      await v.play();
+    }catch{
+      await finalizarAbertura(true);
+    }
+  }
 }
 
 function mostrarEsperaAbertura() {
@@ -4877,6 +4868,8 @@ async function liberarAbertura() {
 
   limparTimersCerimonia();
   cerimoniaPosVideoEmExecucao=false;
+  aberturaIntervaloInserido=false;
+  aberturaIntervaloDisparado=false;
   $("cerimoniaPosVideo")?.classList.remove("ativo");
   $("comandanteCena")?.classList.remove("ativo","impacto");
   $("contagemArena")?.classList.remove("ativo");
@@ -6896,8 +6889,27 @@ $("aberturaSkipBtn")
 
 $("aberturaVideo")
   .addEventListener(
+    "timeupdate",
+    () => {
+      const v=$("aberturaVideo");
+      if(!v || aberturaAssistida || aberturaIntervaloInserido || aberturaIntervaloDisparado) return;
+      if(v.currentTime >= ABERTURA_PONTO_MOSAICO){
+        aberturaIntervaloDisparado=true;
+        try{v.pause()}catch{}
+        executarCerimoniaPosVideo();
+      }
+    }
+  );
+
+$("aberturaVideo")
+  .addEventListener(
     "ended",
-    () => executarCerimoniaPosVideo()
+    () => {
+      if(aberturaAssistida) return;
+      // O MP4 FINAL já contém a espada, o impacto e COMEÇOU A ARENA!.
+      // Ao terminar, entramos diretamente no jogo.
+      finalizarAbertura(true);
+    }
   );
 
 $("aberturaVideo")
