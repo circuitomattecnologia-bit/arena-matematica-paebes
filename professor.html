@@ -1,4 +1,4 @@
-DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -178,6 +178,14 @@ main{max-width:1500px;margin:auto;padding:30px 5% 80px}
   .descritores{grid-template-columns:repeat(2,1fr)}.stats,.monitorResumo,.metaGrid{grid-template-columns:1fr}
   .rank{grid-template-columns:42px 50px 1fr}.rank>div:nth-child(4),.rank>div:nth-child(5){grid-column:3}
 }
+
+/* ===== ALERTA PROFESSOR — 3s FLASH + BIP ===== */
+#alertaProfessorCamera{position:fixed;inset:0;z-index:20000;display:none;align-items:center;justify-content:center;pointer-events:none;background:rgba(255,215,0,.18)}
+#alertaProfessorCamera.ativo{display:flex;animation:flashProfessor .38s linear infinite alternate}
+#alertaProfessorCamera .alertaProfessorBox{width:min(760px,92vw);padding:28px 34px;border-radius:24px;border:4px solid #ffd21f;background:#171300;color:#fff7b2;text-align:center;font-size:clamp(22px,3vw,38px);font-weight:1000;box-shadow:0 0 35px rgba(255,215,0,.95),0 0 90px rgba(255,191,0,.55)}
+#alertaProfessorCamera .alertaProfessorBox small{display:block;margin-top:10px;font-size:15px;color:white}
+@keyframes flashProfessor{from{background:rgba(255,215,0,.10)}to{background:rgba(255,215,0,.42)}}
+
 </style>
 </head>
 <body>
@@ -393,6 +401,14 @@ main{max-width:1500px;margin:auto;padding:30px 5% 80px}
     <div id="modalMeta" class="metaGrid"></div>
     <div id="modalQuestaoTexto" class="questaoBox"></div>
     <div id="modalOpcoes" class="opcoesProfessor"></div>
+  </div>
+</div>
+
+
+<div id="alertaProfessorCamera">
+  <div class="alertaProfessorBox">
+    ⚠ ATENÇÃO — ESTUDANTE AGUARDANDO AUTORIZAÇÃO
+    <small>Problema de câmera, perfil ou evidência do caderno.</small>
   </div>
 </div>
 
@@ -646,8 +662,107 @@ function nfSelecionado(){const a=arenaLocal(),id=document.getElementById("nfEstu
 window.nfLiberarEdicao=async()=>{const x=nfSelecionado();if(!x)return alert("Selecione um estudante.");await liberarEdicaoPerfil(x.id,{arenaCodigo:x.a.codigo,usoUnico:true});nfStatus.innerHTML=`✏️ <strong>${x.j.nome}</strong> autorizado a editar o perfil uma vez.`}
 window.nfAutorizarGaleria=async()=>{const x=nfSelecionado();if(!x)return alert("Selecione um estudante.");await autorizarGaleriaPerfil(x.id,{arenaCodigo:x.a.codigo,usoUnico:true});nfStatus.innerHTML=`📷 <strong>${x.j.nome}</strong> autorizado individualmente a usar a galeria.`}
 window.nfVerHistorico=async()=>{const x=nfSelecionado();if(!x)return alert("Selecione um estudante.");nfHistorico.style.display="block";nfHistorico.textContent="Carregando...";try{const h=await buscarHistoricoEstudante(x.id)||{},ds=h.descritores||h?.historico?.descritores||{};const linhas=Object.entries(ds).map(([d,v])=>`<tr><td>${d}</td><td>${v?.nivelAtual||"—"}</td><td>${Number(v?.tentativas||0)}</td><td>${Number(v?.acertos||0)}</td><td>${Number(v?.percentual||0)}%</td></tr>`).join("");nfHistorico.innerHTML=`<strong>Histórico — ${x.j.nome}</strong><div class="monitorWrap"><table class="monitorTable"><thead><tr><th>Descritor</th><th>Nível</th><th>Tentativas</th><th>Acertos</th><th>%</th></tr></thead><tbody>${linhas||'<tr><td colspan="5">Sem histórico consolidado.</td></tr>'}</tbody></table></div>`}catch(e){console.error(e);nfHistorico.textContent="Não foi possível carregar o histórico."}}
-function renderProblemasCamera(p={}){const box=document.getElementById("nfProblemasCamera");if(!box)return;const itens=[];for(const [id,v] of Object.entries(p||{})){if(!v)continue;const est=v.nome||v.estudanteNome||id,q=v.questaoIndex??v.questao??null;if(q!==null)itens.push(`<div>📷 <strong>${est}</strong> — questão ${Number(q)+1}. <button class="monitorBtn" onclick="nfLiberarSemFoto('${v.estudanteId||id}',${Number(q)})">LIBERAR SEM FOTO</button></div>`);else itens.push(`<div>📷 <strong>${est}</strong> — problema na foto de perfil. Autorize a galeria individualmente.</div>`)}box.innerHTML=itens.join("")||"Nenhum problema informado nesta Arena."}
-window.nfLiberarSemFoto=async(id,q)=>{const a=arenaLocal();if(!a?.codigo)return;await liberarQuestaoSemFoto(a.codigo,id,Number(q),{autorizadoPor:"Professor Leopoldo"});nfStatus.textContent="Questão liberada individualmente sem foto."}
+let problemasCameraAnteriores = new Set();
+let alertaCameraInicializado = false;
+let alertaCameraTocando = false;
+
+function tocarBipProfessor3s(){
+  if(alertaCameraTocando) return;
+  alertaCameraTocando = true;
+  try{
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if(!AudioCtx){ alertaCameraTocando=false; return; }
+    const ctx = new AudioCtx();
+    const inicio = ctx.currentTime;
+    for(let i=0;i<6;i++){
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.0001,inicio+i*.5);
+      gain.gain.exponentialRampToValueAtTime(.18,inicio+i*.5+.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001,inicio+i*.5+.28);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(inicio+i*.5); osc.stop(inicio+i*.5+.30);
+    }
+    setTimeout(()=>{ try{ctx.close()}catch{} alertaCameraTocando=false; },3200);
+  }catch(e){ console.warn("Não foi possível reproduzir o alerta sonoro.",e); alertaCameraTocando=false; }
+}
+
+function dispararAlertaProfessor(){
+  const alerta=document.getElementById("alertaProfessorCamera");
+  if(!alerta) return;
+  alerta.classList.add("ativo");
+  tocarBipProfessor3s();
+  setTimeout(()=>alerta.classList.remove("ativo"),3000);
+}
+
+function montarChavesProblemasCamera(p={}){
+  const chaves=[];
+  for(const [estudanteId,v] of Object.entries(p?.perfil||{})){
+    if(!v) continue;
+    const status=String(v.status||"AGUARDANDO_AUTORIZACAO").toUpperCase();
+    if(status==="AGUARDANDO_AUTORIZACAO") chaves.push(`PERFIL:${estudanteId}`);
+  }
+  for(const [estudanteId,lista] of Object.entries(p?.questoes||{})){
+    for(const [questaoId,v] of Object.entries(lista||{})){
+      if(!v) continue;
+      const status=String(v.status||"AGUARDANDO_AUTORIZACAO").toUpperCase();
+      if(status==="AGUARDANDO_AUTORIZACAO") chaves.push(`QUESTAO:${estudanteId}:${questaoId}`);
+    }
+  }
+  return chaves;
+}
+
+function verificarNovosProblemasCamera(p={}){
+  const atuais=new Set(montarChavesProblemasCamera(p));
+  if(!alertaCameraInicializado){ problemasCameraAnteriores=new Set(atuais); alertaCameraInicializado=true; return; }
+  let apareceuNovo=false;
+  atuais.forEach(chave=>{ if(!problemasCameraAnteriores.has(chave)) apareceuNovo=true; });
+  problemasCameraAnteriores=new Set(atuais);
+  if(apareceuNovo) dispararAlertaProfessor();
+}
+
+function renderProblemasCamera(p={}){
+  const box=document.getElementById("nfProblemasCamera");
+  if(!box) return;
+  verificarNovosProblemasCamera(p);
+  const itens=[];
+  for(const [estudanteId,v] of Object.entries(p?.perfil||{})){
+    if(!v) continue;
+    const status=String(v.status||"AGUARDANDO_AUTORIZACAO").toUpperCase();
+    if(status!=="AGUARDANDO_AUTORIZACAO") continue;
+    const nome=v.nome||v.estudanteNome||((arenaLocal()?.competidores||{})[estudanteId]?.nome)||estudanteId;
+    itens.push(`<div style="margin-bottom:12px;padding:13px;border:1px solid #eab308;border-radius:12px;background:#211b05">📷 <strong>${nome}</strong> — problema na câmera da foto de perfil.<div style="margin-top:6px;color:#fde68a;font-size:12px">O estudante deve permanecer aguardando. Autorize a galeria individualmente somente quando necessário.</div></div>`);
+  }
+  for(const [estudanteId,lista] of Object.entries(p?.questoes||{})){
+    for(const [questaoId,v] of Object.entries(lista||{})){
+      if(!v) continue;
+      const status=String(v.status||"AGUARDANDO_AUTORIZACAO").toUpperCase();
+      if(status!=="AGUARDANDO_AUTORIZACAO") continue;
+      const nome=v.nome||v.estudanteNome||((arenaLocal()?.competidores||{})[estudanteId]?.nome)||estudanteId;
+      const qid=String(v.questaoId||questaoId);
+      const desc=v.descritor?` • ${v.descritor}`:"";
+      const sid=String(estudanteId).replaceAll("'","&#39;");
+      const sqid=qid.replaceAll("'","&#39;");
+      itens.push(`<div style="margin-bottom:12px;padding:13px;border:1px solid #38bdf8;border-radius:12px;background:#071b26">📒 <strong>${nome}</strong> — problema para enviar a foto da resolução${desc}.<div style="margin-top:8px"><button class="monitorBtn" data-estudante="${sid}" data-questao="${sqid}" onclick="nfLiberarSemFoto(this.dataset.estudante,this.dataset.questao)">LIBERAR ESTA QUESTÃO SEM FOTO</button></div></div>`);
+    }
+  }
+  box.innerHTML=itens.join("")||"Nenhum problema informado nesta Arena.";
+}
+
+window.nfLiberarSemFoto=async(estudanteId,questaoId)=>{
+  const a=arenaLocal();
+  if(!a?.codigo||!estudanteId||!questaoId) return;
+  try{
+    await liberarQuestaoSemFoto(a.codigo,estudanteId,String(questaoId));
+    const jogador=(a.competidores||{})[estudanteId];
+    nfStatus.innerHTML=`✅ <strong>${jogador?.nome||"Estudante"}</strong> liberado para continuar esta questão sem enviar a foto.`;
+  }catch(e){
+    console.error(e);
+    nfStatus.textContent="Não foi possível liberar esta questão.";
+  }
+}
 
 const questoesDuelo=[{descritor:"D111_M",texto:"Um cubo possui quantas faces?",opcoes:["4","5","6","8","12"],correta:2},{descritor:"D074_M",texto:"Qual expressão representa uma função exponencial crescente de base 3?",opcoes:["3x","x³","(1/3)^x","3^x","x+3"],correta:3},{descritor:"D097_M",texto:"Numa PG 2, 6, 18, ... qual é o próximo termo?",opcoes:["24","36","48","54","72"],correta:3}];
 window.abrirDuelo=()=>{const a=arenaLocal(),cs=Object.values(a?.competidores||{}).filter(c=>c&&(c.id||c.jogadorId));if(cs.length<2){alert("São necessários pelo menos 2 competidores.");return}const h=cs.map(c=>`<option value="${c.id||c.jogadorId}">${c.nome||"Competidor"} — ${Number(c.xp||0)} XP</option>`).join("");dueloCompetidor1.innerHTML=h;dueloCompetidor2.innerHTML=h;if(dueloCompetidor2.options.length>1)dueloCompetidor2.selectedIndex=1;dueloPanel.classList.add("ativo")}
@@ -663,10 +778,5 @@ montarNucleos();montarMatriz();renderConfiguracaoDescritores();restaurarReuso();
 const salva=arenaLocal();if(salva?.codigo){restaurar(salva);conectarArena(salva.codigo)}
 console.log("🏛️ Arena Matemática — Professor Coliseu carregada.");
 </script>
-
-<script type="module" src="./js/professor-central-correcao.js?v=20260904-3"></script>
-
-<script type="module" src="./js/professor-pedagogico.js?v=20260904-1"></script>
-
 </body>
 </html>
