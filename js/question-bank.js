@@ -64,39 +64,57 @@ export const NIVEIS = [
 ];
 
 export const NUCLEOS_APRENDIZAGEM = {
-  "plano-retas":{
-    nome:"Plano Cartesiano e Retas",
-    descritores:["D009_M","D043_M","D085_M","D124_M"]
+  "n1-plano-retas":{
+    ordem:1,
+    nome:"N1 — Plano Cartesiano e Retas",
+    foco:"Localização no plano cartesiano, interpretação dos coeficientes e construção/reconhecimento da equação da reta.",
+    descritores:["D043_M","D085_M","D124_M"],
+    prioridadeAMA:true
   },
-  "circunferencia":{
-    nome:"Circunferência no Plano Cartesiano",
-    descritores:["D043_M","D155_M"]
+  "n2-exponencial-pg":{
+    ordem:2,
+    nome:"N2 — Função Exponencial e Progressão Geométrica",
+    foco:"Representações da função exponencial, crescimento/decrescimento, aplicações e progressão geométrica.",
+    descritores:["D074_M","D088_M","D097_M"],
+    prioridadeAMA:true
   },
-  "sistemas-matrizes":{
-    nome:"Sistemas Lineares e Matrizes",
-    descritores:["D043_M","D085_M","D154_M","D127_M","D157_M"]
+  "n3-geometria-espacial":{
+    ordem:3,
+    nome:"N3 — Geometria Espacial",
+    foco:"Planificações e vistas, elementos dos poliedros, relação de Euler, área total e volume.",
+    descritores:["D111_M","D125_M","D129_M"],
+    prioridadeAMA:true
   },
-  "exponencial-pg":{
-    nome:"Exponencial e PG",
-    descritores:["D074_M","D088_M","D097_M"]
+  "n4-numeros-proporcionalidade-metricas":{
+    ordem:4,
+    nome:"N4 — Números, Proporcionalidade e Relações Métricas",
+    foco:"Representações de números racionais, proporcionalidade entre grandezas e relações métricas no triângulo retângulo.",
+    descritores:["D013_M","D039_M","D049_M"],
+    prioridadeAMA:true
   },
-  "geometria-espacial":{
-    nome:"Geometria Espacial",
-    descritores:["D111_M","D125_M","D129_M"]
+  "n5-dados-graficos":{
+    ordem:5,
+    nome:"N5 — Dados, Tabelas e Gráficos",
+    foco:"Leitura, interpretação e utilização de informações apresentadas em tabelas e gráficos na resolução de problemas.",
+    descritores:["D064_M"],
+    prioridadeAMA:true
   },
-  "trigonometria":{
-    nome:"Trigonometria",
-    descritores:["D039_M","D049_M","D051_M"]
-  },
-  "funcoes-trig":{
-    nome:"Funções Trigonométricas",
-    descritores:["D043_M","D051_M","D071_M","D126_M"]
-  },
-  "fundamentos":{
-    nome:"Fundamentos e Recuperação",
-    descritores:["D013_M","D038_M","D039_M","D049_M","D058_M","D064_M","D087_M"]
+  "n6-funcoes-algebricas":{
+    ordem:6,
+    nome:"N6 — Funções Algébricas e Resolução de Problemas",
+    foco:"Modelagem e resolução de situações-problema envolvendo equação do 2º grau.",
+    descritores:["D087_M"],
+    prioridadeAMA:true
   }
 };
+
+// REGRA PEDAGÓGICA DA CAMPANHA AMA:
+// Núcleo organiza o conteúdo; descritor identifica a habilidade;
+// o nível é individual e deve evoluir de forma adaptativa:
+// ABAIXO DO BÁSICO → BÁSICO → PROFICIENTE → AVANÇADO.
+// AVANÇADO é o último estágio e deve ter menor incidência.
+// A progressão efetiva do estudante é responsabilidade do motor adaptativo;
+// a distribuição abaixo funciona apenas como fallback quando nenhum nível individual é informado.
 
 export const PRIORIDADE_AMA_3TRI = [
   "D013_M","D039_M","D043_M","D049_M","D064_M","D074_M","D085_M",
@@ -111,7 +129,7 @@ const XP_NIVEL = {
 };
 
 // ======================================================
-// FONTES E REFERÊNCIAS — COLISEU v6
+// FONTES E REFERÊNCIAS — COLISEU v6.2
 // Regra: não rotular item autoral como oficial.
 // Itens reproduzidos/adaptados de material identificado carregam a referência real;
 // geração própria é marcada como EQUIVALENTE/AUTORAL.
@@ -268,9 +286,46 @@ function gerar(descriptor,level,seed,variante=0){
       ...alternativas(fmt(v),[fmt(v+1),fmt(v-1),`${num}/${den+1}`,fmt(den/num)],s)};
   }
   if(descriptor==="D013_M"){
-    const den=pick([2,4,5,10],s),num=1+(s+k)%(den-1),dec=num/den;
-    return {modeloId:`rep-racional-${mod}`,text:`Qual representação decimal corresponde à fração ${num}/${den}?`,
+    const den=pick([2,4,5,10],s+k),num=1+(s+k)%(den-1),dec=num/den;
+    if(mod===0) return {familiaId:"RACIONAL_FRACAO_DECIMAL",modeloId:"racional-fracao-decimal",fonteTipo:"EQUIVALENTE",
+      fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; tarefa equivalente de representação de número racional.`,
+      text:`Qual representação decimal corresponde à fração ${num}/${den}?`,
       ...alternativas(fmt(dec),[fmt(num+den),fmt(den/num),fmt(dec+0.1),fmt(dec*10)],s)};
+    if(mod===1){
+      const pct=Math.round(dec*100);
+      return {familiaId:"RACIONAL_FRACAO_PERCENTUAL",modeloId:"racional-fracao-percentual",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; tarefa equivalente de conversão entre representações.`,
+        text:`A fração ${num}/${den} corresponde a qual percentual?`,
+        ...alternativas(`${pct}%`,[`${pct+10}%`,`${Math.max(0,pct-10)}%`,`${num*10}%`,`${den*10}%`],s)};
+    }
+    if(mod===2){
+      const pct=pick([20,25,40,50,60,75],s+k);
+      const fracs={20:"1/5",25:"1/4",40:"2/5",50:"1/2",60:"3/5",75:"3/4"};
+      return {familiaId:"RACIONAL_PERCENTUAL_FRACAO",modeloId:"racional-percentual-fracao",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; tarefa equivalente de conversão entre representações.`,
+        text:`Qual fração representa ${pct}%?`,
+        ...alternativas(fracs[pct],["1/10","2/3","3/10","4/5"],s)};
+    }
+    if(mod===3){
+      const val=pick([0.2,0.25,0.4,0.5,0.75],s+k);
+      const mapa={"0.2":"1/5","0.25":"1/4","0.4":"2/5","0.5":"1/2","0.75":"3/4"};
+      return {familiaId:"RACIONAL_DECIMAL_FRACAO",modeloId:"racional-decimal-fracao",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; tarefa equivalente de representação racional.`,
+        text:`Qual fração é equivalente ao número decimal ${fmt(val)}?`,
+        ...alternativas(mapa[String(val)],["1/10","2/3","3/5","4/5"],s)};
+    }
+    if(mod===4){
+      const a=pick([0.25,0.4,0.5,0.75],s+k);
+      const pct=Math.round(a*100);
+      return {familiaId:"RACIONAL_EQUIVALENCIA_TRIPLA",modeloId:"racional-equivalencia-tripla",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; equivalência fração-decimal-percentual.`,
+        text:`Qual alternativa apresenta uma representação equivalente a ${fmt(a)}?`,
+        ...alternativas(`${pct}%`,[`${pct/10}%`,`${pct+25}%`,`${Math.max(1,pct-20)}%`,`${100-pct}%`],s)};
+    }
+    return {familiaId:"RACIONAL_COMPARAR_REPRESENTACOES",modeloId:"racional-comparar-representacoes",fonteTipo:"EQUIVALENTE",
+      fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; comparação de representações racionais.`,
+      text:`Qual dos valores é equivalente a ${num}/${den}?`,
+      ...alternativas(fmt(dec),[fmt(dec+0.25),fmt(dec+0.5),fmt(Math.max(0,dec-0.1)),fmt(den/num)],s)};
   }
   if(descriptor==="D033_M"){
     const n=pick([2,3,5,7,8,10,11,13,17],s+k),r=Math.sqrt(n);
@@ -284,8 +339,42 @@ function gerar(descriptor,level,seed,variante=0){
   }
   if(descriptor==="D039_M"){
     const a=2+(s%5),b=3+((s+k)%7),c=a+2,r=b*c/a;
-    return {modeloId:`proporcao-${mod}`,text:`${a} pessoas consomem ${b} litros de água em uma atividade. Mantendo a mesma proporção, quantos litros serão necessários para ${c} pessoas?`,
-      ...alternativas(fmt(r),[fmt(b+2),fmt(b*a),fmt(r+2),fmt(r-2)],s)};
+    if(mod===0) return {familiaId:"PROP_DIRETA_CONSUMO",modeloId:"prop-direta-consumo",fonteTipo:"EQUIVALENTE",
+      fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; proporcionalidade direta em contexto de consumo.`,
+      text:`${a} pessoas consomem ${b} litros de água em uma atividade. Mantendo a mesma proporção, quantos litros serão necessários para ${c} pessoas?`,
+      ...alternativas(fmt(r),[fmt(b+2),fmt(b*a),fmt(r+2),fmt(Math.max(1,r-2))],s)};
+    if(mod===1){
+      const itens=2+(s%4),valor=5+((s+k)%8),novo=itens+3,resp=valor*novo/itens;
+      return {familiaId:"PROP_DIRETA_PRECO",modeloId:"prop-direta-preco",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; proporcionalidade direta em situação de compra.`,
+        text:`${itens} unidades de um produto custam R$ ${valor}. Mantendo o mesmo preço unitário, quanto custam ${novo} unidades?`,
+        ...alternativas(fmt(resp),[fmt(valor+novo),fmt(valor*novo),fmt(resp+5),fmt(Math.max(1,resp-5))],s)};
+    }
+    if(mod===2){
+      const vel=40+10*(s%4),tempo=2+(s+k)%4,dist=vel*tempo,vel2=vel+20,resp=dist/vel2;
+      return {familiaId:"PROP_INVERSA_TEMPO_VELOCIDADE",modeloId:"prop-inversa-tempo-velocidade",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; proporcionalidade inversa em percurso de mesma distância.`,
+        text:`Um percurso de ${dist} km é feito a ${vel} km/h em ${tempo} h. Se a velocidade passar para ${vel2} km/h, quanto tempo será necessário para o mesmo percurso?`,
+        ...alternativas(fmt(resp),[fmt(tempo+1),fmt(tempo-1),fmt(dist/vel),fmt(resp+1)],s)};
+    }
+    if(mod===3){
+      const esc=pick([2,3,4],s+k),med=5+(s%7),real=med*esc;
+      return {familiaId:"PROP_ESCALA",modeloId:"prop-escala",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; proporcionalidade aplicada a escala.`,
+        text:`Em uma representação, cada 1 cm corresponde a ${esc} m reais. Uma medida de ${med} cm representa quantos metros?`,
+        ...alternativas(real,[med+esc,med*esc*10,Math.max(1,real-esc),real+esc],s)};
+    }
+    if(mod===4){
+      const x=3+(s%5),y=4+((s+k)%6),kprop=y/x,novo=x+2,resp=kprop*novo;
+      return {familiaId:"PROP_CONSTANTE",modeloId:"prop-constante",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; identificação e uso da constante de proporcionalidade.`,
+        text:`As grandezas x e y são diretamente proporcionais. Se x=${x} corresponde a y=${y}, qual valor de y corresponde a x=${novo}?`,
+        ...alternativas(fmt(resp),[fmt(y+2),fmt(y*novo),fmt(resp+2),fmt(Math.max(1,resp-2))],s)};
+    }
+    return {familiaId:"PROP_RAZAO",modeloId:"prop-razao",fonteTipo:"EQUIVALENTE",
+      fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; interpretação de razão entre grandezas.`,
+      text:`Uma mistura usa ${a} medidas de concentrado para ${b} medidas de água. Mantendo a proporção, quantas medidas de água são necessárias para ${c} medidas de concentrado?`,
+      ...alternativas(fmt(r),[fmt(b+c),fmt(a*b),fmt(r+1),fmt(Math.max(1,r-1))],s)};
   }
   if(descriptor==="D042_M"){
     const a=3+s%5,b=2+(s+k)%5,t=a*b;
@@ -294,14 +383,87 @@ function gerar(descriptor,level,seed,variante=0){
   }
   if(descriptor==="D043_M"){
     const x=-4+(s+k)%9,y=-4+(s*3+k)%9;
-    return {modeloId:`plano-ponto-${mod}`,text:`Observe o ponto A no plano cartesiano. Quais são suas coordenadas?`,
+    if(mod===0) return {familiaId:"PLANO_LER_COORDENADAS",modeloId:"plano-ler-coordenadas",fonteTipo:"EQUIVALENTE",
+      fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; leitura de coordenadas no plano cartesiano.`,
+      text:`Observe o ponto A no plano cartesiano. Quais são suas coordenadas?`,
       ...alternativas(`(${x}, ${y})`,[`(${y}, ${x})`,`(${-x}, ${y})`,`(${x}, ${-y})`,`(${-x}, ${-y})`],s),
       visual:plano({pontos:[{x,y,label:"A"}]})};
+    if(mod===1){
+      const quad=x>=0?(y>=0?"I":"IV"):(y>=0?"II":"III");
+      return {familiaId:"PLANO_IDENTIFICAR_QUADRANTE",modeloId:"plano-identificar-quadrante",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; localização por quadrantes.`,
+        text:`O ponto A=(${x}, ${y}) está localizado em qual quadrante?`,
+        ...alternativas(`${quad} quadrante`,["I quadrante","II quadrante","III quadrante","IV quadrante"].filter(z=>z!==`${quad} quadrante`),s),
+        visual:plano({pontos:[{x,y,label:"A"}]})};
+    }
+    if(mod===2){
+      const x2=x+2,y2=y;
+      return {familiaId:"PLANO_DESLOCAMENTO_HORIZONTAL",modeloId:"plano-deslocamento-horizontal",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; deslocamento e leitura de coordenadas.`,
+        text:`O ponto A=(${x}, ${y}) é deslocado 2 unidades para a direita. Quais são as coordenadas do novo ponto?`,
+        ...alternativas(`(${x2}, ${y2})`,[`(${x}, ${y+2})`,`(${x-2}, ${y})`,`(${y}, ${x2})`,`(${x2}, ${-y2})`],s),
+        visual:plano({pontos:[{x,y,label:"A"},{x:x2,y:y2,label:"B"}]})};
+    }
+    if(mod===3){
+      const x2=x,y2=y+2;
+      return {familiaId:"PLANO_DESLOCAMENTO_VERTICAL",modeloId:"plano-deslocamento-vertical",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; deslocamento vertical no plano cartesiano.`,
+        text:`Partindo de A=(${x}, ${y}), um deslocamento de 2 unidades para cima leva a qual ponto?`,
+        ...alternativas(`(${x2}, ${y2})`,[`(${x+2}, ${y})`,`(${x}, ${y-2})`,`(${y2}, ${x})`,`(${-x}, ${y2})`],s),
+        visual:plano({pontos:[{x,y,label:"A"},{x:x2,y:y2,label:"B"}]})};
+    }
+    if(mod===4){
+      const dist=Math.abs(x);
+      return {familiaId:"PLANO_DISTANCIA_EIXO_Y",modeloId:"plano-distancia-eixo-y",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; interpretação geométrica de coordenadas.`,
+        text:`Qual é a distância horizontal do ponto A=(${x}, ${y}) até o eixo y?`,
+        ...alternativas(dist,[Math.abs(y),Math.abs(x)+1,Math.abs(x-y),Math.abs(x+y)],s),
+        visual:plano({pontos:[{x,y,label:"A"}]})};
+    }
+    return {familiaId:"PLANO_SIMETRIA_EIXO_Y",modeloId:"plano-simetria-eixo-y",fonteTipo:"EQUIVALENTE",
+      fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; simetria e coordenadas.`,
+      text:`Qual é o ponto simétrico de A=(${x}, ${y}) em relação ao eixo y?`,
+      ...alternativas(`(${-x}, ${y})`,[`(${x}, ${-y})`,`(${-x}, ${-y})`,`(${y}, ${x})`,`(${x}, ${y})`],s),
+      visual:plano({pontos:[{x,y,label:"A"},{x:-x,y,label:"A'"}]})};
   }
   if(descriptor==="D049_M"){
     const pares=[[3,4],[5,12],[6,8],[8,15],[7,24]],p=pick(pares,s+k),a=p[0],b=p[1],h=Math.sqrt(a*a+b*b);
-    return {modeloId:`pitagoras-${mod}`,text:`Um triângulo retângulo possui catetos de ${a} cm e ${b} cm. Qual é a medida da hipotenusa?`,
+    if(mod===0) return {familiaId:"TRI_PITAGORAS_HIPOTENUSA",modeloId:"tri-pitagoras-hipotenusa",fonteTipo:"EQUIVALENTE",
+      fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; relação de Pitágoras.`,
+      text:`Um triângulo retângulo possui catetos de ${a} cm e ${b} cm. Qual é a medida da hipotenusa?`,
       ...alternativas(fmt(h),[fmt(a+b),fmt(a*b),fmt(Math.abs(a-b)),fmt(h+2)],s),visual:tri(a,b,"?")};
+    if(mod===1){
+      const cat=a,hip=h,resp=b;
+      return {familiaId:"TRI_PITAGORAS_CATETO",modeloId:"tri-pitagoras-cateto",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; determinação de cateto.`,
+        text:`Em um triângulo retângulo, a hipotenusa mede ${fmt(hip)} cm e um cateto mede ${cat} cm. Quanto mede o outro cateto?`,
+        ...alternativas(fmt(resp),[fmt(hip-cat),fmt(cat+resp),fmt(resp+2),fmt(Math.max(1,resp-2))],s),visual:tri(cat,"?",hip)};
+    }
+    if(mod===2){
+      return {familiaId:"TRI_DIAGONAL_RETANGULO",modeloId:"tri-diagonal-retangulo",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; aplicação de relação métrica em diagonal.`,
+        text:`Uma tela retangular mede ${a} cm de largura e ${b} cm de altura. Qual é a medida de sua diagonal?`,
+        ...alternativas(fmt(h),[fmt(a+b),fmt(a*b),fmt(h+1),fmt(Math.abs(a-b))],s)};
+    }
+    if(mod===3){
+      const base=a,altura=b,escada=h;
+      return {familiaId:"TRI_ESCADA",modeloId:"tri-escada",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; relação métrica em contexto cotidiano.`,
+        text:`Uma escada encostada em uma parede forma um triângulo retângulo com ${base} m de afastamento da parede e ${altura} m de altura. Qual é o comprimento da escada?`,
+        ...alternativas(fmt(escada),[fmt(base+altura),fmt(base*altura),fmt(escada+1),fmt(Math.abs(base-altura))],s)};
+    }
+    if(mod===4){
+      const proj=pick([2,3,4,5],s+k),hip2=pick([8,9,10,12],s+k),cat=Math.sqrt(proj*hip2);
+      return {familiaId:"TRI_CATETO_PROJECAO",modeloId:"tri-cateto-projecao",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; relação métrica cateto²=hipotenusa×projeção.`,
+        text:`Em um triângulo retângulo, a hipotenusa mede ${hip2} e a projeção de um cateto sobre ela mede ${proj}. Usando c²=a·m, qual é aproximadamente a medida desse cateto?`,
+        ...alternativas(fmt(cat),[fmt(proj+hip2),fmt(Math.sqrt(proj+hip2)),fmt(cat+1),fmt(Math.max(1,cat-1))],s)};
+    }
+    const m=pick([2,3,4],s+k),n=pick([5,6,8],s+k),alt=Math.sqrt(m*n);
+    return {familiaId:"TRI_ALTURA_HIPOTENUSA",modeloId:"tri-altura-hipotenusa",fonteTipo:"EQUIVALENTE",
+      fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; relação métrica h²=m·n.`,
+      text:`A altura relativa à hipotenusa divide-a em segmentos de medidas ${m} e ${n}. Usando h²=m·n, qual é aproximadamente a altura?`,
+      ...alternativas(fmt(alt),[fmt(m+n),fmt(Math.abs(n-m)),fmt(alt+1),fmt(Math.max(1,alt-1))],s)};
   }
   if(descriptor==="D051_M"){
     const ang=pick([30,45,60],s+k),hip=10+(s%5)*2,seno=ang===30?.5:ang===45?Math.SQRT1_2:Math.sqrt(3)/2,op=hip*seno;
@@ -342,8 +504,42 @@ function gerar(descriptor,level,seed,variante=0){
   }
   if(descriptor==="D074_M"){
     const base=pick([2,3,4,5],s+k);
-    return {modeloId:`exp-rep-${mod}`,text:`Qual expressão representa uma função exponencial de base ${base}?`,
+    if(mod===0) return {familiaId:"EXP_RECONHECER_FORMA_ALGEBRICA",modeloId:"exp-reconhecer-forma",fonteTipo:"EQUIVALENTE",
+      fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; correspondência algébrica de função exponencial.`,
+      text:`Qual expressão representa uma função exponencial de base ${base}?`,
       ...alternativas(`f(x)=${base}^x`,[`f(x)=${base}x`,`f(x)=x^${base}`,`f(x)=x+${base}`,`f(x)=${base}-x`],s)};
+    if(mod===1){
+      const cres=base>1;
+      return {familiaId:"EXP_CRESCIMENTO_DECRESCIMENTO",modeloId:"exp-crescimento-decrescimento",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; interpretação do comportamento da função exponencial.`,
+        text:`Considere f(x)=${base}^x. Como essa função se comporta quando x aumenta?`,
+        ...alternativas(cres?"É crescente.":"É decrescente.",["É constante.","É linear.","É quadrática.","Não possui gráfico."],s)};
+    }
+    if(mod===2){
+      const vals=[0,1,2,3].map(x=>[x,Math.pow(base,x)]);
+      return {familiaId:"EXP_TABELA_ALGEBRA",modeloId:"exp-tabela-algebra",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; correspondência entre tabela e expressão exponencial.`,
+        text:"Observe a tabela. Qual expressão representa os valores apresentados?",
+        ...alternativas(`f(x)=${base}^x`,[`f(x)=${base}x`,`f(x)=x+${base}`,`f(x)=x^${base}`,`f(x)=${base}+x`],s),
+        visual:tabela(["x","f(x)"],vals)};
+    }
+    if(mod===3){
+      const y=Math.pow(base,2);
+      return {familiaId:"EXP_VALOR_PONTUAL",modeloId:"exp-valor-pontual",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; leitura de valor em função exponencial.`,
+        text:`Se f(x)=${base}^x, qual é o valor de f(2)?`,
+        ...alternativas(y,[base*2,base+2,Math.pow(base,3),base],s)};
+    }
+    if(mod===4){
+      return {familiaId:"EXP_CARACTERISTICA_GRAFICA",modeloId:"exp-caracteristica-grafica",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; reconhecimento de característica gráfica.`,
+        text:`Qual característica é compatível com o gráfico de f(x)=${base}^x?`,
+        ...alternativas("Passa pelo ponto (0, 1).",["Passa necessariamente por (0, 0).","É uma reta.","Tem valor máximo em x=0.","É periódica."],s)};
+    }
+    return {familiaId:"EXP_COMPARAR_REPRESENTACOES",modeloId:"exp-comparar-representacoes",fonteTipo:"EQUIVALENTE",
+      fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; distinção entre representações funcionais.`,
+      text:`Entre as expressões abaixo, qual apresenta a variável no expoente?`,
+      ...alternativas(`${base}^x`,[`${base}x`,`x^${base}`,`${base}+x`,`x-${base}`],s)};
   }
   if(descriptor==="D076_M"){
     const a=1+s%6,b=2+(s+k)%7;
@@ -402,13 +598,83 @@ function gerar(descriptor,level,seed,variante=0){
   }
   if(descriptor==="D087_M"){
     const r1=1+s%6,r2=2+(s+k)%7,S=r1+r2,P=r1*r2;
-    return {modeloId:`eq2-${mod}`,text:`Quais são as soluções de x²-${S}x+${P}=0?`,
+    if(mod===0) return {familiaId:"EQ2_RAIZES_FATORAVEIS",modeloId:"eq2-raizes-fatoraveis",fonteTipo:"EQUIVALENTE",
+      fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; resolução de equação quadrática fatorável.`,
+      text:`Quais são as soluções de x²-${S}x+${P}=0?`,
       ...alternativas(`${r1} e ${r2}`,[`${-r1} e ${-r2}`,`${S} e ${P}`,`0 e ${S}`,`${r1} e ${-r2}`],s)};
+    if(mod===1){
+      const a=1,b=-(r1+r2),c=r1*r2,delta=b*b-4*a*c;
+      return {familiaId:"EQ2_DISCRIMINANTE",modeloId:"eq2-discriminante",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; uso do discriminante.`,
+        text:`Para a equação x²${b>=0?"+":""}${b}x+${c}=0, qual é o valor do discriminante Δ?`,
+        ...alternativas(delta,[delta+4,Math.abs(b),c,Math.abs(delta-4)],s)};
+    }
+    if(mod===2){
+      const lado=pick([6,8,10,12],s+k),area=lado*lado;
+      return {familiaId:"EQ2_AREA_QUADRADO",modeloId:"eq2-area-quadrado",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; equação quadrática em problema geométrico.`,
+        text:`A área de um terreno quadrado é ${area} m². Qual é a medida positiva do lado?`,
+        ...alternativas(lado,[lado+2,Math.max(1,lado-2),area/2,area],s)};
+    }
+    if(mod===3){
+      const x=pick([4,5,6,7],s+k),produto=x*(x+2);
+      return {familiaId:"EQ2_PRODUTO_CONSECUTIVO",modeloId:"eq2-produto-consecutivo",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; modelagem por equação do 2º grau.`,
+        text:`O produto de um número positivo por esse número acrescido de 2 é ${produto}. Qual é esse número?`,
+        ...alternativas(x,[x+2,Math.max(1,x-2),produto/x,produto],s)};
+    }
+    if(mod===4){
+      const soma=S,prod=P;
+      return {familiaId:"EQ2_SOMA_PRODUTO_RAIZES",modeloId:"eq2-soma-produto",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; relações entre coeficientes e raízes.`,
+        text:`Uma equação monômia x²-${soma}x+${prod}=0 possui duas raízes. Qual é a soma dessas raízes?`,
+        ...alternativas(soma,[prod,-soma,r1-r2,r1*r2+soma],s)};
+    }
+    const a=1,bcoef=-S,ccoef=P;
+    return {familiaId:"EQ2_IDENTIFICAR_COEFICIENTES",modeloId:"eq2-coeficientes",fonteTipo:"EQUIVALENTE",
+      fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; identificação de coeficientes da equação quadrática.`,
+      text:`Na equação x²-${S}x+${P}=0, quais são os coeficientes a, b e c?`,
+      ...alternativas(`${a}, ${bcoef}, ${ccoef}`,[`${a}, ${S}, ${P}`,`${S}, ${P}, ${a}`,`${a}, ${P}, ${bcoef}`,`${bcoef}, ${a}, ${ccoef}`],s)};
   }
   if(descriptor==="D088_M"){
     const ini=pick([50,100,200,500],s+k),f=pick([2,3],s+2*k),n=2+(s+k)%5,total=ini*Math.pow(f,n);
-    return {modeloId:`exp-problema-${mod}`,text:`Uma população inicial de ${ini} unidades é multiplicada por ${f} a cada período. Qual será a quantidade após ${n} períodos?`,
+    if(mod===0) return {familiaId:"EXP_PROBLEMA_POPULACAO",modeloId:"exp-problema-populacao",fonteTipo:"EQUIVALENTE",
+      fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; função exponencial em crescimento populacional.`,
+      text:`Uma população inicial de ${ini} unidades é multiplicada por ${f} a cada período. Qual será a quantidade após ${n} períodos?`,
       ...alternativas(total,[ini*f*n,ini+f*n,total/f,total+ini],s)};
+    if(mod===1){
+      const capital=pick([100,200,500,1000],s+k),taxa=pick([2,3],s+k),periodos=pick([2,3,4],s+k),mont=capital*Math.pow(taxa,periodos);
+      return {familiaId:"EXP_PROBLEMA_FINANCEIRO",modeloId:"exp-problema-financeiro",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; crescimento multiplicativo em contexto financeiro simplificado.`,
+        text:`Um valor inicial de R$ ${capital} é multiplicado por ${taxa} a cada etapa de um modelo. Após ${periodos} etapas, qual será o valor previsto?`,
+        ...alternativas(mont,[capital*taxa*periodos,mont/taxa,mont+capital,capital+taxa*periodos],s)};
+    }
+    if(mod===2){
+      const bact=pick([20,40,80,100],s+k),dobros=pick([3,4,5],s+k),resp=bact*Math.pow(2,dobros);
+      return {familiaId:"EXP_PROBLEMA_DUPLICACAO",modeloId:"exp-problema-duplicacao",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; duplicação sucessiva.`,
+        text:`Uma cultura inicia com ${bact} unidades e dobra a cada ciclo. Quantas unidades haverá após ${dobros} ciclos?`,
+        ...alternativas(resp,[bact*2*dobros,resp/2,resp+bact,bact+2*dobros],s)};
+    }
+    if(mod===3){
+      const inicial=pick([640,960,1280],s+k),metades=pick([2,3,4],s+k),resp=inicial/Math.pow(2,metades);
+      return {familiaId:"EXP_DECAIMENTO_MEIA",modeloId:"exp-decaimento-meia",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; decaimento exponencial simplificado.`,
+        text:`Uma quantidade inicial de ${inicial} unidades é reduzida à metade a cada período. Qual será a quantidade após ${metades} períodos?`,
+        ...alternativas(resp,[inicial/2*metades,inicial-metades*2,resp*2,resp+metades],s)};
+    }
+    if(mod===4){
+      const base=pick([2,3],s+k),x=pick([2,3,4],s+k),resp=Math.pow(base,x);
+      return {familiaId:"EXP_MODELAGEM_VALOR",modeloId:"exp-modelagem-valor",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; uso direto de modelo exponencial.`,
+        text:`Um fenômeno é modelado por Q(t)=${base}^t. Qual é o valor de Q(${x})?`,
+        ...alternativas(resp,[base*x,base+x,Math.pow(x,base),resp+base],s)};
+    }
+    const inicial=pick([100,200,400],s+k),final=inicial*8;
+    return {familiaId:"EXP_DETERMINAR_PERIODOS",modeloId:"exp-determinar-periodos",fonteTipo:"EQUIVALENTE",
+      fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; determinação do número de períodos em crescimento exponencial.`,
+      text:`Uma quantidade dobra a cada período. Partindo de ${inicial}, após quantos períodos ela atingirá ${final}?`,
+      ...alternativas(3,[2,4,5,8],s)};
   }
   if(descriptor==="D096_M"){
     const a1=2+s%8,r=2+(s+k)%6,n=5+(s+k)%6,an=a1+(n-1)*r;
@@ -543,14 +809,77 @@ function gerar(descriptor,level,seed,variante=0){
   }
   if(descriptor==="D124_M"){
     const m=1+s%4,x1=1+(s+k)%3,y1=2+(s*2+k)%6,b=y1-m*x1,eq=`y=${m}x${b>=0?"+":""}${b}`;
-    return {modeloId:`equacao-reta-${mod}`,text:`Uma reta passa pelo ponto (${x1}, ${y1}) e tem coeficiente angular ${m}. Qual é sua equação?`,
+    if(mod===0) return {familiaId:"RETA_PONTO_INCLINACAO",modeloId:"reta-ponto-inclinacao",fonteTipo:"EQUIVALENTE",
+      fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; equação da reta a partir de ponto e inclinação.`,
+      text:`Uma reta passa pelo ponto (${x1}, ${y1}) e tem coeficiente angular ${m}. Qual é sua equação?`,
       ...alternativas(eq,[`y=${x1}x+${y1}`,`y=${m+1}x${b>=0?"+":""}${b}`,`y=${m}x+${y1}`,`y=x${b>=0?"+":""}${b}`],s),
       visual:plano({pontos:[{x:x1,y:y1,label:"A"}],retas:[{m,b}]})};
+    if(mod===1){
+      const x2=x1+2,y2=m*x2+b;
+      return {familiaId:"RETA_DOIS_PONTOS",modeloId:"reta-dois-pontos",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; equação da reta determinada por dois pontos.`,
+        text:`A reta passa pelos pontos A(${x1}, ${y1}) e B(${x2}, ${y2}). Qual é sua equação?`,
+        ...alternativas(eq,[`y=${m+1}x${b>=0?"+":""}${b}`,`y=${m}x+${y1}`,`y=${x1}x+${b}`,`y=x${b>=0?"+":""}${b}`],s),
+        visual:plano({pontos:[{x:x1,y:y1,label:"A"},{x:x2,y:y2,label:"B"}],retas:[{m,b}]})};
+    }
+    if(mod===2){
+      return {familiaId:"RETA_GRAFICO_EQUACAO",modeloId:"reta-grafico-equacao",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; correspondência gráfico-equação.`,
+        text:"Observe o gráfico da reta. Qual equação a representa?",
+        ...alternativas(eq,[`y=${-m}x${b>=0?"+":""}${b}`,`y=${m}x${-b>=0?"+":""}${-b}`,`y=${b}x+${m}`,`y=x+${m}`],s),
+        visual:plano({retas:[{m,b}]})};
+    }
+    if(mod===3){
+      return {familiaId:"RETA_INTERCEPTO_E_INCLINACAO",modeloId:"reta-intercepto-inclinacao",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; construção de equação por coeficientes.`,
+        text:`Uma reta tem coeficiente angular ${m} e intercepta o eixo y em ${b}. Qual é sua equação?`,
+        ...alternativas(eq,[`y=${b}x+${m}`,`y=${m+1}x${b>=0?"+":""}${b}`,`y=${m}x`,`y=x${b>=0?"+":""}${b}`],s)};
+    }
+    if(mod===4){
+      const y0=b;
+      return {familiaId:"RETA_RECONHECER_PONTO",modeloId:"reta-reconhecer-ponto",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; verificação de ponto pertencente à reta.`,
+        text:`Qual ponto pertence à reta ${eq}?`,
+        ...alternativas(`(0, ${y0})`,[`(0, ${y0+1})`,`(1, ${b})`,`(${x1}, ${y1+1})`,`(2, ${b})`],s)};
+    }
+    const xZero=-b/m;
+    return {familiaId:"RETA_INTERSECAO_EIXO_X",modeloId:"reta-intersecao-eixo-x",fonteTipo:"EQUIVALENTE",
+      fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; interpretação da equação da reta.`,
+      text:`Em qual valor de x a reta ${eq} intercepta o eixo x?`,
+      ...alternativas(fmt(xZero),[fmt(xZero+1),fmt(xZero-1),fmt(b),fmt(m)],s)};
   }
   if(descriptor==="D125_M"){
     const V=6+2*(s%4),A=V+3+(k%5),F=2-V+A;
-    return {modeloId:`euler-${mod}`,text:`Um poliedro possui ${V} vértices e ${A} arestas. Pela relação de Euler V - A + F = 2, quantas faces possui?`,
+    if(mod===0) return {familiaId:"EULER_DETERMINAR_FACES",modeloId:"euler-faces",fonteTipo:"EQUIVALENTE",
+      fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; relação de Euler em poliedros.`,
+      text:`Um poliedro possui ${V} vértices e ${A} arestas. Pela relação de Euler V - A + F = 2, quantas faces possui?`,
       ...alternativas(F,[F-1,F+1,V,A],s)};
+    if(mod===1){
+      const faces=F,arestas=A,verts=2+arestas-faces;
+      return {familiaId:"EULER_DETERMINAR_VERTICES",modeloId:"euler-vertices",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; uso inverso da relação de Euler.`,
+        text:`Um poliedro possui ${faces} faces e ${arestas} arestas. Quantos vértices ele possui?`,
+        ...alternativas(verts,[verts-1,verts+1,faces,arestas],s)};
+    }
+    if(mod===2){
+      const faces=F,verts=V,arestas=verts+faces-2;
+      return {familiaId:"EULER_DETERMINAR_ARESTAS",modeloId:"euler-arestas",fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; determinação de arestas pela relação de Euler.`,
+        text:`Um poliedro possui ${verts} vértices e ${faces} faces. Quantas arestas possui?`,
+        ...alternativas(arestas,[arestas-1,arestas+1,verts,faces],s)};
+    }
+    if(mod===3) return {familiaId:"POLIEDRO_CUBO_ELEMENTOS",modeloId:"poliedro-cubo-elementos",fonteTipo:"EQUIVALENTE",
+      fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; reconhecimento de elementos de poliedro.`,
+      text:"Quantos vértices, faces e arestas possui um cubo, respectivamente?",
+      ...alternativas("8, 6 e 12",["6, 8 e 12","8, 12 e 6","6, 12 e 8","12, 8 e 6"],s),visual:cubo()};
+    if(mod===4) return {familiaId:"EULER_VERIFICAR_RELACAO",modeloId:"euler-verificar-relacao",fonteTipo:"EQUIVALENTE",
+      fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; verificação da relação de Euler.`,
+      text:"Qual igualdade expressa corretamente a relação de Euler para poliedros convexos?",
+      ...alternativas("V - A + F = 2",["V + A + F = 2","V - F + A = 0","V + F = A","A - V - F = 2"],s)};
+    return {familiaId:"POLIEDRO_COMPARAR_ELEMENTOS",modeloId:"poliedro-comparar-elementos",fonteTipo:"EQUIVALENTE",
+      fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; interpretação de vértices, faces e arestas.`,
+      text:`Se um poliedro possui ${V} vértices e ${F} faces, qual número de arestas é compatível com a relação de Euler?`,
+      ...alternativas(A,[A-2,A+2,V+F,V*F],s)};
   }
   if(descriptor==="D126_M"){
     const alvo=pick(["seno","cosseno"],s+k);
@@ -763,11 +1092,11 @@ function preparar(descriptor,level,g,peso,index,round){
     contexto:m.contexto,
     recurso:visual?"visual":"texto",
     origem:g.fonteTipo ? (FONTES_BANCO[g.fonteTipo]?.rotulo||g.fonteTipo) : m.origem,
-    origemTipo:g.fonteTipo||"AUTORAL",
-    fonteReferencia:g.fonteReferencia||"Matrizes de Referência AMA/PAEBES 2026 — item autoral de contingência; não reproduzido como item oficial",
+    origemTipo:g.fonteTipo||"EQUIVALENTE",
+    fonteReferencia:g.fonteReferencia||"Matrizes de Referência AMA/PAEBES 2026 — item equivalente/alinhado; não reproduzido como item oficial",
     statusBanco:g.statusBanco||"aprovado",
     solucao:String(g.solucao||solucaoOrientada(descriptor,{options:(g.options||[]).map(String),correct:Number(g.correct)})),
-    versaoBanco:"coliseu-3tri-2026-v6"
+    versaoBanco:"coliseu-3tri-2026-v6.2"
   };
 }
 
@@ -787,7 +1116,7 @@ export function gerarQuestoesArena({
   quantidade=15,
   descritores=[],
   configuracaoDescritores={},
-  distribuicaoNiveis={abb:40,basico:35,proficiente:25,avancado:0}
+  distribuicaoNiveis={abb:45,basico:35,proficiente:17,avancado:3}
 }={}){
   quantidade=Math.max(5,Math.floor(Number(quantidade)||15));
 
@@ -886,4 +1215,4 @@ export function descritoresSemBanco(descritores=[]){
   return descritores.filter(d=>!HABILIDADES_PAEBES[d]);
 }
 
-console.log("🏛️ Banco Coliseu v6 carregado — diversidade por família pedagógica, fontes/referências e autoral somente como contingência.");
+console.log("🏛️ Banco Coliseu v6.2 carregado — Arena competitiva, 14 descritores AMA, progressão ABB→Básico→Proficiente e Avançado reduzido, diversidade por família e fontes rastreáveis.");
