@@ -5279,7 +5279,7 @@ async function abrirArena() {
 function normalizarTexto(v="") { return String(v).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase(); }
 function tempoBasePorNivel(q) {
   const n=normalizarTexto(q?.nivel || q?.nivelPedagogico || q?.level || "");
-  if (n.includes("ABB")) return 90;
+  if (n.includes("ABAIXO") || n.includes("ABB")) return 90;
   if (n.includes("BASICO")) return 120;
   if (n.includes("PROFICIENTE")) return 150;
   if (n.includes("AVANCADO")) return 180;
@@ -5297,6 +5297,7 @@ function formatarTempo(seg) {
 function pararCronometroQuestao() {
   if (cronometroInterval) clearInterval(cronometroInterval);
   cronometroInterval=null;
+  if (typeof cronometroGeracao!=="undefined") cronometroGeracao++;
 }
 function atualizarCronometroUI() {
   if (!cronometroQuestao) return;
@@ -5305,37 +5306,70 @@ function atualizarCronometroUI() {
   $("timerAlert").classList.toggle("flash",extra);
   $("extraTimerValue").textContent = `${Math.max(0,Math.ceil(cronometroQuestao.extraRestante))}s`;
 }
+let cronometroGeracao=0;
 function iniciarCronometroQuestao(q,idx,precisaFoto) {
   const chave=chaveQuestaoAtual(q,idx);
+
+  /* Se é a mesma questão, preserva exatamente o tempo e garante que exista um único intervalo ativo. */
   if (cronometroQuestao?.chave === chave) {
     $("photoTimeBonus").style.display = precisaFoto ? "inline-flex" : "none";
     atualizarCronometroUI();
-    return;
+    if (cronometroInterval) return;
+  } else {
+    pararCronometroQuestao();
+    questaoFinalizando=false;
+    const base=tempoBasePorNivel(q);
+    const bonus=precisaFoto ? 60 : 0;
+    cronometroQuestao={
+      chave,base,bonus,
+      normalRestante:base+bonus,
+      extraRestante:30,
+      fase:"normal",
+      decorrido:0,
+      ultimoTick:Date.now(),
+      esgotado:false
+    };
   }
-  pararCronometroQuestao();
-  questaoFinalizando=false;
-  const base=tempoBasePorNivel(q);
-  const bonus=precisaFoto ? 60 : 0;
-  cronometroQuestao={chave,base,bonus,normalRestante:base+bonus,extraRestante:30,fase:"normal",decorrido:0,ultimoTick:Date.now()};
+
   $("photoTimeBonus").style.display = precisaFoto ? "inline-flex" : "none";
   $("timerAlert").classList.remove("flash");
   atualizarCronometroUI();
+
+  const minhaGeracao=++cronometroGeracao;
+  cronometroQuestao.ultimoTick=Date.now();
+
   cronometroInterval=setInterval(async()=>{
-    if (!cronometroQuestao || cronometroQuestao.chave !== chave || questaoFinalizando) return;
+    if (minhaGeracao!==cronometroGeracao) return;
+    if (!cronometroQuestao || cronometroQuestao.chave!==chave || questaoFinalizando || cronometroQuestao.esgotado) return;
+
     const agora=Date.now();
     if (!arenaRodando()) { cronometroQuestao.ultimoTick=agora; return; }
-    const delta=Math.min(1.5,Math.max(0,(agora-cronometroQuestao.ultimoTick)/1000));
+
+    /* Nunca desconta saltos grandes do relógio causados por travamento, aba em segundo plano, câmera ou renderização. */
+    const bruto=Math.max(0,(agora-cronometroQuestao.ultimoTick)/1000);
+    const delta=Math.min(0.75,bruto);
     cronometroQuestao.ultimoTick=agora;
     cronometroQuestao.decorrido+=delta;
-    if (cronometroQuestao.fase === "normal") {
-      cronometroQuestao.normalRestante-=delta;
-      if (cronometroQuestao.normalRestante <= 0) {
-        cronometroQuestao.normalRestante=0; cronometroQuestao.fase="extra"; cronometroQuestao.extraRestante=30;
+
+    if (cronometroQuestao.fase==="normal") {
+      cronometroQuestao.normalRestante=Math.max(0,cronometroQuestao.normalRestante-delta);
+      if (cronometroQuestao.normalRestante<=0) {
+        cronometroQuestao.normalRestante=0;
+        cronometroQuestao.fase="extra";
+        cronometroQuestao.extraRestante=30;
+        cronometroQuestao.ultimoTick=agora;
+        atualizarCronometroUI();
+        return;
       }
-    } else {
-      cronometroQuestao.extraRestante-=delta;
-      if (cronometroQuestao.extraRestante <= 0) {
-        cronometroQuestao.extraRestante=0; atualizarCronometroUI(); await responderQuestao(true); return;
+    } else if (cronometroQuestao.fase==="extra") {
+      cronometroQuestao.extraRestante=Math.max(0,cronometroQuestao.extraRestante-delta);
+      if (cronometroQuestao.extraRestante<=0) {
+        cronometroQuestao.extraRestante=0;
+        cronometroQuestao.esgotado=true;
+        atualizarCronometroUI();
+        pararCronometroQuestao();
+        await responderQuestao(true);
+        return;
       }
     }
     atualizarCronometroUI();
