@@ -4618,7 +4618,7 @@ function aplicarFeedbackVisualResposta({ok,alternativa,corretaIndex,ganho=0,porT
   document.querySelectorAll("#options .opt").forEach(btn => {
     btn.classList.add("answerLocked");
     const i = Number(btn.dataset.i);
-    if (i === corretaIndex) btn.classList.add("correctAnswer");
+    if (!porTempo && i === corretaIndex) btn.classList.add("correctAnswer");
     if (!porTempo && i === alternativa && !ok) btn.classList.add("wrongAnswer");
     btn.disabled = true;
   });
@@ -4831,8 +4831,19 @@ async function renderQuestao() {
   if (!arenaAtual || !jogador) return;
   const token=++renderQuestaoToken;
   const lista=questoes(); const idx=idxAtual(); const total=lista.length;
-  if (!total) { pararCronometroQuestao(); $("timerAlert").classList.remove("flash"); $("qText").textContent="Aguardando questões da Arena."; $("options").innerHTML=""; $("confirmBtn").disabled=true; return; }
-  if (idx>=total) { pararCronometroQuestao(); $("timerAlert").classList.remove("flash"); $("qText").textContent="Etapa regular concluída!"; $("options").innerHTML=""; $("confirmBtn").disabled=true; $("progressTxt").textContent=`${total} de ${total}`; $("progressPct").textContent="100%"; $("progressBar").style.width="100%"; return; }
+  if (!total) {
+    pararCronometroQuestao(); cronometroQuestao=null;
+    $("timerAlert").classList.remove("flash"); $("timerValue").textContent="--:--"; $("photoTimeBonus").style.display="none";
+    $("qText").textContent="Aguardando questões da Arena."; $("options").innerHTML=""; $("confirmBtn").disabled=true; return;
+  }
+  if (idx>=total) {
+    pararCronometroQuestao(); cronometroQuestao=null;
+    $("timerAlert").classList.remove("flash"); $("timerValue").textContent="--:--"; $("photoTimeBonus").style.display="none";
+    $("qText").textContent="Etapa regular concluída!"; $("options").innerHTML=""; $("confirmBtn").disabled=true;
+    $("progressTxt").textContent=`${total} de ${total}`; $("progressPct").textContent="100%"; $("progressBar").style.width="100%";
+    $("feedback").className="feedback";
+    return;
+  }
   const q=lista[idx]; const chave=chaveQuestaoAtual(q,idx);
   const pct=Math.round(idx/Math.max(1,total)*100);
   $("progressTxt").textContent=`Questão ${idx+1} de ${total}`; $("progressPct").textContent=`${pct}%`; $("progressBar").style.width=`${pct}%`;
@@ -4883,6 +4894,13 @@ async function responderQuestao(porTempo=false) {
   const corretaIndex=correta(q);
   const ok=!porTempo && alternativa===corretaIndex;
   const ganho=ok?xpDaQuestao(q):0;
+
+  /*
+    IMPORTANTE: trava a questão ATUAL e mostra o feedback ANTES de qualquer
+    gravação no Firebase. Assim, quando o observer receber questaoAtual=prox,
+    ele NÃO redesenha a próxima questão por cima do acerto/erro atual.
+  */
+  aplicarFeedbackVisualResposta({ok,alternativa,corretaIndex,ganho,porTempo});
   const xpAnterior=Number(jogador.xp||0);
   const acertosAnteriores=Number(jogador.acertos||0);
   const pontosReg=Number(jogador.pontosRegulares||0)+ganho;
@@ -4977,16 +4995,14 @@ async function responderQuestao(porTempo=false) {
 
     selecoesPorQuestao.delete(chaveQuestaoAtual(q,idx));
 
-    /* Mantém a questão visível por um instante para o estudante enxergar o resultado. */
-    aplicarFeedbackVisualResposta({ok,alternativa,corretaIndex,ganho,porTempo});
-
+    /* O feedback já está aplicado desde antes da gravação; mantém 1,8 s após salvar. */
     setTimeout(()=>{
       limparFeedbackVisualResposta();
       questaoFinalizando=false;
       selecionada=null;
       evidenciaLiberadaAtual=false;
       renderTudo();
-    },1400);
+    },1800);
 
   } catch (erro) {
     console.error("Erro ao registrar resposta/XP:",erro);
