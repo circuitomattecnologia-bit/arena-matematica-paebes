@@ -868,6 +868,19 @@ video{
 .evidencePreview{max-height:min(42dvh,360px)}
 .evidenceBtns{position:sticky;bottom:0;z-index:2;background:linear-gradient(180deg,rgba(16,24,39,.82),rgba(16,24,39,1) 28%);padding-top:10px;padding-bottom:4px}
 
+
+.editProfileBtn{
+  border:1px solid rgba(255,255,255,.28);
+  background:rgba(255,255,255,.10);
+  color:#fff;
+  border-radius:999px;
+  padding:8px 12px;
+  font-weight:900;
+  cursor:pointer;
+  font-size:12px;
+}
+.editProfileBtn:hover{background:rgba(255,255,255,.18)}
+
 @media(max-width:900px){
   .loginGrid,.main{grid-template-columns:1fr}
   .coliseum{height:180px}
@@ -1283,6 +1296,8 @@ video{
 
       </div>
 
+      <button id="editProfileBtn" class="editProfileBtn hidden" type="button">EDITAR PERFIL</button>
+
       <div class="chips">
 
         <div class="chip">
@@ -1665,6 +1680,7 @@ import {
   atualizarPerfilEstudante,
   relatarProblemaCameraPerfil,
   consumirAutorizacaoGaleriaPerfil,
+  consumirEdicaoPerfil,
   salvarEvidenciaCaderno,
   buscarEvidenciaCaderno,
   relatarProblemaCameraQuestao,
@@ -1738,6 +1754,12 @@ let cronometroQuestao = null;
 let cronometroInterval = null;
 let questaoFinalizando = false;
 let renderQuestaoToken = 0;
+
+let modoEdicaoPerfil = false;
+let edicaoPerfilAutorizada = false;
+let autorizacaoPerfilInterval = null;
+let autorizacaoGaleriaInterval = null;
+let autorizacaoQuestaoInterval = null;
 
 iniciarFirebase();
 
@@ -2078,6 +2100,84 @@ async function prepararTrajetoriaAdaptativa() {
 
 }
 
+function chaveEdicaoPerfilSessao(){
+  return jogadorId ? `arena_edicao_perfil_${jogadorId}` : "";
+}
+
+function marcarEdicaoPerfilAutorizada(){
+  if(!jogadorId) return;
+  edicaoPerfilAutorizada = true;
+  try{ sessionStorage.setItem(chaveEdicaoPerfilSessao(),"1"); }catch{}
+  $("editProfileBtn")?.classList.remove("hidden");
+}
+
+async function verificarEdicaoPerfilAutorizada(){
+  if(!jogadorId) return false;
+  try{
+    if(edicaoPerfilAutorizada || sessionStorage.getItem(chaveEdicaoPerfilSessao()) === "1"){
+      marcarEdicaoPerfilAutorizada();
+      return true;
+    }
+  }catch{}
+  const ok = await consumirEdicaoPerfil(jogadorId).catch(()=>false);
+  if(ok) marcarEdicaoPerfilAutorizada();
+  return ok;
+}
+
+function iniciarMonitorEdicaoPerfil(){
+  if(autorizacaoPerfilInterval) clearInterval(autorizacaoPerfilInterval);
+  verificarEdicaoPerfilAutorizada();
+  autorizacaoPerfilInterval = setInterval(verificarEdicaoPerfilAutorizada,2000);
+}
+
+function pararMonitorGaleriaPerfil(){
+  if(autorizacaoGaleriaInterval){ clearInterval(autorizacaoGaleriaInterval); autorizacaoGaleriaInterval=null; }
+}
+
+function iniciarMonitorGaleriaPerfil(){
+  pararMonitorGaleriaPerfil();
+  const tentar = async()=>{
+    if(!jogadorId || $("photoModal")?.style.display === "none"){ pararMonitorGaleriaPerfil(); return; }
+    const ok = await verificarGaleriaPerfil();
+    if(ok) pararMonitorGaleriaPerfil();
+  };
+  tentar();
+  autorizacaoGaleriaInterval=setInterval(tentar,1800);
+}
+
+function pararMonitorLiberacaoQuestao(){
+  if(autorizacaoQuestaoInterval){ clearInterval(autorizacaoQuestaoInterval); autorizacaoQuestaoInterval=null; }
+}
+
+function iniciarMonitorLiberacaoQuestao(){
+  pararMonitorLiberacaoQuestao();
+  const qid=String(evidenciaQuestaoAtual?.id||"");
+  if(!qid) return;
+  const tentar=async()=>{
+    if(!evidenciaQuestaoAtual || String(evidenciaQuestaoAtual.id)!==qid){ pararMonitorLiberacaoQuestao(); return; }
+    const ok=await verificarQuestaoLiberadaSemFoto(codigoArena,jogadorId,qid).catch(()=>false);
+    if(ok){
+      evidenciaLiberadaAtual=true;
+      pararMonitorLiberacaoQuestao();
+      $("evidenceModal").style.display="none";
+      pararEvidenceStream();
+      await renderQuestao();
+    }
+  };
+  tentar();
+  autorizacaoQuestaoInterval=setInterval(tentar,1200);
+}
+
+async function editarPerfilAutorizado(){
+  const ok=await verificarEdicaoPerfilAutorizada();
+  if(!ok) return;
+  modoEdicaoPerfil=true;
+  edicaoPerfilAutorizada=false;
+  try{ sessionStorage.removeItem(chaveEdicaoPerfilSessao()); }catch{}
+  $("editProfileBtn")?.classList.add("hidden");
+  await abrirCamera();
+}
+
 async function entrar() {
 
   mostrarErro("");
@@ -2244,7 +2344,10 @@ async function entrar() {
 
     else {
 
+      await atualizarCompetidor(codigoArena,jogadorId,{online:false,aguardandoFoto:true}).catch(()=>{});
+      jogador={...jogador,online:false,aguardandoFoto:true};
       await abrirCamera();
+      return;
 
     }
 
@@ -3070,74 +3173,38 @@ function arquivoFoto(
 }
 
 async function confirmarFoto() {
-
-  const data =
-    $("photoPreview")
-      .dataset
-      .data;
-
-  if (!data) {
+  const data=$("photoPreview").dataset.data;
+  if(!data) return;
+  await atualizarCompetidor(codigoArena,jogadorId,{
+    fotoPerfil:data,
+    fotoRevisadaNovaFase:true,
+    aguardandoFoto:false,
+    online:true
+  });
+  await atualizarPerfilEstudante(jogadorId,{fotoPerfil:data}).catch(()=>{});
+  pararMonitorGaleriaPerfil();
+  fecharCamera();
+  $("photoModal").style.display="none";
+  jogador={...jogador,fotoPerfil:data,fotoRevisadaNovaFase:true,aguardandoFoto:false,online:true};
+  if(modoEdicaoPerfil){
+    modoEdicaoPerfil=false;
+    renderTudo();
+    iniciarMonitorEdicaoPerfil();
     return;
   }
-
-  await atualizarCompetidor(
-    codigoArena,
-    jogadorId,
-    {
-      fotoPerfil:
-        data,
-      fotoRevisadaNovaFase:
-        true,
-      online:true
-    }
-  );
-
-  await atualizarPerfilEstudante(
-    jogadorId,
-    {
-      fotoPerfil:
-        data
-    }
-  )
-  .catch(
-    () => {}
-  );
-
-  fecharCamera();
-
-  $("photoModal")
-    .style.display =
-    "none";
-
-  jogador = {
-    ...jogador,
-    fotoPerfil:
-      data,
-    fotoRevisadaNovaFase:
-      true
-  };
-
   mostrarConvite();
-
 }
 
 async function relatarCameraPerfil() {
   fecharCamera();
-  $("captureBtn").disabled = false;
-  $("captureBtn").textContent = "TENTAR CÂMERA NOVAMENTE";
-  try {
+  $("captureBtn").disabled=false;
+  $("captureBtn").textContent="TENTAR CÂMERA NOVAMENTE";
+  try{
     await relatarProblemaCameraPerfil(codigoArena,jogadorId,{nome:jogador?.nome || $("nome").value});
-    $("photoMsg").textContent = "Problema enviado ao professor. Verificando autorização para usar a galeria...";
-    const autorizado = await consumirAutorizacaoGaleriaPerfil(jogadorId).catch(()=>false);
-    if (autorizado) {
-      $("galleryLabel").style.display = "inline-flex";
-      $("cameraReportBtn").style.display = "none";
-      $("photoMsg").textContent = "Professor autorizou. Agora você pode escolher a foto da galeria.";
-    } else {
-      $("photoMsg").textContent = "Problema enviado ao professor. Você pode tentar a câmera novamente; a galeria só aparecerá após autorização.";
-    }
-  } catch (erro) {
-    $("photoMsg").textContent = erro?.message || "Não foi possível enviar o aviso ao professor.";
+    $("photoMsg").textContent="Problema enviado ao professor. Aguarde a autorização; a galeria aparecerá automaticamente quando for liberada.";
+    iniciarMonitorGaleriaPerfil();
+  }catch(erro){
+    $("photoMsg").textContent=erro?.message || "Não foi possível enviar o aviso ao professor.";
   }
 }
 
@@ -3595,6 +3662,7 @@ async function enviarEvidencia() {
     evidenciaLiberadaAtual =
       true;
 
+    pararMonitorLiberacaoQuestao();
     pararEvidenceStream();
 
     $("evidenceModal")
@@ -3619,61 +3687,26 @@ async function enviarEvidencia() {
 }
 
 async function relatarCameraQuestaoAtual() {
-
-  if (
-    !evidenciaQuestaoAtual
-  ) {
-    return;
-  }
-
+  if(!evidenciaQuestaoAtual) return;
   await relatarProblemaCameraQuestao(
     codigoArena,
     jogadorId,
-    evidenciaQuestaoAtual
-      .id,
-    evidenciaQuestaoAtual
-      .descritor
-  )
-  .catch(
-    () => {}
-  );
-
-  $("evidenceMsg")
-    .textContent =
-    "Problema enviado ao professor. Você pode continuar com a alternativa marcada; CONFIRMAR será liberado quando o professor autorizar esta questão sem foto.";
-
-  const sem =
-    await verificarQuestaoLiberadaSemFoto(
-      codigoArena,
-      jogadorId,
-      evidenciaQuestaoAtual
-        .id
-    )
-    .catch(
-      () => false
-    );
-
-  if (
-    sem
-  ) {
-
-    evidenciaLiberadaAtual =
-      true;
-
-    pararEvidenceStream();
-
-    $("evidenceModal")
-      .style.display =
-      "none";
-
-    renderQuestao();
-
-  }
-
+    evidenciaQuestaoAtual.id,
+    evidenciaQuestaoAtual.descritor
+  ).catch(()=>{});
+  $("evidenceMsg").textContent="Problema enviado ao professor. Sua alternativa pode continuar marcada. Aguarde: CONFIRMAR será liberado automaticamente se o professor autorizar esta questão sem foto.";
+  iniciarMonitorLiberacaoQuestao();
 }
 
 function mostrarConvite() {
 
+  if(!foto(jogador)){
+    atualizarCompetidor(codigoArena,jogadorId,{online:false,aguardandoFoto:true}).catch(()=>{});
+    abrirCamera();
+    return;
+  }
+
+  iniciarMonitorEdicaoPerfil();
   fecharCamera();
 
   $("login")
@@ -4020,6 +4053,14 @@ function sincronizarAberturaComStatus(
 }
 
 async function abrirArena() {
+
+  if(!foto(jogador)){
+    await atualizarCompetidor(codigoArena,jogadorId,{online:false,aguardandoFoto:true}).catch(()=>{});
+    await abrirCamera();
+    return;
+  }
+
+  iniciarMonitorEdicaoPerfil();
 
   $("invite")
     .style.display =
@@ -5557,6 +5598,10 @@ $("entrarBtn")
   .onclick =
   entrar;
 
+$("editProfileBtn")
+  .onclick =
+  editarPerfilAutorizado;
+
 $("senha")
   .addEventListener(
     "input",
@@ -5719,6 +5764,9 @@ window
       fecharCamera();
 
       pararEvidenceStream();
+      pararMonitorGaleriaPerfil();
+      pararMonitorLiberacaoQuestao();
+      if(autorizacaoPerfilInterval) clearInterval(autorizacaoPerfilInterval);
 
       if (
         codigoArena &&
