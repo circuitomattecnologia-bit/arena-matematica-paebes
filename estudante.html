@@ -1,4 +1,8 @@
 <!DOCTYPE html>
+<!-- ARENA MATEMÁTICA — ESTUDANTE FINAL v6.5 — ABERTURA DEFINITIVA APROVADA
+Abertura: vídeo sem contagem → fotos/confetes → mosaico → espada/comandante → nome da Arena → começou.
+Motor adaptativo: arena-adaptativa-2026-v3.
+-->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -509,7 +513,288 @@ video{
   font-weight:900;
   margin-top:10px
 }
+
 .aberturaHiddenHud .aberturaHud{display:none}
+
+#cerimoniaPosVideo{
+  position:absolute;
+  inset:0;
+  z-index:8;
+  display:none;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 50% 32%,rgba(245,190,78,.20),transparent 28%),
+    radial-gradient(circle at 20% 10%,rgba(57,194,255,.16),transparent 30%),
+    radial-gradient(circle at 82% 12%,rgba(241,92,168,.10),transparent 28%),
+    linear-gradient(180deg,#070b15 0%,#02040a 100%);
+}
+#cerimoniaPosVideo.ativo{display:block}
+
+.cerimoniaArenaBg{
+  position:absolute;inset:0;opacity:.25;pointer-events:none;
+  background:
+    linear-gradient(90deg,transparent 49.5%,rgba(232,188,103,.12) 50%,transparent 50.5%),
+    repeating-linear-gradient(90deg,rgba(255,255,255,.018) 0 1px,transparent 1px 95px);
+}
+.cerimoniaArenaBg:before{
+  content:"";
+  position:absolute;left:50%;bottom:-8%;transform:translateX(-50%);
+  width:min(1100px,94vw);height:63vh;
+  border:18px solid rgba(232,188,103,.24);border-bottom:0;
+  border-radius:50% 50% 0 0/30% 30% 0 0;
+  box-shadow:inset 0 0 55px rgba(232,188,103,.08),0 0 90px rgba(57,194,255,.06)
+}
+
+#confeteAbertura{
+  position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:12
+}
+.confeteParticula{
+  position:absolute;top:-40px;width:10px;height:18px;border-radius:2px;
+  opacity:.95;animation:confeteQueda linear forwards;
+  box-shadow:0 0 8px rgba(255,255,255,.10)
+}
+@keyframes confeteQueda{
+  0%{transform:translate3d(0,-10vh,0) rotate(0deg)}
+  100%{transform:translate3d(var(--desvio),112vh,0) rotate(var(--giro))}
+}
+
+
+#contagemArena{
+  position:absolute;inset:0;z-index:30;display:none;place-items:center;
+  text-align:center;pointer-events:none;
+  background:
+    radial-gradient(circle at 50% 48%,rgba(244,199,91,.20),transparent 24%),
+    linear-gradient(180deg,rgba(1,4,12,.28),rgba(1,4,12,.72));
+}
+#contagemArena.ativo{display:grid}
+.contagemNumero{
+  font-size:clamp(150px,25vw,310px);font-weight:1000;line-height:.8;
+  color:#ffe39a;text-shadow:
+    0 0 12px rgba(255,222,135,.95),
+    0 0 38px rgba(244,199,91,.75),
+    0 0 90px rgba(57,194,255,.38),
+    0 12px 35px #000;
+  animation:contagemPulso .82s cubic-bezier(.18,.86,.24,1) both;
+}
+.contagemLegenda{
+  margin-top:34px;font-size:clamp(18px,2.6vw,34px);font-weight:1000;
+  letter-spacing:5px;color:#fff;text-shadow:0 4px 20px #000
+}
+@keyframes contagemPulso{
+  0%{opacity:0;transform:scale(.28);filter:blur(10px)}
+  30%{opacity:1;transform:scale(1.12);filter:blur(0)}
+  72%{opacity:1;transform:scale(1)}
+  100%{opacity:0;transform:scale(1.28);filter:blur(3px)}
+}
+
+#fotoDestaqueCerimonia{
+  position:absolute;inset:0;z-index:16;display:grid;place-items:center;
+  pointer-events:none
+}
+.fotoDestaqueCard{
+  width:min(440px,78vw);text-align:center;opacity:0;transform:scale(.25);
+  transition:opacity .20s ease,transform .46s cubic-bezier(.2,.9,.2,1);
+}
+.fotoDestaqueCard.visivel{opacity:1;transform:scale(1)}
+.fotoDestaqueCard.saindo{opacity:0;transform:scale(.12)}
+.fotoDestaqueImg,.fotoDestaqueInit{
+  width:min(330px,62vw);aspect-ratio:1;border-radius:50%;
+  object-fit:cover;margin:auto;display:grid;place-items:center;
+  border:8px solid var(--gold);background:#15223a;color:white;
+  font-size:72px;font-weight:1000;
+  box-shadow:
+    0 0 0 10px rgba(232,188,103,.12),
+    0 0 70px rgba(232,188,103,.45),
+    0 30px 90px rgba(0,0,0,.68)
+}
+.fotoDestaqueNome{
+  margin-top:18px;font-size:clamp(20px,3vw,34px);font-weight:1000;
+  text-transform:uppercase;color:#fff;text-shadow:0 4px 20px #000
+}
+
+#mosaicoCerimoniaWrap{
+  position:absolute;inset:7% 5% 8%;z-index:14;
+  display:grid;place-items:center;pointer-events:none;
+  opacity:0;transition:opacity .45s ease
+}
+#mosaicoCerimoniaWrap.visivel{opacity:1}
+#mosaicoCerimonia{
+  width:min(1280px,94vw);
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(72px,1fr));
+  gap:8px;
+  align-items:center;
+}
+.mosaicoCerimoniaItem{
+  position:relative;min-width:0;opacity:0;transform:scale(.20);
+  animation:mosaicoEntrar .48s cubic-bezier(.2,.9,.2,1) forwards;
+}
+@keyframes mosaicoEntrar{to{opacity:1;transform:scale(1)}}
+.mosaicoCerimoniaItem img,.mosaicoCerimoniaInit{
+  width:100%;aspect-ratio:1;border-radius:12px;object-fit:cover;
+  display:grid;place-items:center;background:#15223a;color:#fff;
+  border:2px solid rgba(232,188,103,.72);font-weight:1000;
+  box-shadow:0 8px 24px rgba(0,0,0,.38)
+}
+.mosaicoCerimoniaNome{
+  margin-top:3px;font-size:clamp(7px,.8vw,11px);font-weight:900;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;color:#f5ead1
+}
+.mosaicoTitulo{
+  position:absolute;left:50%;bottom:2%;transform:translateX(-50%);
+  z-index:15;font-weight:1000;letter-spacing:2px;color:var(--gold2);
+  text-align:center;font-size:clamp(15px,2vw,25px);text-shadow:0 3px 16px #000;
+  opacity:0;transition:opacity .45s ease
+}
+.mosaicoTitulo.visivel{opacity:1}
+
+#comandanteCena{
+  position:absolute;inset:0;z-index:20;display:none;place-items:center;
+  background:linear-gradient(180deg,rgba(1,3,8,.38),rgba(1,3,8,.78));
+  overflow:hidden
+}
+#comandanteCena.ativo{display:grid}
+.espadaWrap{
+  position:relative;width:min(520px,84vw);height:min(88vh,850px);
+  transform:translateY(-125vh);opacity:0;
+}
+#comandanteCena.ativo .espadaWrap{
+  animation:espadaDescer 1.35s cubic-bezier(.18,.82,.20,1) forwards
+}
+@keyframes espadaDescer{
+  0%{transform:translateY(-125vh);opacity:0}
+  72%{transform:translateY(1.8vh);opacity:1}
+  88%{transform:translateY(-1vh);opacity:1}
+  100%{transform:translateY(0);opacity:1}
+}
+.espadaGlow{
+  position:absolute;left:50%;top:13%;transform:translateX(-50%);
+  width:62%;height:78%;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(255,221,125,.55),rgba(57,194,255,.16) 42%,transparent 72%);
+  filter:blur(20px);animation:espadaPulso 1.05s ease-in-out infinite alternate
+}
+.espadaEnergia{
+  position:absolute;left:50%;top:10%;width:70%;height:80%;transform:translateX(-50%);
+  pointer-events:none;z-index:1;filter:drop-shadow(0 0 15px rgba(255,210,90,.95))
+}
+.espadaEnergia::before,.espadaEnergia::after{
+  content:"";position:absolute;inset:0;border-radius:48%;
+  border:7px solid transparent;
+  border-left-color:#ffd76f;border-right-color:#5cc8ff;
+  opacity:.86;mix-blend-mode:screen;
+  animation:energiaGirar 1.7s linear infinite
+}
+.espadaEnergia::after{
+  inset:8% 10%;border-width:4px;
+  border-left-color:#fff2b0;border-right-color:#f4b83e;
+  animation-direction:reverse;animation-duration:1.15s
+}
+@keyframes energiaGirar{
+  from{transform:rotate(0deg) scale(.92)}
+  50%{transform:rotate(180deg) scale(1.05)}
+  to{transform:rotate(360deg) scale(.92)}
+}
+#comandanteCena.impacto .espadaGlow{
+  animation:impactoGlow .8s ease-out both
+}
+@keyframes impactoGlow{
+  0%{opacity:.5;transform:translateX(-50%) scale(.9)}
+  28%{opacity:1;transform:translateX(-50%) scale(1.75);filter:blur(8px)}
+  100%{opacity:.72;transform:translateX(-50%) scale(1.05);filter:blur(20px)}
+}
+.impactoChao{
+  position:absolute;left:50%;bottom:4%;transform:translateX(-50%) scale(.2);
+  width:min(760px,88vw);height:120px;border-radius:50%;
+  opacity:0;z-index:0;
+  background:radial-gradient(ellipse,rgba(255,242,180,.96),rgba(244,162,40,.65) 28%,rgba(57,194,255,.22) 52%,transparent 72%);
+  filter:blur(3px)
+}
+#comandanteCena.impacto .impactoChao{
+  animation:impactoChao .85s ease-out both
+}
+@keyframes impactoChao{
+  0%{opacity:0;transform:translateX(-50%) scale(.15)}
+  24%{opacity:1;transform:translateX(-50%) scale(1.22)}
+  100%{opacity:.12;transform:translateX(-50%) scale(1.6)}
+}
+.impactoFrase{
+  position:absolute;left:50%;bottom:4.5%;transform:translateX(-50%) scale(.35);
+  width:min(950px,94vw);text-align:center;z-index:7;opacity:0;
+  padding:16px 28px;border-radius:18px;
+  color:#ffe7a0;background:linear-gradient(180deg,rgba(13,17,28,.96),rgba(4,7,14,.96));
+  border:3px solid rgba(244,199,91,.88);
+  box-shadow:0 0 40px rgba(244,199,91,.42),inset 0 0 25px rgba(57,194,255,.10);
+  font-size:clamp(34px,6vw,78px);font-weight:1000;letter-spacing:2px;
+  text-shadow:0 3px 0 #6c4307,0 0 26px rgba(255,218,121,.78)
+}
+#comandanteCena.impacto .impactoFrase{
+  animation:fraseImpacto 1s cubic-bezier(.16,.9,.22,1) .08s forwards
+}
+@keyframes fraseImpacto{
+  0%{opacity:0;transform:translateX(-50%) scale(.35)}
+  55%{opacity:1;transform:translateX(-50%) scale(1.08)}
+  72%{transform:translateX(-50%) scale(.98)}
+  100%{opacity:1;transform:translateX(-50%) scale(1)}
+}
+#comandanteCena.impacto{
+  animation:tremerArena .46s linear 1
+}
+@keyframes tremerArena{
+  0%,100%{transform:translate(0,0)}
+  18%{transform:translate(-5px,3px)}
+  34%{transform:translate(6px,-3px)}
+  52%{transform:translate(-4px,-2px)}
+  70%{transform:translate(4px,2px)}
+  86%{transform:translate(-2px,1px)}
+}
+@keyframes espadaPulso{to{opacity:.55;transform:translateX(-50%) scale(1.08)}}
+.espadaSvg{position:absolute;inset:0;width:100%;height:100%;filter:drop-shadow(0 22px 32px rgba(0,0,0,.55))}
+.espadaTexto{
+  position:absolute;left:50%;top:47%;transform:translate(-50%,-50%);
+  width:58%;text-align:center;color:#1f1305;text-shadow:0 1px 0 rgba(255,255,255,.45);
+  font-weight:1000;line-height:1.1;z-index:2
+}
+.espadaTexto .mini{
+  display:block;font-size:clamp(13px,1.8vw,22px);letter-spacing:1.5px;margin-bottom:12px
+}
+.espadaTexto .nome{
+  display:block;font-size:clamp(20px,3.1vw,36px);text-transform:uppercase
+}
+.comandanteTopo{
+  position:absolute;top:5%;left:50%;transform:translateX(-50%);
+  width:92%;text-align:center;color:var(--gold2);font-size:clamp(17px,2.2vw,30px);
+  font-weight:1000;letter-spacing:3px;text-shadow:0 4px 24px #000;
+  opacity:0;animation:tituloComandante .8s ease 1.05s forwards
+}
+@keyframes tituloComandante{to{opacity:1}}
+
+#inicioArenaCena{
+  position:absolute;inset:0;z-index:25;display:none;place-items:center;
+  text-align:center;padding:5%;
+  background:
+    radial-gradient(circle at 50% 46%,rgba(232,188,103,.24),transparent 32%),
+    linear-gradient(180deg,#07101c,#02040a);
+}
+#inicioArenaCena.ativo{display:grid}
+.inicioArenaConteudo{animation:inicioArenaZoom .75s cubic-bezier(.2,.9,.2,1) both}
+@keyframes inicioArenaZoom{from{opacity:0;transform:scale(.55)}to{opacity:1;transform:scale(1)}}
+.inicioArenaKicker{
+  color:var(--gold2);font-size:clamp(14px,2vw,24px);font-weight:1000;
+  letter-spacing:4px;margin-bottom:15px
+}
+.inicioArenaNome{
+  font-size:clamp(38px,7vw,88px);line-height:.98;font-weight:1000;
+  text-transform:uppercase;color:#fff;
+  text-shadow:0 7px 30px #000,0 0 34px rgba(57,194,255,.20)
+}
+.inicioArenaNome span{display:block;color:var(--gold);margin-top:10px}
+.inicioArenaComecou{
+  margin-top:28px;display:inline-block;padding:14px 26px;
+  border:2px solid rgba(232,188,103,.72);border-radius:14px;
+  background:rgba(12,16,25,.80);color:var(--gold2);
+  font-size:clamp(20px,3vw,38px);font-weight:1000;letter-spacing:2px;
+  box-shadow:0 0 38px rgba(232,188,103,.18)
+}
 
 #arena{
   display:none;
@@ -1253,7 +1538,7 @@ video{
       Sua Arena está pronta.
       As questões desta disputa foram organizadas de acordo com
       sua trajetória nas habilidades trabalhadas.
-      Entre e aguarde a cerimônia oficial de abertura.
+      Entre e aguarde a cerimônia oficial: vídeo, participantes, mosaico e apresentação do comandante da Arena.
     </p>
 
     <div class="adaptiveBadge">
@@ -1289,10 +1574,99 @@ video{
       playsinline
     >
       <source
-        src="./Arena_Matematica_Coliseu_do_Conhecimento_Abertura%20(4).mp4"
+        src="./Arena_Matematica_Abertura_SEM_CONTAGEM.mp4"
         type="video/mp4"
       >
     </video>
+
+
+    <div id="cerimoniaPosVideo" aria-hidden="true">
+      <div class="cerimoniaArenaBg"></div>
+      <div id="confeteAbertura"></div>
+
+      <div id="contagemArena" aria-hidden="true">
+        <div>
+          <div id="contagemNumero" class="contagemNumero">5</div>
+          <div class="contagemLegenda">PREPARE-SE PARA A ARENA</div>
+        </div>
+      </div>
+
+      <div id="fotoDestaqueCerimonia"></div>
+
+      <div id="mosaicoCerimoniaWrap">
+        <div id="mosaicoCerimonia"></div>
+      </div>
+      <div id="mosaicoTitulo" class="mosaicoTitulo">
+        OS PARTICIPANTES DESTA ARENA
+      </div>
+
+      <div id="comandanteCena">
+        <div class="comandanteTopo">COMANDANDO A ARENA</div>
+        <div class="espadaWrap">
+          <div class="espadaGlow"></div>
+          <div class="espadaEnergia"></div>
+          <svg class="espadaSvg" viewBox="0 0 600 900" role="img" aria-label="Espada de gladiador">
+            <defs>
+              <linearGradient id="laminaGrad" x1="0" x2="1">
+                <stop offset="0" stop-color="#9a7a36"/>
+                <stop offset=".16" stop-color="#fff2b4"/>
+                <stop offset=".38" stop-color="#d8b45e"/>
+                <stop offset=".56" stop-color="#fff8cf"/>
+                <stop offset=".76" stop-color="#c69a43"/>
+                <stop offset="1" stop-color="#7b5a20"/>
+              </linearGradient>
+              <linearGradient id="ouroGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#7b4a0a"/>
+                <stop offset=".28" stop-color="#ffd873"/>
+                <stop offset=".55" stop-color="#9e620e"/>
+                <stop offset=".78" stop-color="#fff0a7"/>
+                <stop offset="1" stop-color="#6f4209"/>
+              </linearGradient>
+              <radialGradient id="gemaGrad">
+                <stop offset="0" stop-color="#b9f3ff"/>
+                <stop offset=".42" stop-color="#39c2ff"/>
+                <stop offset="1" stop-color="#063f87"/>
+              </radialGradient>
+            </defs>
+
+            <path d="M300 42 L370 156 L346 690 L300 842 L254 690 L230 156 Z"
+                  fill="url(#laminaGrad)" stroke="#5d3d0d" stroke-width="7"/>
+            <path d="M300 72 L318 670 L300 796 L282 670 Z"
+                  fill="rgba(255,255,255,.28)"/>
+
+            <path d="M94 180 Q300 105 506 180 L470 238 Q300 190 130 238 Z"
+                  fill="url(#ouroGrad)" stroke="#5f3609" stroke-width="9"/>
+            <circle cx="300" cy="180" r="58" fill="url(#ouroGrad)" stroke="#5f3609" stroke-width="8"/>
+            <circle cx="300" cy="180" r="32" fill="url(#gemaGrad)" stroke="#e5c45f" stroke-width="6"/>
+            <circle cx="135" cy="210" r="21" fill="url(#gemaGrad)" stroke="#e5c45f" stroke-width="5"/>
+            <circle cx="465" cy="210" r="21" fill="url(#gemaGrad)" stroke="#e5c45f" stroke-width="5"/>
+
+            <rect x="266" y="18" width="68" height="145" rx="25"
+                  fill="#35200d" stroke="#d7a94b" stroke-width="8"/>
+            <path d="M264 48 L336 88 M264 92 L336 132" stroke="#9b6e28" stroke-width="10"/>
+            <circle cx="300" cy="26" r="42" fill="url(#ouroGrad)" stroke="#5f3609" stroke-width="7"/>
+          </svg>
+
+          <div class="espadaTexto">
+            <span class="mini">COMANDANDO A ARENA</span>
+            <span class="mini" style="margin-top:12px;margin-bottom:6px">PROFESSOR</span>
+            <span class="nome">ADILSON LEOPOLDO DOS SANTOS</span>
+          </div>
+        </div>
+        <div class="impactoChao"></div>
+        <div class="impactoFrase">COMEÇOU A ARENA!</div>
+      </div>
+
+      <div id="inicioArenaCena">
+        <div class="inicioArenaConteudo">
+          <div class="inicioArenaKicker">COLISEU DO CONHECIMENTO</div>
+          <div id="inicioArenaNome" class="inicioArenaNome">
+            ARENA MATEMÁTICA
+          </div>
+          <div class="inicioArenaComecou">COMEÇOU A ARENA!</div>
+        </div>
+      </div>
+    </div>
 
     <div class="aberturaHud">
 
@@ -1815,6 +2189,8 @@ let processandoBloqueio = false;
 
 let aberturaEmExecucao = false;
 let aberturaAssistida = false;
+let cerimoniaPosVideoEmExecucao = false;
+let cerimoniaTimers = [];
 
 let historicoEstudante = {};
 
@@ -1975,47 +2351,98 @@ function questaoId(
 
 function correta(q) {
 
-  const c =
-    q?.correta ??
-    q?.correct ??
-    q?.resposta ??
-    q?.gabarito;
+  const ops = q?.alternativas || q?.options || q?.opcoes || [];
 
-  if (
-    typeof c ===
-    "number"
-  ) {
-    return c;
+  // 1) Procura primeiro um indicador explícito dentro das alternativas.
+  // Isso cobre bancos que gravam a resposta correta no próprio item.
+  if (Array.isArray(ops)) {
+    const marcado = ops.findIndex(o =>
+      o && typeof o === "object" && (
+        o.correta === true ||
+        o.correct === true ||
+        o.isCorrect === true ||
+        o.certa === true
+      )
+    );
+    if (marcado >= 0) return marcado;
   }
 
-  if (
-    typeof c ===
-    "string"
-  ) {
+  // 2) Compatibilidade com todos os nomes de campo usados/possíveis.
+  const campos = [
+    ["correct", q?.correct],
+    ["correta", q?.correta],
+    ["correctIndex", q?.correctIndex],
+    ["answerIndex", q?.answerIndex],
+    ["indiceCorreta", q?.indiceCorreta],
+    ["indiceResposta", q?.indiceResposta],
+    ["respostaCorreta", q?.respostaCorreta],
+    ["alternativaCorreta", q?.alternativaCorreta],
+    ["resposta", q?.resposta],
+    ["gabarito", q?.gabarito],
+    ["answer", q?.answer]
+  ];
 
-    const t =
-      c.trim()
-        .toUpperCase();
+  for (const [nome, valor] of campos) {
+    if (valor === undefined || valor === null || valor === "") continue;
 
-    if (
-      /^[A-E]$/.test(t)
-    ) {
-      return (
-        t.charCodeAt(0) -
-        65
+    if (typeof valor === "number" && Number.isFinite(valor)) {
+      const n = Math.trunc(valor);
+      // correct/correta/índices são tratados como índice 0-based.
+      if (["correct","correta","correctIndex","answerIndex","indiceCorreta","indiceResposta"].includes(nome)) {
+        if (n >= 0 && n < ops.length) return n;
+      }
+      // gabarito/resposta podem vir como 1..5 em bases antigas.
+      if (n >= 1 && n <= ops.length) return n - 1;
+      if (n >= 0 && n < ops.length) return n;
+    }
+
+    if (typeof valor === "string") {
+      const bruto = valor.trim();
+      const t = bruto.toUpperCase();
+
+      if (/^[A-E]$/.test(t)) return t.charCodeAt(0) - 65;
+
+      if (/^\d+(?:\.0+)?$/.test(t)) {
+        const n = Math.trunc(Number(t));
+        if (["correct","correta","correctIndex","answerIndex","indiceCorreta","indiceResposta"].includes(nome)) {
+          if (n >= 0 && n < ops.length) return n;
+        }
+        if (n >= 1 && n <= ops.length) return n - 1;
+        if (n >= 0 && n < ops.length) return n;
+      }
+
+      // Algumas bases gravam o TEXTO da resposta correta, e não o índice.
+      const alvo = normalizarTexto(bruto);
+      const porTexto = ops.findIndex(o =>
+        normalizarTexto(typeof o === "string" ? o : (o?.texto || o?.text || o?.label || "")) === alvo
       );
+      if (porTexto >= 0) return porTexto;
     }
-
-    if (
-      /^\d+$/.test(t)
-    ) {
-      return Number(t);
-    }
-
   }
+
+  // 3) Defesa para Arenas antigas: tenta encontrar a mesma questão na lista
+  // original da Arena e recuperar de lá o gabarito que possa ter sido omitido
+  // na trajetória individual salva.
+  try {
+    const textoAtual = normalizarTexto(q?.enunciado || q?.text || q?.texto || q?.pergunta || "");
+    const descAtual = String(q?.descritor || q?.descriptor || "").toUpperCase();
+    const originais = Array.isArray(arenaAtual?.questoes)
+      ? arenaAtual.questoes
+      : (Array.isArray(arenaAtual?.questions) ? arenaAtual.questions : []);
+
+    const original = originais.find(item => {
+      const texto = normalizarTexto(item?.enunciado || item?.text || item?.texto || item?.pergunta || "");
+      const desc = String(item?.descritor || item?.descriptor || "").toUpperCase();
+      return textoAtual && texto === textoAtual && (!descAtual || !desc || desc === descAtual);
+    });
+
+    if (original && original !== q) {
+      const r = correta(original);
+      if (r >= 0) return r;
+    }
+  } catch {}
 
   return -1;
-
 }
 
 function pararStream(obj) {
@@ -4054,6 +4481,280 @@ function statusIniciado(
 
 }
 
+
+function limparTimersCerimonia(){
+  cerimoniaTimers.forEach(id=>clearTimeout(id));
+  cerimoniaTimers=[];
+}
+
+function esperarCerimonia(ms){
+  return new Promise(resolve=>{
+    const id=setTimeout(resolve,ms);
+    cerimoniaTimers.push(id);
+  });
+}
+
+function participanteCerimoniaLista(){
+  const fonte=Object.values(competidores||{});
+  const lista=fonte
+    .filter(c=>c && !c.bloqueado && (c.nome || foto(c)))
+    .map(c=>({
+      nome:String(c.nome||"Competidor").trim(),
+      foto:foto(c),
+      id:String(c.id||c.jogadorId||c.estudanteId||c.nome||Math.random())
+    }));
+
+  lista.sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR"));
+
+  if(!lista.length && jogador){
+    lista.push({
+      nome:String(jogador.nome||"Competidor"),
+      foto:foto(jogador),
+      id:String(jogadorId||"eu")
+    });
+  }
+
+  return lista;
+}
+
+function criarConfetesCerimonia(qtd=95){
+  const box=$("confeteAbertura");
+  if(!box) return;
+  box.innerHTML="";
+
+  const cores=["#f4c75b","#ffe09a","#39c2ff","#f15ca8","#ffffff","#48d69b"];
+
+  for(let i=0;i<qtd;i++){
+    const p=document.createElement("i");
+    p.className="confeteParticula";
+    p.style.left=`${Math.random()*100}%`;
+    p.style.background=cores[i%cores.length];
+    p.style.width=`${6+Math.random()*8}px`;
+    p.style.height=`${10+Math.random()*15}px`;
+    p.style.animationDuration=`${3.4+Math.random()*3.8}s`;
+    p.style.animationDelay=`${Math.random()*1.6}s`;
+    p.style.setProperty("--desvio",`${-130+Math.random()*260}px`);
+    p.style.setProperty("--giro",`${720+Math.random()*900}deg`);
+    box.appendChild(p);
+  }
+}
+
+function criarMosaicoCerimoniaBase(lista){
+  const box=$("mosaicoCerimonia");
+  if(!box) return;
+  box.innerHTML="";
+
+  lista.forEach((p,i)=>{
+    const item=document.createElement("div");
+    item.className="mosaicoCerimoniaItem";
+    item.dataset.pid=p.id;
+    item.style.animationDelay=`${Math.min(i*28,700)}ms`;
+
+    const imagem=p.foto
+      ? `<img src="${p.foto}" alt="Foto de ${safe(p.nome)}">`
+      : `<div class="mosaicoCerimoniaInit">${iniciais(p.nome)}</div>`;
+
+    item.innerHTML=`
+      ${imagem}
+      <div class="mosaicoCerimoniaNome">${safe(primeiro(p.nome))}</div>
+    `;
+    box.appendChild(item);
+  });
+}
+
+function tocarImpactoCerimonia(tipo="impacto"){
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC) return;
+    const ctx=new AC();
+    const t=ctx.currentTime;
+
+    const master=ctx.createGain();
+    master.gain.setValueAtTime(.0001,t);
+    master.gain.exponentialRampToValueAtTime(tipo==="espada"?.34:.22,t+.015);
+    master.gain.exponentialRampToValueAtTime(.0001,t+1.35);
+    master.connect(ctx.destination);
+
+    // Estrondo grave do impacto no piso.
+    const boom=ctx.createOscillator();
+    const boomGain=ctx.createGain();
+    boom.type="sine";
+    boom.frequency.setValueAtTime(tipo==="espada"?82:105,t);
+    boom.frequency.exponentialRampToValueAtTime(34,t+1.05);
+    boomGain.gain.setValueAtTime(.9,t);
+    boomGain.gain.exponentialRampToValueAtTime(.0001,t+1.15);
+    boom.connect(boomGain); boomGain.connect(master);
+    boom.start(t); boom.stop(t+1.2);
+
+    // Ataque metálico da espada.
+    const metal=ctx.createOscillator();
+    const metalGain=ctx.createGain();
+    metal.type="triangle";
+    metal.frequency.setValueAtTime(tipo==="espada"?1280:760,t);
+    metal.frequency.exponentialRampToValueAtTime(170,t+.42);
+    metalGain.gain.setValueAtTime(.7,t);
+    metalGain.gain.exponentialRampToValueAtTime(.0001,t+.48);
+    metal.connect(metalGain); metalGain.connect(master);
+    metal.start(t); metal.stop(t+.5);
+
+    // Faísca/ruído curto.
+    const buffer=ctx.createBuffer(1,Math.floor(ctx.sampleRate*.34),ctx.sampleRate);
+    const data=buffer.getChannelData(0);
+    for(let i=0;i<data.length;i++){
+      data[i]=(Math.random()*2-1)*Math.pow(1-i/data.length,2.2);
+    }
+    const noise=ctx.createBufferSource();
+    const noiseGain=ctx.createGain();
+    const filter=ctx.createBiquadFilter();
+    filter.type="bandpass"; filter.frequency.value=1550; filter.Q.value=.8;
+    noise.buffer=buffer;
+    noiseGain.gain.setValueAtTime(.48,t);
+    noiseGain.gain.exponentialRampToValueAtTime(.0001,t+.34);
+    noise.connect(filter); filter.connect(noiseGain); noiseGain.connect(master);
+    noise.start(t);
+
+    setTimeout(()=>{try{ctx.close()}catch{}},1600);
+  }catch(e){
+    console.warn("Som de impacto indisponível.",e);
+  }
+}
+
+async function mostrarParticipanteCerimonia(p){
+  const palco=$("fotoDestaqueCerimonia");
+  if(!palco) return;
+
+  const card=document.createElement("div");
+  card.className="fotoDestaqueCard";
+
+  const imagem=p.foto
+    ? `<img class="fotoDestaqueImg" src="${p.foto}" alt="Foto de ${safe(p.nome)}">`
+    : `<div class="fotoDestaqueInit">${iniciais(p.nome)}</div>`;
+
+  card.innerHTML=`
+    ${imagem}
+    <div class="fotoDestaqueNome">${safe(p.nome)}</div>
+  `;
+
+  palco.innerHTML="";
+  palco.appendChild(card);
+
+  // Entrada suave.
+  requestAnimationFrame(()=>card.classList.add("visivel"));
+  await esperarCerimonia(460);
+
+  // TEMPO DE RECONHECIMENTO: a foto fica grande e praticamente parada.
+  await esperarCerimonia(1500);
+
+  // Só depois ela recolhe em direção ao mosaico.
+  card.style.transition="opacity .70s ease,transform .70s cubic-bezier(.2,.8,.2,1)";
+  card.classList.add("saindo");
+  await esperarCerimonia(700);
+
+  palco.innerHTML="";
+}
+
+async function executarContagemArena(){
+  const tela=$("contagemArena");
+  const numero=$("contagemNumero");
+  if(!tela||!numero) return;
+
+  tela.classList.add("ativo");
+  tela.setAttribute("aria-hidden","false");
+
+  for(const n of [5,4,3,2,1]){
+    if(aberturaAssistida) return;
+    numero.textContent=String(n);
+    numero.style.animation="none";
+    void numero.offsetWidth;
+    numero.style.animation="contagemPulso .82s cubic-bezier(.18,.86,.24,1) both";
+    tocarImpactoCerimonia(n===1?"espada":"impacto");
+    await esperarCerimonia(900);
+  }
+
+  tela.classList.remove("ativo");
+  tela.setAttribute("aria-hidden","true");
+  await esperarCerimonia(250);
+}
+
+async function executarCerimoniaPosVideo(){
+  if(cerimoniaPosVideoEmExecucao || aberturaAssistida) return;
+
+  cerimoniaPosVideoEmExecucao=true;
+  aberturaEmExecucao=false;
+  limparTimersCerimonia();
+
+  const v=$("aberturaVideo");
+  try{v.pause()}catch{}
+  if(v) v.style.display="none";
+
+  $("aberturaOverlay").classList.add("aberturaHiddenHud");
+
+  const cena=$("cerimoniaPosVideo");
+  cena.classList.add("ativo");
+  cena.setAttribute("aria-hidden","false");
+
+  $("contagemArena")?.classList.remove("ativo");
+  $("mosaicoCerimoniaWrap").classList.remove("visivel");
+  $("mosaicoTitulo").classList.remove("visivel");
+  $("comandanteCena").classList.remove("ativo","impacto");
+  $("inicioArenaCena").classList.remove("ativo");
+
+  // 1) Nova contagem cinematográfica, independente do vídeo original.
+  await executarContagemArena();
+  if(aberturaAssistida) return;
+
+  // 2) Participantes: cada estudante tem tempo real para se reconhecer.
+  criarConfetesCerimonia(125);
+
+  const lista=participanteCerimoniaLista();
+  criarMosaicoCerimoniaBase(lista);
+
+  for(const p of lista){
+    if(aberturaAssistida) return;
+    await mostrarParticipanteCerimonia(p);
+  }
+
+  // 3) Mosaico 100% formado.
+  $("mosaicoCerimoniaWrap").classList.add("visivel");
+  $("mosaicoTitulo").classList.add("visivel");
+  tocarImpactoCerimonia("impacto");
+  await esperarCerimonia(2300);
+
+  if(aberturaAssistida) return;
+
+  // 4) Só depois do mosaico: espada desce com energia em movimento.
+  $("mosaicoTitulo").classList.remove("visivel");
+  const comandante=$("comandanteCena");
+  comandante.classList.remove("impacto");
+  comandante.classList.add("ativo");
+  await esperarCerimonia(1350);
+
+  // 5) EXATO MOMENTO EM QUE A ESPADA TOCA A ARENA:
+  // impacto metálico + estrondo + clarão + tremor + frase COMEÇOU A ARENA!
+  comandante.classList.add("impacto");
+  tocarImpactoCerimonia("espada");
+  await esperarCerimonia(2600);
+
+  if(aberturaAssistida) return;
+
+  // 6) Nome dinâmico da Arena criada pelo professor.
+  comandante.classList.remove("ativo","impacto");
+
+  const nomeArena=
+    arenaAtual?.nome ||
+    arenaAtual?.titulo ||
+    "ARENA MATEMÁTICA";
+
+  $("inicioArenaNome").innerHTML=
+    `${safe(nomeArena)}<span>RUMO AO PAEBES</span>`;
+
+  $("inicioArenaCena").classList.add("ativo");
+  await esperarCerimonia(2400);
+
+  cerimoniaPosVideoEmExecucao=false;
+  await finalizarAbertura(true);
+}
+
 function mostrarEsperaAbertura() {
 
   if (
@@ -4153,7 +4854,7 @@ async function liberarAbertura() {
 
   $("aberturaTexto")
     .textContent =
-    "A cerimônia oficial de abertura foi liberada pelo professor.";
+    "A cerimônia oficial foi liberada: vídeo cinematográfico, participantes, mosaico e início da Arena.";
 
   $("aberturaEstado")
     .textContent =
@@ -4173,6 +4874,14 @@ async function liberarAbertura() {
 
   const v =
     $("aberturaVideo");
+
+  limparTimersCerimonia();
+  cerimoniaPosVideoEmExecucao=false;
+  $("cerimoniaPosVideo")?.classList.remove("ativo");
+  $("comandanteCena")?.classList.remove("ativo","impacto");
+  $("contagemArena")?.classList.remove("ativo");
+  $("inicioArenaCena")?.classList.remove("ativo");
+  if(v) v.style.display="block";
 
   try {
 
@@ -4204,6 +4913,14 @@ async function iniciarAberturaPorToque() {
 
   const v =
     $("aberturaVideo");
+
+  limparTimersCerimonia();
+  cerimoniaPosVideoEmExecucao=false;
+  $("cerimoniaPosVideo")?.classList.remove("ativo");
+  $("comandanteCena")?.classList.remove("ativo","impacto");
+  $("contagemArena")?.classList.remove("ativo");
+  $("inicioArenaCena")?.classList.remove("ativo");
+  if(v) v.style.display="block";
 
   try {
 
@@ -4243,6 +4960,17 @@ async function finalizarAbertura(
 
   aberturaEmExecucao =
     false;
+
+  cerimoniaPosVideoEmExecucao=false;
+  limparTimersCerimonia();
+  $("cerimoniaPosVideo")?.classList.remove("ativo");
+  $("comandanteCena")?.classList.remove("ativo","impacto");
+  $("contagemArena")?.classList.remove("ativo");
+  $("inicioArenaCena")?.classList.remove("ativo");
+  $("mosaicoCerimoniaWrap")?.classList.remove("visivel");
+  $("mosaicoTitulo")?.classList.remove("visivel");
+  const aberturaVideoEl=$("aberturaVideo");
+  if(aberturaVideoEl) aberturaVideoEl.style.display="block";
 
   aberturaAssistida =
     true;
@@ -4765,18 +5493,13 @@ function rankingOrdenado() {
         ...j
       })
     )
-    .sort(
-      (a,b) =>
-        Number(
-          b.xp ||
-          0
-        )
-        -
-        Number(
-          a.xp ||
-          0
-        )
-    );
+    .sort((a,b) => {
+      const dxp = Number(b.xp || 0) - Number(a.xp || 0);
+      if (dxp) return dxp;
+      const dacertos = Number(b.acertos || 0) - Number(a.acertos || 0);
+      if (dacertos) return dacertos;
+      return Number(a.entrouEm || a.criadoEm || 0) - Number(b.entrouEm || b.criadoEm || 0);
+    });
 
 }
 
@@ -4892,6 +5615,17 @@ async function responderQuestao(porTempo=false) {
 
   const alternativa=porTempo?null:selecionada;
   const corretaIndex=correta(q);
+
+  if (!porTempo && corretaIndex < 0) {
+    questaoFinalizando=false;
+    iniciarCronometroQuestao(q,idx,precisa);
+    $("feedback").textContent="Esta questão está sem gabarito reconhecível. Avise o professor; a resposta não foi contabilizada.";
+    $("feedback").className="feedback no";
+    $("confirmBtn").disabled=false;
+    console.error("Questão sem gabarito reconhecível:", q);
+    return;
+  }
+
   const ok=!porTempo && alternativa===corretaIndex;
   const ganho=ok?xpDaQuestao(q):0;
 
@@ -6163,10 +6897,7 @@ $("aberturaSkipBtn")
 $("aberturaVideo")
   .addEventListener(
     "ended",
-    () =>
-      finalizarAbertura(
-        true
-      )
+    () => executarCerimoniaPosVideo()
   );
 
 $("aberturaVideo")
