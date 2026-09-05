@@ -110,20 +110,37 @@ const XP_NIVEL = {
   "AVANÇADO":240
 };
 
+// ======================================================
+// FONTES E REFERÊNCIAS — COLISEU v6
+// Regra: não rotular item autoral como oficial.
+// Itens reproduzidos/adaptados de material identificado carregam a referência real;
+// geração própria é marcada como EQUIVALENTE/AUTORAL.
+// ======================================================
+export const FONTES_BANCO = {
+  AMA:{tipo:"AMA",rotulo:"AMA — Avaliação de Monitoramento da Aprendizagem",prioridade:1},
+  PAEBES:{tipo:"PAEBES",rotulo:"PAEBES — Programa de Avaliação da Educação Básica do Espírito Santo",prioridade:1},
+  SAEB:{tipo:"SAEB",rotulo:"SAEB / avaliações externas",prioridade:2},
+  MATERIAL_ESTRUTURADO:{tipo:"MATERIAL_ESTRUTURADO",rotulo:"Material público/estruturado",prioridade:3},
+  BANCO_PORTAL:{tipo:"BANCO_PORTAL",rotulo:"Banco aprovado do Portal Jornada Matemática",prioridade:4},
+  EQUIVALENTE:{tipo:"EQUIVALENTE",rotulo:"Item equivalente ao padrão externo",prioridade:5},
+  AUTORAL:{tipo:"AUTORAL",rotulo:"Questão autoral de contingência",prioridade:6}
+};
+
+const REFERENCIAS_BANCO = {
+  RPE_3SERIE_2TRI_2026:"SEDU-ES — 3ª Série EM Matemática, RPE 2026, 2º trimestre — seção Progressão Geométrica (D097_M)",
+  MATRIZES_2026:"Matrizes de Referência AMA/PAEBES 2026 — habilidade/descritor informado no item",
+  PORTAL:"Banco de Questões aprovado — Portal Jornada Matemática — Professor Leopoldo"
+};
+
 const HIST_KEY = "arenaPAEBES_historicoQuestoes_v3";
 const ROUND_KEY = "arenaPAEBES_rodadaBanco";
 
 function clamp(n,min,max){ return Math.max(min,Math.min(max,n)); }
-
 function fmt(n){
   const x=Math.round(Number(n)*100)/100;
   return Number.isInteger(x)?String(x):String(x).replace(".",",");
 }
-
-function pick(a,s=0){
-  return a[Math.abs(Number(s)||0)%a.length];
-}
-
+function pick(a,s=0){ return a[Math.abs(Number(s)||0)%a.length]; }
 function hash(str=""){
   let h=2166136261;
   for(let i=0;i<str.length;i++){
@@ -132,1100 +149,625 @@ function hash(str=""){
   }
   return (h>>>0).toString(36);
 }
-
 function norm(v=""){
-  return String(v)
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g,"")
-    .toLowerCase()
-    .replace(/<[^>]*>/g," ")
-    .replace(/[^a-z0-9]+/g," ")
-    .trim();
+  return String(v).normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .toLowerCase().replace(/<[^>]*>/g," ").replace(/[^a-z0-9]+/g," ").trim();
 }
-
 function shuffle(arr,seed=1){
-  const a=[...arr];
-  let s=Math.abs(Number(seed)||1);
-
+  const a=[...arr]; let s=Math.abs(Number(seed)||1);
   for(let i=a.length-1;i>0;i--){
     s=(s*9301+49297)%233280;
     const j=Math.floor((s/233280)*(i+1));
     [a[i],a[j]]=[a[j],a[i]];
   }
-
   return a;
 }
-
 function alternativas(correta,distratores,seed){
   const resposta=String(correta);
   const unicos=[];
-
-  [
-    resposta,
-    ...distratores.map(String),
-    "0","1","2","3","4","5","6","8","10","12","15","20","25","30","40","50","60","100"
-  ].forEach(x=>{
-    if(!unicos.includes(x)) unicos.push(x);
-  });
-
+  [resposta,...distratores.map(String),"0","1","2","3","4","5","6","8","10","12","15","20","25","30","40","50","60","100"]
+    .forEach(x=>{ if(!unicos.includes(x)) unicos.push(x); });
   const opts=shuffle(unicos.slice(0,5),seed);
-
-  return {
-    options:opts,
-    correct:opts.indexOf(resposta)
-  };
+  return {options:opts,correct:opts.indexOf(resposta)};
 }
-
-function meta(descriptor,level,habilidade){
-  const nucleo=Object.values(NUCLEOS_APRENDIZAGEM)
-    .find(n=>n.descritores.includes(descriptor))?.nome||"Recomposição e Consolidação";
-
+function svg(inner,label="Representação matemática"){
+  return `<svg viewBox="0 0 520 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${label}">
+  <rect width="520" height="280" rx="18" fill="#07182d"/>${inner}</svg>`;
+}
+function plano({pontos=[],retas=[]}={}){
+  let c="";
+  for(let i=-5;i<=5;i++){
+    const x=260+i*42,y=140-i*22;
+    c+=`<line x1="${x}" y1="20" x2="${x}" y2="255" stroke="#153552"/>
+        <line x1="35" y1="${y}" x2="485" y2="${y}" stroke="#153552"/>`;
+  }
+  c+=`<line x1="35" y1="140" x2="485" y2="140" stroke="#dbeafe" stroke-width="2"/>
+      <line x1="260" y1="20" x2="260" y2="255" stroke="#dbeafe" stroke-width="2"/>`;
+  retas.forEach((r,idx)=>{
+    const pts=[];
+    for(let x=-5;x<=5;x+=.25){
+      const y=r.m*x+r.b;
+      pts.push(`${260+x*42},${140-y*22}`);
+    }
+    c+=`<polyline points="${pts.join(" ")}" fill="none" stroke="${idx?"#facc15":"#ff6fab"}" stroke-width="4"/>`;
+  });
+  pontos.forEach(p=>{
+    c+=`<circle cx="${260+p.x*42}" cy="${140-p.y*22}" r="6" fill="#22d3ee"/>
+        <text x="${270+p.x*42}" y="${132-p.y*22}" fill="#fff" font-size="14">${p.label||""}</text>`;
+  });
+  return svg(c,"Plano cartesiano");
+}
+function barras(vals,labels=["A","B","C","D"],titulo="Dados"){
+  const max=Math.max(...vals,1); let c=`<text x="260" y="30" text-anchor="middle" fill="#fff">${titulo}</text>`;
+  vals.forEach((v,i)=>{
+    const h=145*v/max,x=70+i*105;
+    c+=`<rect x="${x}" y="${220-h}" width="60" height="${h}" rx="5" fill="#3e8cff"/>
+        <text x="${x+30}" y="${208-h}" text-anchor="middle" fill="#fff">${v}</text>
+        <text x="${x+30}" y="245" text-anchor="middle" fill="#cbd5e1">${labels[i]}</text>`;
+  });
+  return svg(c,"Gráfico de barras");
+}
+function tabela(headers,rows){
+  const w=440/headers.length; let c="";
+  headers.forEach((h,i)=>{
+    c+=`<rect x="${40+i*w}" y="45" width="${w}" height="42" fill="#12385a" stroke="#8bdcff"/>
+        <text x="${40+i*w+w/2}" y="72" text-anchor="middle" fill="#fff">${h}</text>`;
+  });
+  rows.forEach((row,r)=>row.forEach((v,i)=>{
+    c+=`<rect x="${40+i*w}" y="${87+r*42}" width="${w}" height="42" fill="#0d2743" stroke="#2b5b7a"/>
+        <text x="${40+i*w+w/2}" y="${114+r*42}" text-anchor="middle" fill="#dcecff">${v}</text>`;
+  }));
+  return svg(c,"Tabela");
+}
+function cubo(){
+  return svg(`<g fill="none" stroke="#8bdcff" stroke-width="5">
+  <path d="M150 65 L285 65 L365 125 L230 125 Z"/>
+  <path d="M150 65 L150 185 L230 245 L230 125"/>
+  <path d="M230 125 L365 125 L365 245 L230 245 Z"/>
+  <path d="M285 65 L285 185 L365 245"/><path d="M150 185 L285 185"/></g>`,"Cubo");
+}
+function cilindro(){
+  return svg(`<ellipse cx="260" cy="62" rx="95" ry="28" fill="#17456d" stroke="#8bdcff" stroke-width="4"/>
+  <path d="M165 62 L165 205 M355 62 L355 205" stroke="#8bdcff" stroke-width="4"/>
+  <ellipse cx="260" cy="205" rx="95" ry="28" fill="#17456d" stroke="#8bdcff" stroke-width="4"/>`,"Cilindro");
+}
+function planCubo(){
+  const q=(x,y)=>`<rect x="${x}" y="${y}" width="58" height="58" fill="#17456d" stroke="#8bdcff" stroke-width="3"/>`;
+  return svg(q(202,42)+q(144,100)+q(202,100)+q(260,100)+q(318,100)+q(202,158),"Planificação de cubo");
+}
+function tri(a,b,c){
+  return svg(`<polygon points="120,220 410,220 120,60" fill="rgba(62,140,255,.16)" stroke="#8bdcff" stroke-width="4"/>
+  <rect x="120" y="198" width="22" height="22" fill="none" stroke="#facc15" stroke-width="3"/>
+  <text x="265" y="246" fill="#fff" text-anchor="middle">${a}</text>
+  <text x="93" y="145" fill="#fff" text-anchor="middle">${b}</text>
+  <text x="290" y="130" fill="#fff" text-anchor="middle">${c}</text>`,"Triângulo retângulo");
+}
+function meta(descriptor,level,task,contexto="problema",recurso="texto"){
   return {
-    expectativa:habilidade,
-    tarefa:habilidade,
-    nucleo,
+    habilidade:HABILIDADES_PAEBES[descriptor]||"",
+    expectativa:task,
+    tarefa:task,
+    contexto,
+    recurso,
+    nivelPedagogico:level,
+    nucleo:Object.entries(NUCLEOS_APRENDIZAGEM)
+      .filter(([,n])=>n.descritores.includes(descriptor))
+      .map(([,n])=>n.nome),
     prioridadeAMA:PRIORIDADE_AMA_3TRI.includes(descriptor),
-    contexto:"Arena Matemática — Rumo à AMA e ao PAEBES",
-    origem:"Questão autoral alinhada à matriz de referência",
-    level
+    origem:"Questão autoral alinhada à Matriz de Referência PAEBES/AMA."
   };
 }
 
-function questaoValida(q){
-  return !!(
-    q &&
-    q.descriptor &&
-    q.text &&
-    Array.isArray(q.options) &&
-    q.options.length>=4 &&
-    Number.isInteger(q.correct) &&
-    q.correct>=0 &&
-    q.correct<q.options.length
-  );
+function gerar(descriptor,level,seed,variante=0){
+  const s=Math.abs(Number(seed)||1), k=Math.abs(Number(variante)||0);
+  const mod=k%6;
+
+  if(descriptor==="D009_M"){
+    const den=pick([2,4,5,10],s+k),num=1+(s+k)%Math.max(2,den*3),v=num/den;
+    return {modeloId:`reta-racional-${mod}`,text:`Na reta numérica, um ponto está localizado em ${fmt(v)}. Qual número racional representa essa posição?`,
+      ...alternativas(fmt(v),[fmt(v+1),fmt(v-1),`${num}/${den+1}`,fmt(den/num)],s)};
+  }
+  if(descriptor==="D013_M"){
+    const den=pick([2,4,5,10],s),num=1+(s+k)%(den-1),dec=num/den;
+    return {modeloId:`rep-racional-${mod}`,text:`Qual representação decimal corresponde à fração ${num}/${den}?`,
+      ...alternativas(fmt(dec),[fmt(num+den),fmt(den/num),fmt(dec+0.1),fmt(dec*10)],s)};
+  }
+  if(descriptor==="D033_M"){
+    const n=pick([2,3,5,7,8,10,11,13,17],s+k),r=Math.sqrt(n);
+    return {modeloId:`irracional-${mod}`,text:`Entre quais números inteiros consecutivos está localizado √${n}?`,
+      ...alternativas(`${Math.floor(r)} e ${Math.ceil(r)}`,["0 e 1","1 e 2","2 e 3","3 e 4","4 e 5"],s)};
+  }
+  if(descriptor==="D038_M"){
+    const preco=80+((s+k)%11)*20,p=pick([10,15,20,25,30,40],s+k),d=preco*p/100;
+    return {modeloId:`porcentagem-${mod}`,text:`Um produto custa R$ ${preco}. Em uma promoção, recebe desconto de ${p}%. Qual é o valor do desconto?`,
+      ...alternativas(fmt(d),[fmt(preco-d),fmt(d+10),fmt(preco*p/10),fmt(p)],s)};
+  }
+  if(descriptor==="D039_M"){
+    const a=2+(s%5),b=3+((s+k)%7),c=a+2,r=b*c/a;
+    return {modeloId:`proporcao-${mod}`,text:`${a} pessoas consomem ${b} litros de água em uma atividade. Mantendo a mesma proporção, quantos litros serão necessários para ${c} pessoas?`,
+      ...alternativas(fmt(r),[fmt(b+2),fmt(b*a),fmt(r+2),fmt(r-2)],s)};
+  }
+  if(descriptor==="D042_M"){
+    const a=3+s%5,b=2+(s+k)%5,t=a*b;
+    return {modeloId:`contagem-${mod}`,text:`Uma loja oferece ${a} modelos de camisa e ${b} modelos de calça. Quantos conjuntos diferentes podem ser formados escolhendo uma camisa e uma calça?`,
+      ...alternativas(t,[a+b,t+2,t-2,a*2],s)};
+  }
+  if(descriptor==="D043_M"){
+    const x=-4+(s+k)%9,y=-4+(s*3+k)%9;
+    return {modeloId:`plano-ponto-${mod}`,text:`Observe o ponto A no plano cartesiano. Quais são suas coordenadas?`,
+      ...alternativas(`(${x}, ${y})`,[`(${y}, ${x})`,`(${-x}, ${y})`,`(${x}, ${-y})`,`(${-x}, ${-y})`],s),
+      visual:plano({pontos:[{x,y,label:"A"}]})};
+  }
+  if(descriptor==="D049_M"){
+    const pares=[[3,4],[5,12],[6,8],[8,15],[7,24]],p=pick(pares,s+k),a=p[0],b=p[1],h=Math.sqrt(a*a+b*b);
+    return {modeloId:`pitagoras-${mod}`,text:`Um triângulo retângulo possui catetos de ${a} cm e ${b} cm. Qual é a medida da hipotenusa?`,
+      ...alternativas(fmt(h),[fmt(a+b),fmt(a*b),fmt(Math.abs(a-b)),fmt(h+2)],s),visual:tri(a,b,"?")};
+  }
+  if(descriptor==="D051_M"){
+    const ang=pick([30,45,60],s+k),hip=10+(s%5)*2,seno=ang===30?.5:ang===45?Math.SQRT1_2:Math.sqrt(3)/2,op=hip*seno;
+    return {modeloId:`trig-${mod}`,text:`Em um triângulo retângulo, a hipotenusa mede ${hip} cm e um ângulo agudo mede ${ang}°. Qual é aproximadamente o cateto oposto?`,
+      ...alternativas(fmt(op),[fmt(hip-op),fmt(hip),fmt(op+2),fmt(Math.max(1,op-2))],s),visual:tri("adj.","?",hip)};
+  }
+  if(descriptor==="D057_M"){
+    const a=5+s%9,b=3+(s+k)%7,p=2*(a+b);
+    return {modeloId:`perimetro-${mod}`,text:`Um terreno retangular mede ${a} m por ${b} m. Quantos metros de cerca são necessários para contorná-lo?`,
+      ...alternativas(p,[a*b,a+b,2*a+b,a+2*b],s)};
+  }
+  if(descriptor==="D058_M"){
+    const a=6+s%8,b=4+(s+k)%7,A=a*b;
+    return {modeloId:`area-${mod}`,text:`O piso retangular de uma sala mede ${a} m por ${b} m. Qual é sua área?`,
+      ...alternativas(`${A} m²`,[`${2*(a+b)} m²`,`${a+b} m²`,`${A+a} m²`,`${A-b} m²`],s)};
+  }
+  if(descriptor==="D063_M"||descriptor==="D064_M"){
+    const v=[12+s%8,18+(s+k)%8,10+(s+2*k)%8,22+(s+3*k)%8];
+    if(descriptor==="D063_M"){
+      const idx=v.indexOf(Math.max(...v)),labs=["A","B","C","D"];
+      return {modeloId:`grafico-corresp-${mod}`,text:"Observe o gráfico. Qual categoria apresenta o maior valor?",
+        ...alternativas(labs[idx],labs.filter(x=>x!==labs[idx]),s),visual:barras(v,labs,"Resultados")};
+    }
+    const soma=v.reduce((a,b)=>a+b,0);
+    return {modeloId:`grafico-info-${mod}`,text:"O gráfico apresenta dados de quatro grupos. Qual é o total registrado?",
+      ...alternativas(soma,[soma-10,soma+10,Math.max(...v),v[0]+v[1]],s),visual:barras(v,["A","B","C","D"],"Quantidade")};
+  }
+  if(descriptor==="D065_M"){
+    const a=2+s%6,b=3+(s+k)%6,t=a+b;
+    return {modeloId:`probabilidade-${mod}`,text:`Uma urna contém ${a} bolas vermelhas e ${b} azuis. Qual é a probabilidade de retirar uma vermelha?`,
+      ...alternativas(`${a}/${t}`,[`${b}/${t}`,`${a}/${b}`,`${t}/${a}`,`1/${t}`],s)};
+  }
+  if(descriptor==="D071_M"){
+    const m=pick([-3,-2,-1,1,2,3],s+k),b=-2+(s+k)%5;
+    return {modeloId:`crescimento-${mod}`,text:"Observe o gráfico da função. Ela é:",
+      ...alternativas(m>0?"crescente":"decrescente",[m>0?"decrescente":"crescente","constante","periódica","sem domínio"],s),
+      visual:plano({retas:[{m,b}]})};
+  }
+  if(descriptor==="D074_M"){
+    const base=pick([2,3,4,5],s+k);
+    return {modeloId:`exp-rep-${mod}`,text:`Qual expressão representa uma função exponencial de base ${base}?`,
+      ...alternativas(`f(x)=${base}^x`,[`f(x)=${base}x`,`f(x)=x^${base}`,`f(x)=x+${base}`,`f(x)=${base}-x`],s)};
+  }
+  if(descriptor==="D076_M"){
+    const a=1+s%6,b=2+(s+k)%7;
+    return {modeloId:`polinomio-${mod}`,text:`Quais são as raízes de P(x)=(x-${a})(x-${b})?`,
+      ...alternativas(`${a} e ${b}`,[`${-a} e ${-b}`,`${a+b} e ${a*b}`,`0 e ${a+b}`,`${a} e ${-b}`],s)};
+  }
+  if(descriptor==="D078_M"||descriptor==="D145_M"){
+    const m=pick([-3,-2,-1,1,2,3],s+k),b=-2+(s+k)%5,eq=`y=${m}x${b>=0?"+":""}${b}`;
+    return {modeloId:`reta-grafico-${mod}`,text:descriptor==="D078_M"?"Observe o gráfico. Qual expressão representa a reta?":`Considere f(x)=${m}x${b>=0?"+":""}${b}. Qual afirmação está correta?`,
+      ...(descriptor==="D078_M"?alternativas(eq,[`y=${b}x+${m}`,`y=${m+1}x${b>=0?"+":""}${b}`,`y=${m}x`,`y=x${b>=0?"+":""}${b}`],s):
+      alternativas(m>0?"É uma reta crescente.":"É uma reta decrescente.",[m>0?"É uma reta decrescente.":"É uma reta crescente.","É uma parábola.","É exponencial.","É horizontal."],s)),
+      visual:plano({retas:[{m,b}]})};
+  }
+  if(descriptor==="D080_M"){
+    const base=pick([2,3,10],s+k);
+    return {modeloId:`log-${mod}`,text:`A função f(x)=log${base}(x) é inversa de qual função?`,
+      ...alternativas(`f(x)=${base}^x`,[`f(x)=${base}x`,`f(x)=x^${base}`,`f(x)=x+${base}`,"f(x)=1/x"],s)};
+  }
+  if(descriptor==="D082_M"){
+    return {modeloId:`situacao-grafico-${mod}`,text:"A altura de uma bola lançada para cima aumenta, atinge um máximo e depois diminui. Qual gráfico representa melhor essa situação?",
+      ...alternativas("Uma parábola com concavidade para baixo",["Uma reta crescente","Uma reta decrescente","Uma função constante","Uma parábola com concavidade para cima"],s)};
+  }
+  if(descriptor==="D085_M"){
+    const m=pick([-5,-4,-3,-2,-1,1,2,3,4,5],s+k),b=-6+(s+2*k)%13;
+    const eq=`y=${m}x${b>=0?"+":""}${b}`;
+    if(mod===0){
+      return {modeloId:`coef-angular-${mod}`,text:`Na equação ${eq}, qual é o coeficiente angular da reta?`,
+        ...alternativas(m,[b,-m,m+b,1],s),visual:plano({retas:[{m,b}]})};
+    }
+    if(mod===1){
+      return {modeloId:`coef-linear-${mod}`,text:`Na equação ${eq}, qual é o coeficiente linear, isto é, o valor em que a reta intercepta o eixo y?`,
+        ...alternativas(b,[m,-b,m+b,0],s),visual:plano({retas:[{m,b}]})};
+    }
+    if(mod===2){
+      const resposta=m>0?"A reta é crescente":"A reta é decrescente";
+      return {modeloId:`sentido-reta-${mod}`,text:`Considere a reta ${eq}. O que o sinal do coeficiente angular indica sobre o comportamento da reta?`,
+        ...alternativas(resposta,[m>0?"A reta é decrescente":"A reta é crescente","A reta é horizontal","A reta é vertical","A reta passa necessariamente pela origem"],s),visual:plano({retas:[{m,b}]})};
+    }
+    if(mod===3){
+      const b2=b===0?3:b+2;
+      return {modeloId:`paralelismo-${mod}`,text:`A reta r tem equação ${eq}. Qual das equações abaixo representa uma reta paralela a r?`,
+        ...alternativas(`y=${m}x${b2>=0?"+":""}${b2}`,[`y=${-m}x${b2>=0?"+":""}${b2}`,`y=${b}x${m>=0?"+":""}${m}`,`y=${m+1}x${b>=0?"+":""}${b}`,`y=${b}`],s),visual:plano({retas:[{m,b},{m,b:b2}]})};
+    }
+    if(mod===4){
+      const x1=1+(s+k)%4,x2=x1+2,y1=m*x1+b,y2=m*x2+b;
+      return {modeloId:`taxa-variacao-${mod}`,text:`Uma reta passa pelos pontos (${x1}, ${y1}) e (${x2}, ${y2}). Qual é sua taxa de variação, isto é, seu coeficiente angular?`,
+        ...alternativas(m,[m+1,m-1,y2-y1,x2-x1],s),visual:plano({pontos:[{x:x1,y:y1,label:"A"},{x:x2,y:y2,label:"B"}],retas:[{m,b}]})};
+    }
+    return {modeloId:`interpretacao-reta-${mod}`,text:`No gráfico da função ${eq}, a cada aumento de 1 unidade em x, de quanto varia o valor de y?`,
+      ...alternativas(m,[b,-m,m+b,1],s),visual:plano({retas:[{m,b}]})};
+  }
+  if(descriptor==="D086_M"){
+    const a=1+s%4,b=1+(s+k)%5,rows=[0,1,2,3].map(x=>[x,a*x+b]);
+    return {modeloId:`tabela-funcao-${mod}`,text:"Observe a tabela. Qual função representa a relação entre x e y?",
+      ...alternativas(`y=${a}x+${b}`,[`y=${b}x+${a}`,`y=${a+1}x+${b}`,`y=${a}x`,`y=x+${b}`],s),visual:tabela(["x","y"],rows)};
+  }
+  if(descriptor==="D087_M"){
+    const r1=1+s%6,r2=2+(s+k)%7,S=r1+r2,P=r1*r2;
+    return {modeloId:`eq2-${mod}`,text:`Quais são as soluções de x²-${S}x+${P}=0?`,
+      ...alternativas(`${r1} e ${r2}`,[`${-r1} e ${-r2}`,`${S} e ${P}`,`0 e ${S}`,`${r1} e ${-r2}`],s)};
+  }
+  if(descriptor==="D088_M"){
+    const ini=pick([50,100,200,500],s+k),f=pick([2,3],s+2*k),n=2+(s+k)%5,total=ini*Math.pow(f,n);
+    return {modeloId:`exp-problema-${mod}`,text:`Uma população inicial de ${ini} unidades é multiplicada por ${f} a cada período. Qual será a quantidade após ${n} períodos?`,
+      ...alternativas(total,[ini*f*n,ini+f*n,total/f,total+ini],s)};
+  }
+  if(descriptor==="D096_M"){
+    const a1=2+s%8,r=2+(s+k)%6,n=5+(s+k)%6,an=a1+(n-1)*r;
+    return {modeloId:`pa-${mod}`,text:`Em uma PA, a₁=${a1} e r=${r}. Qual é o ${n}º termo?`,
+      ...alternativas(an,[a1+n*r,a1*r,an-r,an+r],s)};
+  }
+  if(descriptor==="D097_M"){
+    // D097_M — famílias pedagógicas reais. Alterar números NÃO cria nova família.
+    // As três primeiras famílias partem de tarefas presentes no material estruturado SEDU/RPE.
+    const familia=k%7;
+
+    if(familia===0){
+      const sequencias=[
+        {seq:[4,8,16,32,64],q:2},
+        {seq:[3,9,27,81,243],q:3},
+        {seq:[5,10,20,40,80],q:2},
+        {seq:[2,6,18,54,162],q:3}
+      ];
+      const z=pick(sequencias,s+k);
+      return {
+        familiaId:"PG_RAZAO_SEQUENCIA",
+        modeloId:"pg-razao-sequencia",
+        fonteTipo:"MATERIAL_ESTRUTURADO",
+        fonteReferencia:REFERENCIAS_BANCO.RPE_3SERIE_2TRI_2026,
+        text:`A sequência (${z.seq.join(", ")}, ...) é uma progressão geométrica. Qual é a razão dessa PG?`,
+        ...alternativas(z.q,[z.q+1,z.q-1,z.q*2,z.seq[1]-z.seq[0]],s)
+      };
+    }
+
+    if(familia===1){
+      const dados=[
+        {a1:-3,q:-3,n:5},
+        {a1:2,q:3,n:5},
+        {a1:4,q:2,n:6},
+        {a1:5,q:2,n:5}
+      ];
+      const z=pick(dados,s+k);
+      const correta=z.a1*Math.pow(z.q,z.n-1);
+      return {
+        familiaId:"PG_TERMO_GERAL",
+        modeloId:"pg-termo-geral",
+        fonteTipo:"MATERIAL_ESTRUTURADO",
+        fonteReferencia:REFERENCIAS_BANCO.RPE_3SERIE_2TRI_2026,
+        text:`Uma PG tem primeiro termo ${z.a1} e razão ${z.q}. Qual é o ${z.n}º termo?`,
+        ...alternativas(correta,[z.a1*Math.pow(z.q,z.n),z.a1*z.q*z.n,z.a1*Math.pow(z.q,z.n-2),z.a1+z.q*z.n],s)
+      };
+    }
+
+    if(familia===2){
+      const dados=[
+        {a1:-5,q:-3,n:8},
+        {a1:2,q:2,n:6},
+        {a1:3,q:2,n:5},
+        {a1:1,q:3,n:5}
+      ];
+      const z=pick(dados,s+k);
+      const correta=z.q===1?z.a1*z.n:z.a1*(Math.pow(z.q,z.n)-1)/(z.q-1);
+      return {
+        familiaId:"PG_SOMA_FINITA",
+        modeloId:"pg-soma-finita",
+        fonteTipo:"MATERIAL_ESTRUTURADO",
+        fonteReferencia:REFERENCIAS_BANCO.RPE_3SERIE_2TRI_2026,
+        text:`Em uma PG, a₁=${z.a1} e q=${z.q}. Qual é a soma dos ${z.n} primeiros termos?`,
+        ...alternativas(correta,[correta+z.a1,correta-z.a1,z.a1*Math.pow(z.q,z.n-1),z.a1*z.q*z.n],s)
+      };
+    }
+
+    if(familia===3){
+      const a1=pick([2,3,4,5],s+k),q=pick([2,3,4],s*2+k),a2=a1*q;
+      const a3=a2*q;
+      return {
+        familiaId:"PG_IDENTIFICAR_TERMO_FALTANTE",
+        modeloId:"pg-termo-faltante",
+        fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; item equivalente produzido para diversificação pedagógica.`,
+        text:`A sequência (${a1}, ${a2}, __, ${a3*q}, ...) é uma PG. Qual número completa corretamente a sequência?`,
+        ...alternativas(a3,[a2+q,a2*q*q,a1+a2,a3+q],s)
+      };
+    }
+
+    if(familia===4){
+      const q=pick([2,3,4],s+k),a1=pick([1,2,3,5],s*3+k),a2=a1*q;
+      const a3=a2*q;
+      const correta=`${a1}, ${a2}, ${a3}`;
+      return {
+        familiaId:"PG_RECONHECER_SEQUENCIA",
+        modeloId:"pg-reconhecer-sequencia",
+        fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; item equivalente produzido para diversificação pedagógica.`,
+        text:`Qual das sequências abaixo é uma progressão geométrica de razão ${q}?`,
+        ...alternativas(correta,[`${a1}, ${a1+q}, ${a1+2*q}`,`${a1}, ${a2}, ${a3+q}`,`${a1}, ${a1*q+1}, ${(a1*q+1)*q}`,`${a1}, ${a1+q}, ${(a1+q)*q}`],s)
+      };
+    }
+
+    if(familia===5){
+      const inicial=pick([50,100,200,250],s+k),q=pick([2,3],s*2+k),periodos=pick([3,4,5],s*3+k);
+      const correta=inicial*Math.pow(q,periodos);
+      return {
+        familiaId:"PG_CONTEXTO_CRESCIMENTO",
+        modeloId:"pg-contexto-crescimento",
+        fonteTipo:"EQUIVALENTE",
+        fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; situação equivalente contextualizada.`,
+        text:`Uma cultura de microrganismos começa com ${inicial} unidades e, a cada período, sua quantidade é multiplicada por ${q}. Mantido esse padrão, quantas unidades haverá após ${periodos} períodos?`,
+        ...alternativas(correta,[inicial*q*periodos,inicial*Math.pow(q,periodos-1),inicial+q*periodos,inicial*Math.pow(q,periodos+1)],s)
+      };
+    }
+
+    const a1=pick([2,3,4,5],s+k),q=pick([2,3],s*2+k),n=pick([4,5,6],s*3+k);
+    const an=a1*Math.pow(q,n-1);
+    return {
+      familiaId:"PG_DETERMINAR_RAZAO_POR_TERMOS",
+      modeloId:"pg-razao-por-termos",
+      fonteTipo:"EQUIVALENTE",
+      fonteReferencia:`${REFERENCIAS_BANCO.MATRIZES_2026}; item equivalente produzido para diversificação pedagógica.`,
+      text:`Em uma PG, a₁=${a1} e a${n}=${an}. Sabendo que a razão é positiva e inteira, qual é o valor de q?`,
+      ...alternativas(q,[q+1,Math.max(1,q-1),q*2,n],s)
+    };
+  }
+
+  if(descriptor==="D111_M"){
+    if(mod%3===0) return {modeloId:"planificacao-cubo",text:"Observe a planificação. Qual sólido é formado ao dobrá-la?",
+      ...alternativas("Cubo",["Cilindro","Cone","Prisma triangular","Pirâmide"],s),visual:planCubo()};
+    if(mod%3===1) return {modeloId:"reconhece-cilindro",text:"O sólido possui duas bases circulares paralelas e superfície lateral curva. Qual é esse sólido?",
+      ...alternativas("Cilindro",["Cone","Cubo","Pirâmide","Prisma triangular"],s),visual:cilindro()};
+    return {modeloId:"reconhece-cubo",text:"O sólido apresentado possui seis faces quadradas congruentes. Qual é seu nome?",
+      ...alternativas("Cubo",["Prisma triangular","Cilindro","Cone","Pirâmide"],s),visual:cubo()};
+  }
+  if(descriptor==="D119_M"){
+    const a=3+s%5,f=2+(s+k)%3,b=4+(s*2+k)%6,r=b*f;
+    return {modeloId:`semelhanca-${mod}`,text:`Dois triângulos semelhantes têm lados correspondentes ${a} cm e ${a*f} cm. Se outro lado do menor mede ${b} cm, quanto mede o correspondente no maior?`,
+      ...alternativas(r,[b+f,r+f,r-f,a*f],s)};
+  }
+  if(descriptor==="D124_M"){
+    const m=1+s%4,x1=1+(s+k)%3,y1=2+(s*2+k)%6,b=y1-m*x1,eq=`y=${m}x${b>=0?"+":""}${b}`;
+    return {modeloId:`equacao-reta-${mod}`,text:`Uma reta passa pelo ponto (${x1}, ${y1}) e tem coeficiente angular ${m}. Qual é sua equação?`,
+      ...alternativas(eq,[`y=${x1}x+${y1}`,`y=${m+1}x${b>=0?"+":""}${b}`,`y=${m}x+${y1}`,`y=x${b>=0?"+":""}${b}`],s),
+      visual:plano({pontos:[{x:x1,y:y1,label:"A"}],retas:[{m,b}]})};
+  }
+  if(descriptor==="D125_M"){
+    const V=6+2*(s%4),A=V+3+(k%5),F=2-V+A;
+    return {modeloId:`euler-${mod}`,text:`Um poliedro possui ${V} vértices e ${A} arestas. Pela relação de Euler V - A + F = 2, quantas faces possui?`,
+      ...alternativas(F,[F-1,F+1,V,A],s)};
+  }
+  if(descriptor==="D126_M"){
+    const alvo=pick(["seno","cosseno"],s+k);
+    return {modeloId:`trig-grafico-${mod}`,text:`Uma função periódica oscila regularmente entre -1 e 1. Qual função pode apresentar esse comportamento?`,
+      ...alternativas(alvo==="seno"?"f(x)=sen(x)":"f(x)=cos(x)",["f(x)=2^x","f(x)=x²","f(x)=3x+1","f(x)=log(x)"],s)};
+  }
+  if(descriptor==="D127_M"||descriptor==="D154_M"){
+    const x=1+s%4,y=1+(s+k)%5,m1=1,b1=y-x,m2=-1,b2=y+x;
+    return {modeloId:`sistema-grafico-${mod}`,text:descriptor==="D127_M"?`Duas retas se intersectam em (${x}, ${y}). Esse ponto representa:`:"Observe as duas retas do sistema. O ponto de interseção representa:",
+      ...alternativas("a solução que satisfaz simultaneamente as duas equações",["o coeficiente angular das duas retas","o valor máximo do sistema","o produto das equações","um ponto que satisfaz apenas uma equação"],s),
+      visual:plano({pontos:[{x,y,label:"P"}],retas:[{m:m1,b:b1},{m:m2,b:b2}]})};
+  }
+  if(descriptor==="D129_M"){
+    if(mod%3===0){
+      const l=2+s%7,V=l**3;
+      return {modeloId:"volume-cubo",text:`Um reservatório cúbico possui aresta interna de ${l} m. Qual é seu volume?`,
+        ...alternativas(`${V} m³`,[`${l*l} m³`,`${6*l*l} m³`,`${3*l} m³`,`${V+l} m³`],s),visual:cubo()};
+    }
+    if(mod%3===1){
+      const r=2+s%5,h=4+(s+k)%7,V=3.14*r*r*h;
+      return {modeloId:"volume-cilindro",text:`Um cilindro possui raio ${r} cm e altura ${h} cm. Use π≈3,14. Qual é aproximadamente o volume?`,
+        ...alternativas(`${fmt(V)} cm³`,[`${fmt(3.14*r*h)} cm³`,`${fmt(2*3.14*r*h)} cm³`,`${fmt(3.14*r*r)} cm³`,`${fmt(V/2)} cm³`],s),visual:cilindro()};
+    }
+    const l=3+s%6,A=6*l*l;
+    return {modeloId:"area-cubo",text:`Um cubo possui aresta de ${l} cm. Qual é sua área total?`,
+      ...alternativas(`${A} cm²`,[`${l**3} cm²`,`${l*l} cm²`,`${4*l*l} cm²`,`${6*l} cm²`],s),visual:cubo()};
+  }
+  if(descriptor==="D132_M"){
+    const taxa=2+s%8,fixa=5+(s+k)%15,x=3+(s*2+k)%8,total=taxa*x+fixa;
+    return {modeloId:`funcao1-${mod}`,text:`Um serviço cobra taxa fixa de R$ ${fixa} mais R$ ${taxa} por unidade. Qual o valor para ${x} unidades?`,
+      ...alternativas(total,[taxa*x,fixa+x,total+taxa,total-taxa],s)};
+  }
+  if(descriptor==="D133_M"){
+    const h=1+s%5,kmax=4+(s+k)%8;
+    return {modeloId:`maximo-${mod}`,text:`Uma parábola com concavidade para baixo tem vértice em (${h}, ${kmax}). Qual é o valor máximo da função?`,
+      ...alternativas(kmax,[h,-kmax,h+kmax,0],s)};
+  }
+  if(descriptor==="D155_M"){
+    const h=-3+(s+k)%7,kk=-3+(s*2+k)%7,r=2+(s+k)%5;
+    const eq=`(x${h>=0?"-":"+"}${Math.abs(h)})²+(y${kk>=0?"-":"+"}${Math.abs(kk)})²=${r*r}`;
+    return {modeloId:`circunferencia-${mod}`,text:`Uma circunferência tem centro C(${h}, ${kk}) e raio ${r}. Qual é sua equação?`,
+      ...alternativas(eq,[`(x-${r})²+(y-${r})²=${h*h+kk*kk}`,`x²+y²=${r}`,`(x${h>=0?"+":"-"}${Math.abs(h)})²+(y${kk>=0?"+":"-"}${Math.abs(kk)})²=${r*r}`,`x+y=${r*r}`],s),
+      visual:plano({pontos:[{x:h,y:kk,label:"C"}]})};
+  }
+  if(descriptor==="D157_M"){
+    const a=1+s%4,b=2+(s+k)%5,c=2+(s*2+k)%5,d=1+(s*3+k)%4;
+    const det=a*d-b*c;
+    return {modeloId:`matriz-det-${mod}`,text:`Considere a matriz A = [[${a}, ${b}], [${c}, ${d}]]. Qual é o determinante de A?`,
+      ...alternativas(det,[a*d+b*c,a+b+c+d,b*c-a*d,a*d],s),visual:tabela(["","C1","C2"],[["L1",a,b],["L2",c,d]])};
+  }
+
+  throw new Error(`Descritor ${descriptor} ainda não possui gerador configurado.`);
 }
 
 function assinatura(q){
-  return hash(
-    `${q.descriptor}|${q.level}|${norm(q.text)}|${q.options.map(norm).join("|")}`
-  );
+  return hash([
+    q.descriptor||"",
+    q.level||"",
+    norm(q.text),
+    (q.options||[]).map(norm).sort().join("|"),
+    norm(q.visual?.svg||q.visual||"")
+  ].join("|||"));
 }
-
+function questaoValida(q){
+  if(!q||!String(q.text||"").trim()) return false;
+  if(!Array.isArray(q.options)||q.options.length<4) return false;
+  if(new Set(q.options.map(norm)).size!==q.options.length) return false;
+  return Number.isInteger(q.correct)&&q.correct>=0&&q.correct<q.options.length;
+}
 function lerHist(){
   try{
-    const h=JSON.parse(localStorage.getItem(HIST_KEY)||"{}");
-
-    return {
-      assinaturas:Array.isArray(h.assinaturas)?h.assinaturas:[],
-      modelos:Array.isArray(h.modelos)?h.modelos:[]
-    };
-  }catch{
-    return {assinaturas:[],modelos:[]};
-  }
+    const x=JSON.parse(localStorage.getItem(HIST_KEY)||"{}");
+    return {assinaturas:Array.isArray(x.assinaturas)?x.assinaturas:[],modelos:Array.isArray(x.modelos)?x.modelos:[]};
+  }catch(e){ return {assinaturas:[],modelos:[]}; }
 }
-
 function salvarHist(h){
   try{
-    localStorage.setItem(
-      HIST_KEY,
-      JSON.stringify({
-        assinaturas:[...new Set(h.assinaturas||[])].slice(-20000),
-        modelos:[...new Set(h.modelos||[])].slice(-10000)
-      })
-    );
-  }catch{}
+    localStorage.setItem(HIST_KEY,JSON.stringify({
+      assinaturas:[...new Set(h.assinaturas||[])].slice(-12000),
+      modelos:[...new Set(h.modelos||[])].slice(-12000),
+      atualizadoEm:new Date().toISOString()
+    }));
+  }catch(e){}
 }
-
 function rodada(){
   try{
-    const r=Number(localStorage.getItem(ROUND_KEY)||0)+1;
-    localStorage.setItem(ROUND_KEY,String(r));
-    return r;
-  }catch{
-    return Date.now()%99999;
-  }
+    const n=Number(localStorage.getItem(ROUND_KEY)||0)+1;
+    localStorage.setItem(ROUND_KEY,String(n));
+    return n;
+  }catch(e){ return Math.floor(Date.now()/1000); }
 }
-
-function niveisDistrib(dist,quantidade){
-  const abb=Math.max(0,Number(dist?.abb||0));
-  const basico=Math.max(0,Number(dist?.basico||0));
-  const prof=Math.max(0,Number(dist?.proficiente||0));
-  const av=Math.max(0,Number(dist?.avancado||0));
-
-  const soma=abb+basico+prof+av||100;
-
-  const faixas=[
-    ["ABAIXO DO BÁSICO",abb/soma],
-    ["BÁSICO",basico/soma],
-    ["PROFICIENTE",prof/soma],
-    ["AVANÇADO",av/soma]
-  ];
-
-  const arr=[];
-
-  for(let i=0;i<quantidade;i++){
-    const p=(i+.5)/quantidade;
-    let acumulado=0;
-    let escolhido="BÁSICO";
-
-    for(const [nivel,fracao] of faixas){
-      acumulado+=fracao;
-      if(p<=acumulado){
-        escolhido=nivel;
-        break;
-      }
-    }
-
-    arr.push(escolhido);
-  }
-
-  return arr;
-}
-
-function filaDescritores(validos,config,quantidade){
-  const pesos={};
-
-  validos.forEach(d=>{
-    pesos[d]=clamp(Number(config?.[d]?.peso||1),1,4);
-  });
-
-  const expandida=[];
-
-  validos.forEach(d=>{
-    for(let i=0;i<pesos[d];i++){
-      expandida.push(d);
-    }
-  });
-
+function filaDescritores(validos,cfg,qtd){
+  const pesos=Object.fromEntries(validos.map(d=>[d,clamp(Number(cfg[d]?.peso||1),1,4)]));
+  const cont=Object.fromEntries(validos.map(d=>[d,0]));
   const fila=[];
-
-  for(let i=0;i<quantidade;i++){
-    fila.push(expandida[i%expandida.length]);
+  for(const d of validos){
+    if(fila.length>=qtd) break;
+    fila.push(d); cont[d]++;
   }
-
+  while(fila.length<qtd){
+    const ultimo=fila[fila.length-1];
+    const cands=validos.map(d=>({d,idx:cont[d]/pesos[d],c:cont[d]}))
+      .sort((a,b)=>a.idx-b.idx||a.c-b.c||validos.indexOf(a.d)-validos.indexOf(b.d));
+    const d=(cands.find(x=>x.d!==ultimo)||cands[0]).d;
+    fila.push(d); cont[d]++;
+  }
   return {fila,pesos};
 }
-
-function solucaoOrientada(descriptor,q){
-  const correta=q.options?.[q.correct];
-
-  const guias={
-    "D009_M":"Observe a posição do número em relação ao zero e às marcações da reta. Compare numerador e denominador quando a representação for fracionária.",
-    "D013_M":"Converta entre fração, decimal e porcentagem para reconhecer representações equivalentes.",
-    "D033_M":"Compare os valores aproximados dos irracionais com inteiros e racionais próximos para localizar o ponto correto na reta.",
-    "D038_M":"Transforme a porcentagem em forma decimal e multiplique pelo valor total.",
-    "D039_M":"Monte uma proporção entre as grandezas correspondentes e resolva a igualdade entre razões.",
-    "D042_M":"Multiplique a quantidade de possibilidades independentes de cada etapa.",
-    "D043_M":"Leia primeiro a coordenada x no eixo horizontal e depois a coordenada y no eixo vertical.",
-    "D049_M":"Identifique os elementos do triângulo retângulo e aplique Pitágoras ou as relações métricas adequadas.",
-    "D051_M":"Escolha seno, cosseno ou tangente conforme os lados conhecidos e o lado procurado.",
-    "D057_M":"Some as medidas de todos os lados da figura.",
-    "D058_M":"Decomponha a figura quando necessário e aplique a fórmula de área correspondente.",
-    "D063_M":"Compare categorias e valores da tabela com alturas ou posições representadas no gráfico.",
-    "D064_M":"Localize a informação solicitada no gráfico ou tabela e realize a operação exigida pelo problema.",
-    "D065_M":"Calcule a razão entre casos favoráveis e total de casos possíveis.",
-    "D071_M":"Observe onde o gráfico cresce, decresce e cruza o eixo x para identificar comportamento e zeros.",
-    "D074_M":"Relacione a expressão exponencial ao comportamento do gráfico, observando base, crescimento ou decrescimento.",
-    "D076_M":"Iguale cada fator a zero; as soluções obtidas são as raízes.",
-    "D078_M":"Compare coeficiente angular, coeficiente linear e inclinação do gráfico.",
-    "D080_M":"Use a relação entre função logarítmica e exponencial, observando domínio e crescimento.",
-    "D082_M":"Traduza o texto em comportamento gráfico: crescimento, decrescimento, máximo, mínimo ou constância.",
-    "D085_M":"Na forma y = mx + b, m é o coeficiente angular e b é o coeficiente linear. Para dois pontos, use m=(y₂−y₁)/(x₂−x₁).",
-    "D086_M":"Calcule a variação de y quando x aumenta uma unidade e use um par da tabela para determinar a expressão.",
-    "D087_M":"Organize a equação do 2º grau e resolva por fatoração ou fórmula de Bhaskara.",
-    "D088_M":"Identifique valor inicial, fator de multiplicação e quantidade de períodos.",
-    "D096_M":"Em uma PA, identifique a razão e use an=a1+(n−1)r.",
-    "D097_M":"Em uma PG, determine a razão q e use an=a1·q^(n−1).",
-    "D111_M":"Compare faces, bases e superfícies para relacionar o sólido à planificação ou vista.",
-    "D119_M":"Verifique a proporcionalidade entre lados correspondentes.",
-    "D124_M":"Calcule a inclinação e use y=mx+b ou a forma ponto-inclinação.",
-    "D125_M":"Use a relação de Euler V−A+F=2.",
-    "D126_M":"Observe período, amplitude, zeros e pontos característicos do gráfico.",
-    "D127_M":"A solução corresponde ao ponto de interseção das retas.",
-    "D129_M":"Para prismas e cilindros use V=Ab·h; para área total, some as áreas das faces ou superfícies.",
-    "D132_M":"Modele a situação por f(x)=ax+b e substitua os dados.",
-    "D133_M":"Use xv=−b/(2a) e yv=f(xv) para encontrar máximo ou mínimo.",
-    "D145_M":"Na função y=ax+b, a determina a inclinação e b indica a interseção com o eixo y.",
-    "D154_M":"Relacione cada equação do sistema a uma reta e interprete a solução como interseção.",
-    "D155_M":"Use (x−a)²+(y−b)²=r².",
-    "D157_M":"Organize coeficientes e termos independentes e resolva o sistema ou matriz equivalente."
+function niveisDistrib(dis,qtd){
+  const v={
+    abb:Number(dis?.abb??40), basico:Number(dis?.basico??35),
+    proficiente:Number(dis?.proficiente??25), avancado:Number(dis?.avancado??0)
   };
-
-  return `${guias[descriptor]||"Resolva utilizando a habilidade indicada pelo descritor."} Resposta correta: ${correta}.`;
-}
-
-function gerarGenerica(descriptor,level,seed,variante){
-  const s=Math.abs(Number(seed)||1);
-  const v=Math.abs(Number(variante)||0);
-
-  switch(descriptor){
-
-    case "D009_M":{
-      const den=pick([2,3,4,5,8,10],s+v);
-      const num=1+(s+v)%Math.max(1,den-1);
-      const valor=num/den;
-      const ops=[
-        `${num}/${den}`,
-        `${num+1}/${den}`,
-        `${Math.max(0,num-1)}/${den}`,
-        `${den}/${num}`,
-        `${num}/${den+1}`
-      ];
-      return {
-        text:`Na reta numérica, qual fração corresponde ao número decimal ${fmt(valor)}?`,
-        options:shuffle(ops,s),
-        correct:shuffle(ops,s).indexOf(`${num}/${den}`),
-        modeloId:`reta-racional-${den}-${v%50}`
-      };
-    }
-
-    case "D013_M":{
-      const p=pick([10,20,25,30,40,50,60,75,80],s+v);
-      const correta=fmt(p/100);
-      const a=alternativas(correta,[fmt(p/10),String(p),fmt((100-p)/100),fmt(p/1000)],s);
-      return {
-        text:`Qual representação decimal é equivalente a ${p}%?`,
-        ...a,
-        modeloId:`racional-representacao-${p}-${v%30}`
-      };
-    }
-
-    case "D033_M":{
-      const n=pick([2,3,5,6,7,8,10,11,13],s+v);
-      const raiz=Math.sqrt(n);
-      const correta=`entre ${Math.floor(raiz)} e ${Math.ceil(raiz)}`;
-      const ops=[
-        correta,
-        `entre ${Math.floor(raiz)+1} e ${Math.ceil(raiz)+1}`,
-        `entre ${Math.max(0,Math.floor(raiz)-1)} e ${Math.floor(raiz)}`,
-        `exatamente em ${Math.round(raiz)}`,
-        `maior que ${Math.ceil(raiz)+2}`
-      ];
-      const sh=shuffle(ops,s);
-      return {
-        text:`Na reta numérica, √${n} está localizado`,
-        options:sh,
-        correct:sh.indexOf(correta),
-        modeloId:`irracional-${n}-${v%40}`
-      };
-    }
-
-    case "D038_M":{
-      const total=pick([120,160,200,240,300,400,500,600,800],s+v);
-      const pct=pick([10,15,20,25,30,35,40,50],s*3+v);
-      const correta=total*pct/100;
-      const a=alternativas(correta,[total*(pct+10)/100,total*(pct-5)/100,total-pct,total+pct],s);
-      return {
-        text:`Em uma ação escolar, ${pct}% de ${total} participantes correspondem a quantas pessoas?`,
-        ...a,
-        modeloId:`porcentagem-${pct}-${total}-${v%20}`
-      };
-    }
-
-    case "D039_M":{
-      const a1=pick([2,3,4,5,6],s+v);
-      const b1=pick([6,8,10,12,15,18],s*2+v);
-      const a2=pick([4,5,6,8,10],s*5+v);
-      const correta=b1*a2/a1;
-      const a=alternativas(correta,[correta+a1,correta-a1,b1+a2,b1*a1],s);
-      return {
-        text:`Se ${a1} unidades de uma grandeza correspondem a ${b1} unidades de outra, mantendo-se a proporcionalidade, ${a2} unidades correspondem a quanto?`,
-        ...a,
-        modeloId:`proporcao-${a1}-${b1}-${a2}-${v%30}`
-      };
-    }
-
-    case "D042_M":{
-      const x=pick([2,3,4,5,6],s+v);
-      const y=pick([2,3,4,5],s*2+v);
-      const z=pick([2,3,4],s*3+v);
-      const correta=x*y*z;
-      const a=alternativas(correta,[x+y+z,x*y+z,x+y*z,x*y],s);
-      return {
-        text:`Uma escolha é formada por ${x} opções na primeira etapa, ${y} na segunda e ${z} na terceira. Quantas escolhas diferentes são possíveis?`,
-        ...a,
-        modeloId:`contagem-${x}-${y}-${z}-${v%20}`
-      };
-    }
-
-    case "D043_M":{
-      const x=pick([-5,-4,-3,-2,-1,1,2,3,4,5],s+v);
-      const y=pick([-5,-4,-3,-2,-1,1,2,3,4,5],s*3+v);
-      const correta=`(${x}, ${y})`;
-      const ops=[
-        correta,
-        `(${y}, ${x})`,
-        `(${-x}, ${y})`,
-        `(${x}, ${-y})`,
-        `(${-x}, ${-y})`
-      ];
-      const sh=shuffle(ops,s);
-      return {
-        text:`Um ponto P possui abscissa ${x} e ordenada ${y}. Quais são suas coordenadas?`,
-        options:sh,
-        correct:sh.indexOf(correta),
-        modeloId:`plano-ponto-${x}-${y}-${v%50}`
-      };
-    }
-
-    case "D049_M":{
-      const trip=pick([[3,4,5],[5,12,13],[6,8,10],[8,15,17],[7,24,25]],s+v);
-      const correta=trip[2];
-      const a=alternativas(correta,[trip[0]+trip[1],trip[2]-1,trip[2]+1,trip[0]*trip[1]],s);
-      return {
-        text:`Um triângulo retângulo possui catetos medindo ${trip[0]} cm e ${trip[1]} cm. Quanto mede a hipotenusa?`,
-        ...a,
-        modeloId:`pitagoras-${trip.join("-")}-${v%30}`
-      };
-    }
-
-    case "D051_M":{
-      const ang=pick([30,45,60],s+v);
-      const oposto=pick([5,6,8,10,12],s*2+v);
-      const sen={30:.5,45:Math.SQRT1_2,60:Math.sqrt(3)/2}[ang];
-      const correta=fmt(oposto/sen);
-      const a=alternativas(correta,[fmt(oposto*sen),fmt(oposto/Math.cos(ang*Math.PI/180)),fmt(oposto+ang),fmt(oposto*2)],s);
-      return {
-        text:`Em um triângulo retângulo, o cateto oposto a um ângulo de ${ang}° mede ${oposto} cm. Usando seno, qual é aproximadamente a hipotenusa?`,
-        ...a,
-        modeloId:`trig-seno-${ang}-${oposto}-${v%20}`
-      };
-    }
-
-    case "D057_M":{
-      const l=pick([4,5,6,8,10,12],s+v);
-      const c=pick([6,8,10,12,15,20],s*2+v);
-      const correta=2*(l+c);
-      const a=alternativas(correta,[l*c,l+c,2*l+c,l+2*c],s);
-      return {
-        text:`Um terreno retangular mede ${l} m por ${c} m. Qual é o perímetro?`,
-        ...a,
-        modeloId:`perimetro-ret-${l}-${c}-${v%30}`
-      };
-    }
-
-    case "D058_M":{
-      const b=pick([4,5,6,8,10,12],s+v);
-      const h=pick([3,4,5,6,8,10],s*2+v);
-      const correta=b*h;
-      const a=alternativas(correta,[2*(b+h),b+h,b*h/2,b*h*2],s);
-      return {
-        text:`Uma região retangular tem base ${b} m e altura ${h} m. Qual é sua área?`,
-        ...a,
-        modeloId:`area-ret-${b}-${h}-${v%30}`
-      };
-    }
-
-    case "D063_M":{
-      const vals=[
-        5+(s%10),
-        8+((s+v)%12),
-        6+((s*2+v)%15),
-        10+((s*3+v)%9)
-      ];
-      const maior=Math.max(...vals);
-      const idx=vals.indexOf(maior);
-      const labels=["A","B","C","D"];
-      const correta=labels[idx];
-      const sh=shuffle(labels,s);
-      return {
-        text:`Uma tabela apresenta os valores: A=${vals[0]}, B=${vals[1]}, C=${vals[2]}, D=${vals[3]}. Qual categoria teria a maior barra em um gráfico correspondente?`,
-        options:sh,
-        correct:sh.indexOf(correta),
-        modeloId:`tabela-grafico-${vals.join("-")}-${v%30}`
-      };
-    }
-
-    case "D064_M":{
-      const vals=[
-        12+(s%10),
-        15+((s+v)%10),
-        10+((s*2+v)%15),
-        18+((s*3+v)%10)
-      ];
-      const total=vals.reduce((a,b)=>a+b,0);
-      const a=alternativas(total,[total-5,total+5,Math.max(...vals),Math.min(...vals)],s);
-      return {
-        text:`Uma tabela registra ${vals.join(", ")} participantes em quatro atividades. Quantos participantes foram registrados ao todo?`,
-        ...a,
-        modeloId:`leitura-tabela-${vals.join("-")}-${v%30}`
-      };
-    }
-
-    case "D065_M":{
-      const total=pick([10,12,15,20,24,30],s+v);
-      const fav=1+(s*3+v)%(total-1);
-      const correta=`${fav}/${total}`;
-      const ops=[
-        correta,
-        `${total-fav}/${total}`,
-        `${fav}/${total-fav}`,
-        `${total}/${fav}`,
-        `${fav+1}/${total}`
-      ];
-      const sh=shuffle(ops,s);
-      return {
-        text:`Em uma caixa há ${total} fichas, das quais ${fav} são azuis. Qual é a probabilidade de retirar uma ficha azul ao acaso?`,
-        options:sh,
-        correct:sh.indexOf(correta),
-        modeloId:`probabilidade-${fav}-${total}-${v%30}`
-      };
-    }
-
-    case "D071_M":{
-      const a=pick([-3,-2,-1,1,2,3],s+v);
-      const correta=a>0?"crescente":"decrescente";
-      const ops=["crescente","decrescente","constante","sem zeros","periódica"];
-      const sh=shuffle(ops,s);
-      return {
-        text:`Considere a função f(x)=${a}x+${pick([-5,-3,0,2,4],s*2+v)}. Quanto ao comportamento do gráfico, essa função é`,
-        options:sh,
-        correct:sh.indexOf(correta),
-        modeloId:`crescimento-linear-${a}-${v%30}`
-      };
-    }
-
-    case "D074_M":{
-      const base=pick([2,3,4,5],s+v);
-      const correta=`f(x) = ${base}^x`;
-      const ops=[
-        correta,
-        `f(x) = x^${base}`,
-        `f(x) = ${base}x`,
-        `f(x) = x + ${base}`,
-        `f(x) = (1/${base})^x`
-      ];
-      const sh=shuffle(ops,s);
-      return {
-        text:`Qual expressão representa uma função exponencial crescente de base ${base}?`,
-        options:sh,
-        correct:sh.indexOf(correta),
-        modeloId:`exp-grafico-${base}-${v%50}`
-      };
-    }
-
-    case "D076_M":{
-      const r1=pick([-5,-4,-3,-2,-1,1,2,3,4],s+v);
-      let r2=pick([-6,-4,-2,1,2,3,5,6],s*2+v);
-      if(r2===r1) r2++;
-
-      const correta=`${r1} e ${r2}`;
-      const ops=[
-        correta,
-        `${-r1} e ${-r2}`,
-        `${r1+r2} e ${r1*r2}`,
-        `${r1} e ${-r2}`,
-        `${-r1} e ${r2}`
-      ];
-      const sh=shuffle(ops,s);
-
-      return {
-        text:`Quais são as raízes de (x − (${r1}))(x − (${r2})) = 0?`,
-        options:sh,
-        correct:sh.indexOf(correta),
-        modeloId:`polinomio-raizes-${r1}-${r2}-${v%30}`
-      };
-    }
-
-    case "D078_M":
-    case "D145_M":{
-      const m=pick([-4,-3,-2,-1,1,2,3,4],s+v);
-      const b=pick([-5,-3,-1,0,2,4,5],s*2+v);
-      const correta=`y = ${m}x + ${b}`;
-      const ops=[
-        correta,
-        `y = ${b}x + ${m}`,
-        `y = ${-m}x + ${b}`,
-        `y = ${m}x - ${b}`,
-        `y = x + ${b}`
-      ];
-      const sh=shuffle(ops,s);
-
-      return {
-        text:`Uma reta possui coeficiente angular ${m} e coeficiente linear ${b}. Qual é sua equação?`,
-        options:sh,
-        correct:sh.indexOf(correta),
-        modeloId:`reta-coef-${descriptor}-${m}-${b}-${v%50}`
-      };
-    }
-
-    case "D080_M":{
-      const base=pick([2,3,5,10],s+v);
-      const correta=`f(x) = log${base}(x)`;
-      const ops=[
-        correta,
-        `f(x) = ${base}^x`,
-        `f(x) = x^${base}`,
-        `f(x) = ${base}x`,
-        `f(x) = 1/x`
-      ];
-      const sh=shuffle(ops,s);
-
-      return {
-        text:`Qual expressão representa uma função logarítmica de base ${base}?`,
-        options:sh,
-        correct:sh.indexOf(correta),
-        modeloId:`log-${base}-${v%30}`
-      };
-    }
-
-    case "D082_M":{
-      const taxa=pick([2,3,4,5,6],s+v);
-      const correta="crescimento linear";
-      const ops=[
-        "crescimento linear",
-        "decrescimento linear",
-        "crescimento exponencial",
-        "função constante",
-        "comportamento periódico"
-      ];
-      const sh=shuffle(ops,s);
-
-      return {
-        text:`Uma quantidade aumenta sempre ${taxa} unidades a cada período. Que comportamento gráfico melhor representa essa situação?`,
-        options:sh,
-        correct:sh.indexOf(correta),
-        modeloId:`situacao-grafico-${taxa}-${v%40}`
-      };
-    }
-
-    case "D085_M":{
-      const m=pick([-5,-4,-3,-2,-1,1,2,3,4,5],s+v);
-      const b=pick([-8,-6,-4,-2,0,2,4,6,8],s*2+v);
-      const correta=`coeficiente angular ${m} e intercepto em y igual a ${b}`;
-      const ops=[
-        correta,
-        `coeficiente angular ${b} e intercepto em y igual a ${m}`,
-        `coeficiente angular ${-m} e intercepto em y igual a ${b}`,
-        `coeficiente angular ${m} e intercepto em y igual a ${-b}`,
-        `coeficiente angular ${m+b} e intercepto em y igual a 0`
-      ];
-      const sh=shuffle(ops,s);
-
-      return {
-        text:`Considere a reta y = ${m}x + ${b}. Qual interpretação geométrica está correta?`,
-        options:sh,
-        correct:sh.indexOf(correta),
-        modeloId:`reta-interpretacao-${m}-${b}-${v%500}`
-      };
-    }
-
-    case "D086_M":{
-      const m=pick([2,3,4,5,-2,-3],s+v);
-      const b=pick([-4,-2,0,1,3,5],s*2+v);
-      const x1=pick([0,1,2],s*3+v);
-      const y1=m*x1+b;
-      const x2=x1+1;
-      const y2=m*x2+b;
-
-      const correta=`y = ${m}x + ${b}`;
-      const ops=[
-        correta,
-        `y = ${b}x + ${m}`,
-        `y = ${-m}x + ${b}`,
-        `y = ${m}x - ${b}`,
-        `y = x + ${b}`
-      ];
-      const sh=shuffle(ops,s);
-
-      return {
-        text:`Uma tabela contém os pares (${x1}, ${y1}) e (${x2}, ${y2}). Sabendo que a relação é linear, qual expressão a representa?`,
-        options:sh,
-        correct:sh.indexOf(correta),
-        modeloId:`tabela-funcao-${m}-${b}-${x1}-${v%30}`
-      };
-    }
-
-    case "D087_M":{
-      const r1=pick([1,2,3,4,5,6],s+v);
-      const r2=pick([-6,-5,-4,-3,-2,-1],s*2+v);
-      const soma=r1+r2;
-      const prod=r1*r2;
-
-      const correta=`x = ${r1} ou x = ${r2}`;
-      const ops=[
-        correta,
-        `x = ${-r1} ou x = ${-r2}`,
-        `x = ${soma}`,
-        `x = ${prod}`,
-        `x = ${Math.abs(r1-r2)}`
-      ];
-      const sh=shuffle(ops,s);
-
-      return {
-        text:`Quais são as soluções da equação x² − (${soma})x + (${prod}) = 0?`,
-        options:sh,
-        correct:sh.indexOf(correta),
-        modeloId:`eq2-${r1}-${r2}-${v%40}`
-      };
-    }
-
-    case "D088_M":{
-      const inicial=pick([50,100,150,200,300,500],s+v);
-      const fator=pick([2,3,4],s*2+v);
-      const t=pick([2,3,4,5],s*3+v);
-      const correta=inicial*Math.pow(fator,t);
-      const a=alternativas(
-        correta,
-        [
-          inicial*fator*t,
-          inicial+fator*t,
-          inicial*Math.pow(fator,t-1),
-          inicial*Math.pow(fator,t+1)
-        ],
-        s
-      );
-
-      return {
-        text:`Uma população inicia com ${inicial} indivíduos e é multiplicada por ${fator} a cada período. Quantos indivíduos haverá após ${t} períodos?`,
-        ...a,
-        modeloId:`exp-problema-${inicial}-${fator}-${t}-${v%50}`
-      };
-    }
-
-    case "D096_M":{
-      const a1=pick([2,3,4,5,6,10],s+v);
-      const r=pick([2,3,4,5,6,8],s*2+v);
-      const n=pick([5,6,7,8,10,12],s*3+v);
-      const correta=a1+(n-1)*r;
-      const a=alternativas(
-        correta,
-        [
-          a1+n*r,
-          a1+(n-2)*r,
-          a1*r*n,
-          a1+n+r
-        ],
-        s
-      );
-
-      return {
-        text:`Em uma PA, a₁=${a1} e a razão é ${r}. Qual é o ${n}º termo?`,
-        ...a,
-        modeloId:`pa-${a1}-${r}-${n}-${v%40}`
-      };
-    }
-
-    case "D097_M":{
-      const a1=pick([1,2,3,4,5],s+v);
-      const q=pick([2,3,4],s*2+v);
-      const n=pick([4,5,6,7],s*3+v);
-      const correta=a1*Math.pow(q,n-1);
-      const a=alternativas(
-        correta,
-        [
-          a1*q*n,
-          a1*Math.pow(q,n),
-          a1*Math.pow(q,n-2),
-          a1+q*n
-        ],
-        s
-      );
-
-      return {
-        text:`Em uma PG, a₁=${a1} e a razão é ${q}. Qual é o ${n}º termo?`,
-        ...a,
-        modeloId:`pg-${a1}-${q}-${n}-${v%40}`
-      };
-    }
-
-    case "D111_M":{
-      const tipo=pick(["cubo","cilindro","prisma triangular","cone"],s+v);
-
-      const dados={
-        "cubo":{
-          correta:"seis quadrados congruentes",
-          op:[
-            "seis quadrados congruentes",
-            "dois círculos e um retângulo",
-            "um círculo e um setor circular",
-            "dois triângulos e três retângulos",
-            "quatro triângulos e um quadrado"
-          ]
-        },
-        "cilindro":{
-          correta:"dois círculos e um retângulo",
-          op:[
-            "dois círculos e um retângulo",
-            "seis quadrados congruentes",
-            "um círculo e um setor circular",
-            "dois triângulos e três retângulos",
-            "quatro triângulos e um quadrado"
-          ]
-        },
-        "prisma triangular":{
-          correta:"dois triângulos e três retângulos",
-          op:[
-            "dois triângulos e três retângulos",
-            "seis quadrados congruentes",
-            "dois círculos e um retângulo",
-            "um círculo e um setor circular",
-            "quatro triângulos e um quadrado"
-          ]
-        },
-        "cone":{
-          correta:"um círculo e um setor circular",
-          op:[
-            "um círculo e um setor circular",
-            "seis quadrados congruentes",
-            "dois círculos e um retângulo",
-            "dois triângulos e três retângulos",
-            "quatro triângulos e um quadrado"
-          ]
-        }
-      }[tipo];
-
-      const sh=shuffle(dados.op,s);
-
-      return {
-        text:`Qual conjunto de figuras pode formar uma planificação de um ${tipo}?`,
-        options:sh,
-        correct:sh.indexOf(dados.correta),
-        modeloId:`planificacao-${tipo}-${v%50}`
-      };
-    }
-
-    case "D119_M":{
-      const k=pick([2,3,4,5],s+v);
-      const a1=pick([3,4,5,6],s*2+v);
-      const b1=pick([4,5,6,8],s*3+v);
-      const a2=a1*k;
-      const correta=b1*k;
-
-      const a=alternativas(
-        correta,
-        [
-          b1+k,
-          b1*k+1,
-          b1*k-1,
-          a2+b1
-        ],
-        s
-      );
-
-      return {
-        text:`Dois triângulos semelhantes têm lados correspondentes ${a1} e ${a2}. Se outro lado do menor mede ${b1}, quanto mede o correspondente no maior?`,
-        ...a,
-        modeloId:`semelhanca-${k}-${a1}-${b1}-${v%30}`
-      };
-    }
-
-    case "D124_M":{
-      const x1=pick([-4,-3,-2,-1,0,1,2],s+v);
-      const m=pick([-4,-3,-2,-1,1,2,3,4],s*2+v);
-      const b=pick([-5,-3,-1,0,2,4,5],s*3+v);
-      const y1=m*x1+b;
-      const x2=x1+2;
-      const y2=m*x2+b;
-
-      const correta=`y = ${m}x + ${b}`;
-      const ops=[
-        correta,
-        `y = ${b}x + ${m}`,
-        `y = ${-m}x + ${b}`,
-        `y = ${m}x - ${b}`,
-        `y = x + ${b}`
-      ];
-      const sh=shuffle(ops,s);
-
-      return {
-        text:`Qual é a equação da reta que passa pelos pontos (${x1}, ${y1}) e (${x2}, ${y2})?`,
-        options:sh,
-        correct:sh.indexOf(correta),
-        modeloId:`reta-2pontos-${x1}-${y1}-${x2}-${y2}-${v%50}`
-      };
-    }
-
-    case "D125_M":{
-      const pol=pick([
-        {nome:"cubo",V:8,F:6,A:12},
-        {nome:"tetraedro",V:4,F:4,A:6},
-        {nome:"prisma triangular",V:6,F:5,A:9},
-        {nome:"pirâmide quadrangular",V:5,F:5,A:8}
-      ],s+v);
-
-      const correta=pol.A;
-      const a=alternativas(
-        correta,
-        [pol.V,pol.F,pol.V+pol.F,pol.A+2],
-        s
-      );
-
-      return {
-        text:`Um ${pol.nome} possui ${pol.V} vértices e ${pol.F} faces. Usando a relação de Euler, quantas arestas ele possui?`,
-        ...a,
-        modeloId:`euler-${pol.nome}-${v%30}`
-      };
-    }
-
-    case "D126_M":{
-      const fun=pick(["seno","cosseno"],s+v);
-      const correta=fun==="seno"
-        ?"passa pela origem"
-        :"assume valor máximo 1 quando x=0";
-
-      const ops=[
-        correta,
-        "é sempre crescente",
-        "não possui período",
-        "tem domínio apenas positivo",
-        "é uma reta"
-      ];
-      const sh=shuffle(ops,s);
-
-      return {
-        text:`Qual característica é compatível com o gráfico da função ${fun}?`,
-        options:sh,
-        correct:sh.indexOf(correta),
-        modeloId:`trig-grafico-${fun}-${v%30}`
-      };
-    }
-
-    case "D127_M":
-    case "D154_M":{
-      const x=pick([-3,-2,-1,1,2,3,4],s+v);
-      const y=pick([-3,-2,-1,1,2,3,4],s*2+v);
-
-      const correta=`(${x}, ${y})`;
-      const ops=[
-        correta,
-        `(${y}, ${x})`,
-        `(${-x}, ${y})`,
-        `(${x}, ${-y})`,
-        `(${-x}, ${-y})`
-      ];
-      const sh=shuffle(ops,s);
-
-      return {
-        text:`Duas retas de um sistema se intersectam no ponto (${x}, ${y}). Qual é a solução do sistema?`,
-        options:sh,
-        correct:sh.indexOf(correta),
-        modeloId:`sistema-intersec-${descriptor}-${x}-${y}-${v%40}`
-      };
-    }
-
-    case "D129_M":{
-      const forma=pick(["prisma","cilindro"],s+v);
-
-      if(forma==="prisma"){
-        const ab=pick([12,15,18,20,24,30],s*2+v);
-        const h=pick([4,5,6,8,10],s*3+v);
-        const correta=ab*h;
-
-        const a=alternativas(
-          correta,
-          [
-            ab+h,
-            ab*2+h,
-            ab*h/2,
-            ab*h+ab
-          ],
-          s
-        );
-
-        return {
-          text:`Um prisma possui área da base igual a ${ab} cm² e altura ${h} cm. Qual é seu volume?`,
-          ...a,
-          modeloId:`volume-prisma-${ab}-${h}-${v%50}`
-        };
-      }
-
-      const r=pick([2,3,4,5],s*2+v);
-      const h=pick([4,5,6,8,10],s*3+v);
-      const correta=`${r*r*h}π cm³`;
-
-      const ops=[
-        correta,
-        `${2*r*h}π cm³`,
-        `${r*h}π cm³`,
-        `${r*r}π cm³`,
-        `${2*r*r*h}π cm³`
-      ];
-
-      const sh=shuffle(ops,s);
-
-      return {
-        text:`Um cilindro possui raio ${r} cm e altura ${h} cm. Qual é seu volume?`,
-        options:sh,
-        correct:sh.indexOf(correta),
-        modeloId:`volume-cil-${r}-${h}-${v%50}`
-      };
-    }
-
-    case "D132_M":{
-      const taxa=pick([2,3,4,5,6,8,10],s+v);
-      const fixo=pick([5,10,15,20,30,40],s*2+v);
-      const x=pick([3,4,5,6,8,10],s*3+v);
-      const correta=fixo+taxa*x;
-
-      const a=alternativas(
-        correta,
-        [
-          taxa*x,
-          fixo*x,
-          fixo+taxa,
-          fixaSeguro(fixo,taxa,x)
-        ],
-        s
-      );
-
-      return {
-        text:`Uma situação é modelada por f(x)=${taxa}x+${fixo}. Qual é o valor de f(${x})?`,
-        ...a,
-        modeloId:`func1-${taxa}-${fixo}-${x}-${v%40}`
-      };
-    }
-
-    case "D133_M":{
-      const a=-pick([1,2,3],s+v);
-      const xv=pick([1,2,3,4,5],s*2+v);
-      const c=pick([10,20,30,40,50],s*3+v);
-      const b=-2*a*xv;
-      const yv=a*xv*xv+b*xv+c;
-
-      const correta=`${fmt(yv)}`;
-      const aop=alternativas(
-        correta,
-        [fmt(yv-5),fmt(yv+5),fmt(xv),fmt(c)],
-        s
-      );
-
-      return {
-        text:`A função f(x)=${a}x²+${b}x+${c} possui valor máximo. Qual é esse valor?`,
-        ...aop,
-        modeloId:`vertice-${a}-${b}-${c}-${v%30}`
-      };
-    }
-
-    case "D155_M":{
-      const cx=pick([-4,-3,-2,-1,0,1,2,3,4],s+v);
-      const cy=pick([-4,-3,-2,-1,0,1,2,3,4],s*2+v);
-      const r=pick([2,3,4,5,6],s*3+v);
-
-      const correta=`(x - (${cx}))² + (y - (${cy}))² = ${r*r}`;
-
-      const ops=[
-        correta,
-        `(x + (${cx}))² + (y + (${cy}))² = ${r*r}`,
-        `(x - (${cx}))² + (y - (${cy}))² = ${r}`,
-        `x² + y² = ${r}`,
-        `(x - (${cy}))² + (y - (${cx}))² = ${r*r}`
-      ];
-      const sh=shuffle(ops,s);
-
-      return {
-        text:`Qual é a equação da circunferência de centro (${cx}, ${cy}) e raio ${r}?`,
-        options:sh,
-        correct:sh.indexOf(correta),
-        modeloId:`circ-${cx}-${cy}-${r}-${v%50}`
-      };
-    }
-
-    case "D157_M":{
-      const x=pick([1,2,3,4,5],s+v);
-      const y=pick([1,2,3,4,5],s*2+v);
-
-      const soma=x+y;
-      const dif=x-y;
-      const correta=`x=${x} e y=${y}`;
-
-      const ops=[
-        correta,
-        `x=${y} e y=${x}`,
-        `x=${soma} e y=${dif}`,
-        `x=${x+1} e y=${y-1}`,
-        `x=${x-1} e y=${y+1}`
-      ];
-      const sh=shuffle(ops,s);
-
-      return {
-        text:`Resolva o sistema x+y=${soma} e x−y=${dif}.`,
-        options:sh,
-        correct:sh.indexOf(correta),
-        modeloId:`matriz-sistema-${x}-${y}-${v%50}`
-      };
-    }
-
-    default:{
-      const n=pick([2,3,4,5,6,8,10,12],s+v);
-      const correta=n*2;
-      const a=alternativas(
-        correta,
-        [n,n+2,n*3,n*n],
-        s
-      );
-
-      return {
-        text:`Considere uma situação relacionada ao descritor ${descriptor}. Se uma grandeza de referência vale ${n} e é duplicada, qual é o resultado?`,
-        ...a,
-        modeloId:`fallback-${descriptor}-${n}-${v%100}`
-      };
+  const t=v.abb+v.basico+v.proficiente+v.avancado||100;
+  const metas={
+    "ABAIXO DO BÁSICO":Math.round(qtd*v.abb/t),
+    "BÁSICO":Math.round(qtd*v.basico/t),
+    "PROFICIENTE":Math.round(qtd*v.proficiente/t),
+    "AVANÇADO":Math.round(qtd*v.avancado/t)
+  };
+  let soma=Object.values(metas).reduce((a,b)=>a+b,0);
+  while(soma<qtd){ metas["ABAIXO DO BÁSICO"]++; soma++; }
+  while(soma>qtd){
+    for(const n of ["AVANÇADO","PROFICIENTE","BÁSICO","ABAIXO DO BÁSICO"]){
+      if(metas[n]>0&&soma>qtd){ metas[n]--; soma--; }
     }
   }
+  const out=[],ordem=["ABAIXO DO BÁSICO","BÁSICO","PROFICIENTE","AVANÇADO"];
+  while(out.length<qtd){
+    for(const n of ordem){
+      if(metas[n]>0){ out.push(n); metas[n]--; }
+      if(out.length>=qtd) break;
+    }
+  }
+  return out;
 }
 
-function fixaSeguro(a,b,c){
-  return a+b*c+1;
-}
+function letraOpcao(i){ return i>=0 && i<26 ? String.fromCharCode(65+i) : "?"; }
 
-function gerar(descriptor,level,seed,variante){
-  return gerarGenerica(descriptor,level,seed,variante);
+function solucaoOrientada(descriptor,q){
+  const correta=Number(q?.correct);
+  const resposta=Array.isArray(q?.options) && correta>=0 ? q.options[correta] : "";
+  const base=`Gabarito: alternativa ${letraOpcao(correta)}${resposta!==""?` — ${resposta}`:""}.`;
+  const guia={
+    "D009_M":"Localize o valor racional na reta numérica, comparando sua posição com os números de referência.",
+    "D013_M":"Converta e compare as representações do número racional (fração, decimal ou porcentagem) até identificar equivalência.",
+    "D033_M":"Aproxime o número irracional por valores decimais conhecidos e localize-o entre dois números consecutivos na reta.",
+    "D038_M":"Transforme a porcentagem em fração ou decimal e multiplique pelo valor de referência.",
+    "D039_M":"Identifique as grandezas, estabeleça a razão de proporcionalidade e aplique a relação correspondente.",
+    "D042_M":"Separe as etapas independentes da escolha e multiplique a quantidade de possibilidades de cada etapa.",
+    "D043_M":"Leia primeiro a coordenada x no eixo horizontal e depois a coordenada y no eixo vertical.",
+    "D049_M":"Use as relações métricas do triângulo retângulo, especialmente o Teorema de Pitágoras quando houver dois lados conhecidos.",
+    "D051_M":"Identifique cateto oposto, cateto adjacente e hipotenusa; depois aplique seno, cosseno ou tangente conforme os dados.",
+    "D057_M":"Some os comprimentos de todos os lados da figura; em retângulos, use P=2(a+b).",
+    "D058_M":"Identifique a figura e aplique sua fórmula de área; em retângulos, A=base×altura.",
+    "D063_M":"Compare os dados da tabela ou gráfico e identifique a representação que conserva exatamente as mesmas informações.",
+    "D064_M":"Leia os valores apresentados no gráfico ou tabela e execute apenas a operação pedida pelo problema.",
+    "D065_M":"Calcule a razão entre casos favoráveis e total de casos possíveis.",
+    "D071_M":"Observe onde o gráfico cresce, decresce e cruza o eixo x para identificar comportamento e zeros.",
+    "D074_M":"Relacione a expressão exponencial ao comportamento do gráfico, observando base, crescimento/decrescimento e interceptos.",
+    "D076_M":"Iguale cada fator a zero; as soluções obtidas são as raízes do polinômio.",
+    "D078_M":"Compare coeficiente angular, coeficiente linear e inclinação do gráfico da função do 1º grau.",
+    "D080_M":"Use a relação de inversão entre função logarítmica e exponencial e observe domínio e comportamento do gráfico.",
+    "D082_M":"Traduza a situação descrita em comportamento gráfico: crescimento, decrescimento, máximo, mínimo ou constância.",
+    "D085_M":"Na forma y=mx+b, m é o coeficiente angular (taxa de variação) e b é o coeficiente linear (interseção com o eixo y). Para dois pontos, m=(y₂−y₁)/(x₂−x₁).",
+    "D086_M":"Calcule a variação de y quando x aumenta uma unidade e use um par da tabela para determinar a expressão algébrica.",
+    "D087_M":"Organize a equação do 2º grau e resolva por fatoração ou pela fórmula de Bhaskara.",
+    "D088_M":"Modele a situação por uma função exponencial, identificando valor inicial, fator de multiplicação e número de períodos.",
+    "D096_M":"Em uma PA, use a razão constante e as relações an=a1+(n−1)r ou a soma dos termos quando necessário.",
+    "D097_M":"Em uma PG, determine a razão q e use an=a1·q^(n−1), ou avance termo a termo quando a sequência for curta.",
+    "D111_M":"Compare faces, bases, superfícies curvas e disposição das partes para relacionar o sólido à planificação ou vista correta.",
+    "D119_M":"Verifique a proporcionalidade entre lados correspondentes e a igualdade dos ângulos para reconhecer semelhança.",
+    "D124_M":"Calcule a inclinação m e depois use y=mx+b ou a forma ponto-inclinação para determinar a equação da reta.",
+    "D125_M":"Use a relação de Euler V−A+F=2 para poliedros convexos, identificando corretamente vértices, arestas e faces.",
+    "D126_M":"Reconheça período, amplitude, zeros e pontos característicos para distinguir os gráficos trigonométricos.",
+    "D127_M":"A solução do sistema corresponde ao ponto de interseção das retas; resolva o sistema ou leia esse ponto no gráfico.",
+    "D129_M":"Identifique a base e as dimensões do sólido. Para volume de prismas/cilindros use V=Ab·h; para área total, some as áreas de todas as faces/superfícies.",
+    "D132_M":"Modele a situação por f(x)=ax+b, substitua o valor conhecido e interprete o resultado no contexto.",
+    "D133_M":"Identifique o vértice da parábola; o valor máximo ou mínimo ocorre em xv=−b/(2a) e yv=f(xv).",
+    "D145_M":"Na função y=ax+b, o sinal e valor de a determinam a inclinação e b indica onde a reta cruza o eixo y.",
+    "D154_M":"Relacione cada equação do sistema a uma reta e interprete a solução como o ponto de interseção.",
+    "D155_M":"Use a forma (x−a)²+(y−b)²=r², em que (a,b) é o centro e r é o raio.",
+    "D157_M":"Organize os coeficientes na matriz/sistema, aplique operações algébricas equivalentes e interprete a solução encontrada."
+  };
+  return `${guia[descriptor]||"Resolva a situação usando a habilidade indicada pelo descritor, conferindo os dados e a operação necessária."} ${base}`;
 }
 
 function preparar(descriptor,level,g,peso,index,round){
-  const m=meta(
-    descriptor,
-    level,
-    HABILIDADES_PAEBES[descriptor]||""
-  );
-
+  const visual=typeof g.visual==="string"?{svg:g.visual}:g.visual?.svg?g.visual:null;
+  const m=meta(descriptor,level,HABILIDADES_PAEBES[descriptor]||"");
   return {
     id:`${descriptor}-${index+1}-${round}-${Date.now().toString(36)}-${hash(g.text+index)}`,
     questaoId:`Q-${descriptor}-${hash(g.text+"|"+(g.modeloId||""))}`,
     descriptor,
-    descritor:descriptor,
-
     habilidade:HABILIDADES_PAEBES[descriptor]||"",
     expectativa:m.expectativa,
     tarefa:m.tarefa,
     parteHabilidade:m.tarefa,
-
     level,
-    nivel:level,
-
     text:String(g.text||"").trim(),
-    texto:String(g.text||"").trim(),
-
     options:(g.options||[]).map(String),
-    opcoes:(g.options||[]).map(String),
-
     correct:Number(g.correct),
-    correta:Number(g.correct),
-
+    visual,
     pesoDescritor:peso,
     baseXP:Math.round((XP_NIVEL[level]||120)*peso),
-
     modeloId:g.modeloId||null,
+    familiaId:g.familiaId||g.modeloId||`${descriptor}-familia-generica`,
     nucleo:m.nucleo,
     prioridadeAMA:m.prioridadeAMA,
     contexto:m.contexto,
-    recurso:"texto",
-
-    origem:m.origem,
-    origemTipo:"autoral_alinhada",
-    fonteReferencia:"Matriz de Referência PAEBES/AMA — item autoral alinhado, não reproduzido como item oficial",
-
-    solucao:String(
-      g.solucao||
-      solucaoOrientada(
-        descriptor,
-        {
-          options:(g.options||[]).map(String),
-          correct:Number(g.correct)
-        }
-      )
-    ),
-
-    versaoBanco:"coliseu-3tri-2026-v5"
+    recurso:visual?"visual":"texto",
+    origem:g.fonteTipo ? (FONTES_BANCO[g.fonteTipo]?.rotulo||g.fonteTipo) : m.origem,
+    origemTipo:g.fonteTipo||"AUTORAL",
+    fonteReferencia:g.fonteReferencia||"Matrizes de Referência AMA/PAEBES 2026 — item autoral de contingência; não reproduzido como item oficial",
+    statusBanco:g.statusBanco||"aprovado",
+    solucao:String(g.solucao||solucaoOrientada(descriptor,{options:(g.options||[]).map(String),correct:Number(g.correct)})),
+    versaoBanco:"coliseu-3tri-2026-v6"
   };
 }
 
@@ -1233,35 +775,11 @@ export function habilidadeDoDescritor(descritor){
   return HABILIDADES_PAEBES[descritor]||"";
 }
 
-export function gerarQuestaoDescritor(
-  descritor,
-  nivel="BÁSICO",
-  seed=Date.now()
-){
-  if(!HABILIDADES_PAEBES[descritor]){
-    throw new Error("Descritor não pertence à matriz configurada.");
-  }
-
-  const g=gerar(
-    descritor,
-    nivel,
-    seed,
-    Math.abs(Number(seed)||0)
-  );
-
-  const q=preparar(
-    descritor,
-    nivel,
-    g,
-    1,
-    0,
-    rodada()
-  );
-
-  if(!questaoValida(q)){
-    throw new Error("Questão especial inválida.");
-  }
-
+export function gerarQuestaoDescritor(descritor,nivel="BÁSICO",seed=Date.now()){
+  if(!HABILIDADES_PAEBES[descritor]) throw new Error("Descritor não pertence à matriz configurada.");
+  const g=gerar(descritor,nivel,seed,Math.abs(Number(seed)||0));
+  const q=preparar(descritor,nivel,g,1,0,rodada());
+  if(!questaoValida(q)) throw new Error("Questão especial inválida.");
   return q;
 }
 
@@ -1269,385 +787,103 @@ export function gerarQuestoesArena({
   quantidade=15,
   descritores=[],
   configuracaoDescritores={},
-  distribuicaoNiveis={
-    abb:40,
-    basico:35,
-    proficiente:25,
-    avancado:0
-  }
+  distribuicaoNiveis={abb:40,basico:35,proficiente:25,avancado:0}
 }={}){
-  quantidade=Math.max(
-    5,
-    Math.floor(Number(quantidade)||15)
-  );
+  quantidade=Math.max(5,Math.floor(Number(quantidade)||15));
 
-  const validos=[
-    ...new Set(
-      descritores.filter(
-        d=>HABILIDADES_PAEBES[d]
-      )
-    )
-  ];
+  const validos=[...new Set(descritores.filter(d=>HABILIDADES_PAEBES[d]))];
+  if(!validos.length) throw new Error("Selecione pelo menos um descritor.");
 
-  if(!validos.length){
-    throw new Error("Selecione pelo menos um descritor.");
-  }
-
-  const {fila,pesos}=filaDescritores(
-    validos,
-    configuracaoDescritores,
-    quantidade
-  );
-
-  const nivs=niveisDistrib(
-    distribuicaoNiveis,
-    quantidade
-  );
-
-  const round=rodada();
-
-  const seedArena=
-    round*10007+
-    (Date.now()%1000003);
+  const {fila,pesos}=filaDescritores(validos,configuracaoDescritores,quantidade);
+  const nivs=niveisDistrib(distribuicaoNiveis,quantidade);
+  const round=rodada(),seedArena=round*10007+(Date.now()%1000003);
 
   const hist=lerHist();
-
-  const histA=new Set(hist.assinaturas);
-  const histM=new Set(hist.modelos);
-
-  const usadasA=new Set();
-  const usadasTexto=new Set();
-  const usadasModelo=new Set();
-
-  const novasA=[];
-  const novasM=[];
-  const questoes=[];
-  const uso={};
+  const histA=new Set(hist.assinaturas),histM=new Set(hist.modelos);
+  const usadasA=new Set(),usadasTexto=new Set(),usadasModelo=new Set(),usadasFamilia=new Set();
+  const novasA=[],novasM=[],questoes=[],uso={};
 
   for(let i=0;i<quantidade;i++){
-
-    const d=fila[i];
-    const cfg=configuracaoDescritores[d]||{};
-
-    const level=
-      cfg.nivel &&
-      cfg.nivel!=="MISTO"
-        ? cfg.nivel
-        : (nivs[i]||"BÁSICO");
-
-    const chave=`${d}|${level}`;
-    const base=Number(uso[chave]||0);
-
+    const d=fila[i],cfg=configuracaoDescritores[d]||{};
+    const level=cfg.nivel&&cfg.nivel!=="MISTO"?cfg.nivel:(nivs[i]||"BÁSICO");
+    const chave=`${d}|${level}`,base=Number(uso[chave]||0);
     let escolhida=null;
 
-    // ==================================================
-    // FASE 1
-    // QUESTÃO INÉDITA TAMBÉM NO HISTÓRICO
-    // ==================================================
+    // 1ª fase: tenta inédita também no histórico.
     for(let tentativa=0;tentativa<500;tentativa++){
-
-      const seed=
-        seedArena+
-        (i+1)*7919+
-        validos.indexOf(d)*104729+
-        tentativa*15485863;
-
-      const variante=
-        base+
-        round+
-        tentativa+
-        i*7;
-
+      const seed=seedArena+(i+1)*7919+validos.indexOf(d)*104729+tentativa*15485863;
+      const variante=base+round+tentativa+i*7;
       let g;
-
-      try{
-        g=gerar(
-          d,
-          level,
-          seed,
-          variante
-        );
-      }catch{
-        continue;
-      }
-
-      const q=preparar(
-        d,
-        level,
-        g,
-        pesos[d],
-        i,
-        round
-      );
-
-      if(!questaoValida(q)){
-        continue;
-      }
-
-      const a=assinatura(q);
-      const txt=norm(q.text);
-
-      const mk=
-        `${d}|${level}|${q.modeloId||""}`;
-
-      if(
-        usadasA.has(a) ||
-        usadasTexto.has(txt)
-      ){
-        continue;
-      }
-
-      if(
-        histA.has(a) ||
-        histM.has(mk) ||
-        usadasModelo.has(mk)
-      ){
-        continue;
-      }
-
-      escolhida=q;
-
-      usadasA.add(a);
-      usadasTexto.add(txt);
-      usadasModelo.add(mk);
-
-      novasA.push(a);
-
-      if(q.modeloId){
-        novasM.push(mk);
-      }
-
-      break;
+      try{ g=gerar(d,level,seed,variante); }catch(e){ continue; }
+      const q=preparar(d,level,g,pesos[d],i,round);
+      if(!questaoValida(q)) continue;
+      const a=assinatura(q),txt=norm(q.text),mk=`${d}|${q.familiaId||q.modeloId||""}`;
+      if(usadasA.has(a)||usadasTexto.has(txt)) continue;
+      if(histA.has(a)||histM.has(mk)||usadasModelo.has(mk)||usadasFamilia.has(`${d}|${q.familiaId||q.modeloId||""}`)) continue;
+      escolhida=q; usadasA.add(a); usadasTexto.add(txt); usadasModelo.add(mk); usadasFamilia.add(`${d}|${q.familiaId||q.modeloId||""}`);
+      novasA.push(a); if(q.modeloId) novasM.push(mk); break;
     }
 
-    // ==================================================
-    // FASE 2
-    // PODE REUTILIZAR MODELO ANTIGO,
-    // MAS NÃO REPETE QUESTÃO NA ARENA ATUAL
-    // ==================================================
+    // 2ª fase: se histórico estiver esgotado, pode reutilizar modelo antigo,
+    // mas jamais repete questão/texto dentro da Arena atual.
     if(!escolhida){
-
-      for(
-        let tentativa=500;
-        tentativa<2500;
-        tentativa++
-      ){
-
-        const seed=
-          seedArena+
-          i*99991+
-          tentativa*32452843+
-          Date.now();
-
+      for(let tentativa=500;tentativa<2500;tentativa++){
+        const seed=seedArena+i*99991+tentativa*32452843+Date.now();
         let g;
-
-        try{
-          g=gerar(
-            d,
-            level,
-            seed,
-            base+
-            tentativa+
-            17+
-            i*13
-          );
-        }catch{
-          continue;
-        }
-
-        const q=preparar(
-          d,
-          level,
-          g,
-          pesos[d],
-          i,
-          round
-        );
-
-        if(!questaoValida(q)){
-          continue;
-        }
-
-        const a=assinatura(q);
-        const txt=norm(q.text);
-
-        const mk=
-          `${d}|${level}|${q.modeloId||""}`;
-
-        if(
-          usadasA.has(a) ||
-          usadasTexto.has(txt)
-        ){
-          continue;
-        }
-
-        escolhida=q;
-
-        usadasA.add(a);
-        usadasTexto.add(txt);
-
-        novasA.push(a);
-
-        if(q.modeloId){
-          novasM.push(mk);
-        }
-
-        break;
+        try{ g=gerar(d,level,seed,base+tentativa+17+i*13); }catch(e){ continue; }
+        const q=preparar(d,level,g,pesos[d],i,round);
+        if(!questaoValida(q)) continue;
+        const a=assinatura(q),txt=norm(q.text),mk=`${d}|${q.familiaId||q.modeloId||""}`;
+        if(usadasA.has(a)||usadasTexto.has(txt)||usadasFamilia.has(`${d}|${q.familiaId||q.modeloId||""}`)) continue;
+        escolhida=q; usadasA.add(a); usadasTexto.add(txt); usadasFamilia.add(`${d}|${q.familiaId||q.modeloId||""}`);
+        novasA.push(a); if(q.modeloId) novasM.push(mk); break;
       }
     }
 
-    // ==================================================
-    // FASE 3
-    // CONTINGÊNCIA PEDAGÓGICA
-    // HISTÓRICO NUNCA BLOQUEIA A ARENA
-    // ==================================================
+    // 3ª fase — contingência pedagógica.
+    // Se os modelos anteriores tiverem sido esgotados no histórico, o sistema
+    // continua tentando novas variações autorais alinhadas ao MESMO descritor e nível.
+    // O histórico entre Arenas deixa de bloquear a criação; a proteção de duplicata
+    // permanece dentro da Arena atual.
     if(!escolhida){
-
-      for(
-        let tentativa=2500;
-        tentativa<20000;
-        tentativa++
-      ){
-
-        const seed=
-          seedArena+
-          (i+11)*2147483+
-          tentativa*49979687+
-          (Date.now()%100000);
-
+      for(let tentativa=2500;tentativa<20000;tentativa++){
+        const seed=seedArena+(i+11)*2147483+tentativa*49979687+(Date.now()%100000);
         let g;
-
         try{
-          g=gerar(
-            d,
-            level,
-            seed,
-            base+
-            tentativa+
-            round*31+
-            i*101
-          );
-        }catch{
+          g=gerar(d,level,seed,base+tentativa+round*31+i*101);
+        }catch(e){
           continue;
         }
-
-        if(
-          g &&
-          typeof g.text==="string"
-        ){
-          const molduras=[
-            "Em uma atividade de revisão da Arena, ",
-            "Durante uma análise matemática, ",
-            "Em uma situação de preparação para avaliação externa, ",
-            "Em um desafio de consolidação da habilidade, ",
-            "Ao revisar esta habilidade, ",
-            "Em uma etapa de verificação da aprendizagem, "
-          ];
-
-          const pref=
-            molduras[
-              tentativa%
-              molduras.length
-            ];
-
-          g={
-            ...g,
-            text:
-              pref+
-              g.text.charAt(0).toLowerCase()+
-              g.text.slice(1),
-
-            modeloId:
-              `${g.modeloId||"modelo"}-c${tentativa}`
-          };
-        }
-
-        const q=preparar(
-          d,
-          level,
-          g,
-          pesos[d],
-          i,
-          round
-        );
-
-        if(!questaoValida(q)){
-          continue;
-        }
-
-        const a=assinatura(q);
-        const txt=norm(q.text);
-
-        const mk=
-          `${d}|${level}|${q.modeloId||""}`;
-
-        if(
-          usadasA.has(a) ||
-          usadasTexto.has(txt)
-        ){
-          continue;
-        }
-
+        const q=preparar(d,level,g,pesos[d],i,round);
+        if(!questaoValida(q)) continue;
+        const a=assinatura(q),txt=norm(q.text),mk=`${d}|${q.familiaId||q.modeloId||""}`;
+        if(usadasA.has(a)||usadasTexto.has(txt)) continue;
         escolhida=q;
-
-        usadasA.add(a);
-        usadasTexto.add(txt);
-        usadasModelo.add(mk);
-
-        novasA.push(a);
-
-        if(q.modeloId){
-          novasM.push(mk);
-        }
-
+        usadasA.add(a);usadasTexto.add(txt);usadasModelo.add(mk);usadasFamilia.add(`${d}|${q.familiaId||q.modeloId||""}`);
+        novasA.push(a);if(q.modeloId)novasM.push(mk);
         break;
       }
     }
 
     if(!escolhida){
-      throw new Error(
-        `Falha interna de validação do banco para ${d}. A Arena não foi reduzida; revise a estrutura deste descritor.`
-      );
+      throw new Error(`Falha interna de validação do banco para ${d}. A Arena não foi reduzida; revise a estrutura deste descritor.`);
     }
-
     uso[chave]=base+1;
-
-    questoes.push(
-      escolhida
-    );
+    questoes.push(escolhida);
   }
 
-  if(
-    questoes.length!==
-    quantidade
-  ){
-    throw new Error(
-      "A quantidade final de questões não corresponde à configuração da Arena."
-    );
-  }
+  if(questoes.length!==quantidade) throw new Error("A quantidade final de questões não corresponde à configuração da Arena.");
 
   salvarHist({
-    assinaturas:[
-      ...hist.assinaturas,
-      ...novasA
-    ],
-    modelos:[
-      ...hist.modelos,
-      ...novasM
-    ]
+    assinaturas:[...hist.assinaturas,...novasA],
+    modelos:[...hist.modelos,...novasM]
   });
 
   return questoes;
 }
 
-export function descritoresSemBanco(
-  descritores=[]
-){
-  return descritores.filter(
-    d=>!HABILIDADES_PAEBES[d]
-  );
+export function descritoresSemBanco(descritores=[]){
+  return descritores.filter(d=>!HABILIDADES_PAEBES[d]);
 }
 
-console.log(
-  "🏛️ Banco Coliseu v5 carregado — variedade ampliada, solução pedagógica e contingência sem bloqueio por esgotamento histórico."
-);
+console.log("🏛️ Banco Coliseu v6 carregado — diversidade por família pedagógica, fontes/referências e autoral somente como contingência.");
