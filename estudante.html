@@ -1171,6 +1171,40 @@ video{
   font-weight:900
 }
 
+
+.pedagogicalBox{
+  margin:12px 0 14px;
+  padding:14px 16px;
+  border:1px solid rgba(57,194,255,.34);
+  border-left:4px solid var(--blue);
+  border-radius:14px;
+  background:linear-gradient(90deg,rgba(57,194,255,.08),rgba(232,188,103,.05));
+  color:#e9f1fb;
+}
+.pedagogicalBox .pedRow{
+  display:flex;
+  gap:8px;
+  align-items:flex-start;
+  line-height:1.42;
+  margin:3px 0;
+}
+.pedagogicalBox .pedLabel{
+  flex:0 0 auto;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.5px;
+  color:var(--gold2);
+}
+.pedagogicalBox .pedValue{
+  font-size:14px;
+  font-weight:700;
+  color:#eef6ff;
+}
+@media(max-width:680px){
+  .pedagogicalBox .pedRow{display:block}
+  .pedagogicalBox .pedLabel{display:block;margin-bottom:2px}
+}
+
 .timerRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0 16px}
 .timerBox{display:inline-flex;gap:8px;align-items:center;padding:10px 14px;border:1px solid #42516b;border-radius:12px;background:#0c1728;font-weight:900}
 .timerBox strong{color:var(--gold2);font-size:20px}
@@ -1829,6 +1863,17 @@ video{
             NÍVEL
           </span>
 
+        </div>
+
+        <div id="qPedagogico" class="pedagogicalBox">
+          <div class="pedRow">
+            <span class="pedLabel">NÚCLEO:</span>
+            <span id="qNucleo" class="pedValue">—</span>
+          </div>
+          <div class="pedRow">
+            <span class="pedLabel">HABILIDADE / O QUE A QUESTÃO AVALIA:</span>
+            <span id="qHabilidade" class="pedValue">—</span>
+          </div>
         </div>
 
         <div class="timerRow">
@@ -5543,6 +5588,44 @@ function renderRanking() {
 
 }
 
+const HABILIDADES_PEDAGOGICAS_FALLBACK={
+  "D013_M":"Reconhecer as diferentes representações de um número racional.",
+  "D039_M":"Utilizar proporcionalidade entre duas grandezas na resolução de problema.",
+  "D043_M":"Identificar a localização de pontos no plano cartesiano.",
+  "D049_M":"Utilizar relações métricas em um triângulo retângulo na resolução de problemas.",
+  "D064_M":"Utilizar informações apresentadas em tabelas ou gráficos na resolução de problemas.",
+  "D074_M":"Corresponder as representações algébrica e gráfica de uma função exponencial.",
+  "D085_M":"Interpretar geometricamente os coeficientes da equação de uma reta.",
+  "D087_M":"Resolver problema envolvendo equação do 2º grau.",
+  "D088_M":"Utilizar função exponencial na resolução de problemas.",
+  "D097_M":"Utilizar propriedades de progressões geométricas na resolução de problemas.",
+  "D111_M":"Relacionar diferentes poliedros ou corpos redondos com suas planificações ou vistas.",
+  "D124_M":"Identificar a equação de uma reta a partir de dois pontos dados ou de um ponto e sua inclinação.",
+  "D125_M":"Identificar a relação entre o número de vértices, faces e/ou arestas de poliedros expressa em um problema.",
+  "D129_M":"Resolver problema envolvendo a área total e/ou volume de um sólido."
+};
+const NUCLEOS_PEDAGOGICOS_FALLBACK={
+  "D043_M":"N1 — Plano Cartesiano e Retas","D085_M":"N1 — Plano Cartesiano e Retas","D124_M":"N1 — Plano Cartesiano e Retas",
+  "D074_M":"N2 — Função Exponencial e Progressão Geométrica","D088_M":"N2 — Função Exponencial e Progressão Geométrica","D097_M":"N2 — Função Exponencial e Progressão Geométrica",
+  "D111_M":"N3 — Geometria Espacial","D125_M":"N3 — Geometria Espacial","D129_M":"N3 — Geometria Espacial",
+  "D013_M":"N4 — Números, Proporcionalidade e Relações Métricas","D039_M":"N4 — Números, Proporcionalidade e Relações Métricas","D049_M":"N4 — Números, Proporcionalidade e Relações Métricas",
+  "D064_M":"N5 — Dados, Tabelas e Gráficos",
+  "D087_M":"N6 — Funções Algébricas e Resolução de Problemas"
+};
+function textoPedagogico(valor){
+  if(Array.isArray(valor)) return valor.map(v=>textoPedagogico(v)).filter(Boolean).join(" • ");
+  if(valor && typeof valor==="object") return textoPedagogico(valor.nome||valor.name||valor.titulo||valor.title||valor.descricao||valor.description||"");
+  return String(valor??"").trim();
+}
+function preencherQuadroPedagogico(q={}){
+  const descritor=String(q?.descritor||q?.descriptor||"").toUpperCase().trim();
+  const habilidade=textoPedagogico(q?.habilidade||q?.skill||q?.tarefa||q?.expectativa)||HABILIDADES_PEDAGOGICAS_FALLBACK[descritor]||"Habilidade vinculada ao descritor da questão.";
+  const nucleo=textoPedagogico(q?.nucleo||q?.nucleus)||NUCLEOS_PEDAGOGICOS_FALLBACK[descritor]||"Núcleo de aprendizagem da Arena Matemática";
+  if($("qNucleo")) $("qNucleo").textContent=nucleo;
+  if($("qHabilidade")) $("qHabilidade").textContent=habilidade;
+  if($("qPedagogico")) $("qPedagogico").style.display=(descritor||habilidade||nucleo)?"block":"none";
+}
+
 async function renderQuestao() {
   if (!arenaAtual || !jogador) return;
   const token=++renderQuestaoToken;
@@ -5564,6 +5647,7 @@ async function renderQuestao() {
   const pct=Math.round(idx/Math.max(1,total)*100);
   $("progressTxt").textContent=`Questão ${idx+1} de ${total}`; $("progressPct").textContent=`${pct}%`; $("progressBar").style.width=`${pct}%`;
   $("qDesc").textContent=q.descritor||q.descriptor||"DESCRITOR"; $("qLevel").textContent=q.nivel||q.level||""; $("qText").textContent=q.enunciado||q.text||q.texto||q.pergunta||"";
+  preencherQuadroPedagogico(q);
   const visualBruto=q?.visual ?? q?.svg ?? "";
   let vis="";
   if (typeof visualBruto === "string") {
