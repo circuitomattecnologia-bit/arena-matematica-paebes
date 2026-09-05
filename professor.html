@@ -230,7 +230,7 @@ main{max-width:1500px;margin:auto;padding:30px 5% 80px}
 </div>
 
 <div class="two">
-  <div><label>Quantidade de questões</label><input id="qtd" type="number" value="40" min="5" step="1"><div class="small">A nova versão não terá limite pedagógico fixo de 40. O banco será ampliado no próximo arquivo.</div></div>
+  <div><label>Quantidade de questões</label><input id="qtd" type="number" value="40" min="5" step="1"><div class="small">A quantidade é definida pelo professor. O banco v6.2 trabalha com geração ampliada e proteção contra repetição.</div></div>
   <div><label>Limite de participantes</label><input id="limite" type="number" value="60" min="1" max="120"></div>
 </div>
 
@@ -250,18 +250,17 @@ main{max-width:1500px;margin:auto;padding:30px 5% 80px}
 <h3>📚 Descritores disponíveis</h3>
 <div class="descritores" id="descritores"></div>
 
-<div class="status">🎯 Para cada descritor selecionado, defina prioridade e nível de trabalho.</div>
+<div class="status">🎯 Para cada descritor, defina a prioridade. Mantenha <strong>ADAPTATIVO — individual</strong> para o motor conduzir a progressão do estudante. Os níveis manuais funcionam apenas como teto.</div>
 <div id="configDescritores" class="configDescritores"></div>
 
 <div class="status">
-  <strong>Distribuição quando o nível estiver em “Misto”</strong>
-  <div class="nivelGrid">
-    <label>Abaixo do Básico (%)<input id="pctAbb" type="number" value="40"></label>
-    <label>Básico (%)<input id="pctBasico" type="number" value="35"></label>
-    <label>Proficiente (%)<input id="pctProficiente" type="number" value="25"></label>
-    <label>Avançado (%)<input id="pctAvancado" type="number" value="0"></label>
+  <strong>🧭 PROGRESSÃO ADAPTATIVA INDIVIDUAL</strong>
+  <div class="small" style="margin-top:8px">
+    A Arena não distribui mais percentuais fixos iguais para todos. Cada estudante progride,
+    por descritor, em <strong>Abaixo do Básico → Básico → Proficiente → Avançado</strong>,
+    conforme seu histórico e desempenho. O Avançado é o último estágio e aparece com menor incidência.
+    O professor escolhe os Núcleos, os descritores e a prioridade; o motor adaptativo define o nível individual.
   </div>
-  <div class="small">Prioridade pedagógica: Abaixo do Básico → Básico → Proficiente. Avançado permanece opcional.</div>
 </div>
 
 <div class="actions">
@@ -419,22 +418,27 @@ import {
   criarEventoEspecial,observarEventoEspecial,atualizarCompetidor,removerCompetidor,retomarArena,
   buscarHistoricoEstudante,liberarEdicaoPerfil,autorizarGaleriaPerfil,observarProblemasCamera,liberarQuestaoSemFoto
 } from "./js/firebase-service.js";
-import {gerarQuestoesArena,HABILIDADES_PAEBES} from "./js/question-bank.js";
+import {gerarQuestoesArena,HABILIDADES_PAEBES,NUCLEOS_APRENDIZAGEM,PRIORIDADE_AMA_3TRI} from "./js/question-bank.js";
 import {metaDiamante,observarHistoricoDiamante} from "./js/diamante-service.js";
 iniciarFirebase();
 
-const NUCLEOS=[
-  {id:"retas",nome:"Plano Cartesiano e Retas",foco:"Da localização à equação da reta.",descritores:["D009_M","D043_M","D085_M","D124_M"]},
-  {id:"circ",nome:"Circunferência no Plano",foco:"Coordenadas, centro, raio e equação.",descritores:["D043_M","D155_M"]},
-  {id:"sistemas",nome:"Sistemas Lineares e Matrizes",foco:"Representações, interseção, sistemas e matrizes.",descritores:["D043_M","D085_M","D154_M","D127_M","D157_M"]},
-  {id:"exp",nome:"Exponencial e PG",foco:"Gráfico, modelagem exponencial e progressão geométrica.",descritores:["D074_M","D088_M","D097_M"]},
-  {id:"espacial",nome:"Geometria Espacial",foco:"Planificações, poliedros, área e volume.",descritores:["D111_M","D125_M","D129_M"]},
-  {id:"trig",nome:"Trigonometria",foco:"Proporcionalidade, relações métricas e razões trigonométricas.",descritores:["D039_M","D049_M","D051_M"]},
-  {id:"funtrig",nome:"Funções Trigonométricas",foco:"Plano cartesiano, razões e gráficos trigonométricos.",descritores:["D043_M","D051_M","D071_M","D126_M"]},
-  {id:"rec",nome:"Fundamentos e Recuperação",foco:"Recomposição para avançar até o Proficiente.",descritores:["D013_M","D038_M","D039_M","D049_M","D058_M","D064_M","D087_M"]}
-];
-const AMA=["D013_M","D039_M","D043_M","D049_M","D064_M","D074_M","D085_M","D087_M","D088_M","D097_M","D111_M","D124_M","D125_M","D129_M"];
-const DESCRITORES_FIXOS=['D009_M','D033_M','D038_M','D039_M','D042_M','D043_M','D049_M','D051_M','D057_M','D058_M','D063_M','D064_M','D065_M','D071_M','D074_M','D076_M','D078_M','D080_M','D082_M','D085_M','D086_M','D087_M','D088_M','D096_M','D097_M','D111_M','D119_M','D124_M','D125_M','D126_M','D127_M','D129_M','D132_M','D133_M','D145_M'];
+const NUCLEOS=Object.entries(NUCLEOS_APRENDIZAGEM||{})
+  .map(([id,n])=>({
+    id,
+    ordem:Number(n?.ordem||999),
+    nome:n?.nome||id,
+    foco:n?.foco||"",
+    descritores:Array.isArray(n?.descritores)?n.descritores:[]
+  }))
+  .sort((a,b)=>a.ordem-b.ordem);
+
+const AMA=[...(PRIORIDADE_AMA_3TRI||[])];
+
+// Campanha atual: somente os 14 descritores prioritários AMA.
+// Os demais descritores permanecem preservados no banco para expansão posterior.
+const DESCRITORES_FIXOS=[...AMA];
+
+const DISTRIBUICAO_FALLBACK={abb:45,basico:35,proficiente:17,avancado:3};
 
 const area=document.getElementById("descritores");
 let pararArena=null,pararCompetidores=null,pararDuelo=null,pararBoss=null,pararEspecial=null,pararHistoricoDiamante=null,pararProblemasCamera=null;
@@ -455,7 +459,7 @@ function montarNucleos(){
   el.innerHTML=NUCLEOS.map(n=>`
     <div class="nucleo">
       <div class="nucleoTopo">
-        <div><h4>${n.nome}</h4><p>${n.foco}</p></div>
+        <div><h4>${n.nome}</h4><p>${n.foco}</p><div class="small" style="margin-top:6px;color:#f4c75b">Campanha AMA — 3º trimestre</div></div>
         <input class="selNucleo" type="checkbox" data-nucleo="${n.id}" aria-label="Selecionar ${n.nome}">
       </div>
       <div class="caminho">${n.descritores.join(" → ")}</div>
@@ -492,7 +496,10 @@ function renderConfiguracaoDescritores(base=null){
     return `<div class="configLinha" data-desc="${d}">
       <strong>${d}${AMA.includes(d)?' <span style="color:#f4c75b">• AMA</span>':""}</strong>
       <select class="pesoDesc">${[1,2,3,4].map(v=>`<option value="${v}" ${p===v?"selected":""}>${v===1?"Peso normal":v===2?"Prioridade média":v===3?"Prioridade alta":"Prioridade máxima"} — ${v}×</option>`).join("")}</select>
-      <select class="nivelDesc">${["MISTO","ABAIXO DO BÁSICO","BÁSICO","PROFICIENTE","AVANÇADO"].map(v=>`<option ${n===v?"selected":""}>${v}</option>`).join("")}</select>
+      <select class="nivelDesc">
+        <option value="MISTO" ${n==="MISTO"?"selected":""}>ADAPTATIVO — individual</option>
+        ${["ABAIXO DO BÁSICO","BÁSICO","PROFICIENTE","AVANÇADO"].map(v=>`<option value="${v}" ${n===v?"selected":""}>Teto: ${v}</option>`).join("")}
+      </select>
       <div class="habilidadeLinha">📘 ${HABILIDADES_PAEBES[d]||""}</div>
     </div>`;
   }).join("");
@@ -500,7 +507,7 @@ function renderConfiguracaoDescritores(base=null){
 function lerConfiguracaoDescritores(){
   const c={};document.querySelectorAll(".configLinha").forEach(l=>c[l.dataset.desc]={peso:Number(l.querySelector(".pesoDesc").value||1),nivel:l.querySelector(".nivelDesc").value||"MISTO"});return c
 }
-function lerDistribuicaoNiveis(){return{abb:Number(pctAbb.value||0),basico:Number(pctBasico.value||0),proficiente:Number(pctProficiente.value||0),avancado:Number(pctAvancado.value||0)}}
+function lerDistribuicaoNiveis(){return{...DISTRIBUICAO_FALLBACK}}
 function atualizarDescritorEspecial(){const s=document.getElementById("descritorEspecial"),ant=s.value,sel=selecionados();s.innerHTML='<option value="">Selecione</option>'+sel.map(d=>`<option value="${d}">${d}</option>`).join("");if(sel.includes(ant))s.value=ant}
 function setLive(status){const map={preparacao:"● ARENA EM PREPARAÇÃO",iniciada:"● ARENA EM DISPUTA",continuada:"● ARENA EM DISPUTA",pausada:"● ARENA PAUSADA",encerrada:"■ ARENA ENCERRADA"};live.textContent=map[status]||"● ARENA EM PREPARAÇÃO"}
 function configBossAtual(a=arenaLocal()||{}){const c=a.configBoss||{};return{pctAcertos:Math.max(0,Math.min(100,Number(c.pctAcertos??bossPctAcertos.value??60))),pctConcluidos:Math.max(0,Math.min(100,Number(c.pctConcluidos??bossPctConcluidos.value??70)))}}
@@ -519,7 +526,6 @@ function restaurar(a){
   qtd.value=Number(a.quantidade||40);limite.value=Number(a.limite||60);
   const cfgBoss=a.configBoss||{};bossPctAcertos.value=Number(cfgBoss.pctAcertos??60);bossPctConcluidos.value=Number(cfgBoss.pctConcluidos??70);
   document.querySelectorAll(".desc input").forEach(x=>x.checked=(a.descritores||[]).includes(x.value));
-  const d=a.distribuicaoNiveis||{};pctAbb.value=d.abb??40;pctBasico.value=d.basico??35;pctProficiente.value=d.proficiente??25;pctAvancado.value=d.avancado??0;
   renderConfiguracaoDescritores(a.configuracaoDescritores||{});atualizarDescritorEspecial();sincronizarNucleos();
   const nomesStatus={preparacao:"Preparação",iniciada:"Em disputa",continuada:"Em disputa",pausada:"Pausada",encerrada:"Encerrada"};
   estado.textContent=nomesStatus[a.status]||"Preparação";setLive(a.status);atualizarControles(a.status==="encerrada");
@@ -635,11 +641,22 @@ codigoRetomar.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefaul
 window.criarArena=async()=>{
   const sel=selecionados();if(!sel.length){alert("Selecione pelo menos um descritor.");return}
   const quantidade=Math.max(5,Number(qtd.value)||40);qtd.value=quantidade;
-  const dist=lerDistribuicaoNiveis();if(Object.values(dist).reduce((a,b)=>a+b,0)!==100){alert("A distribuição dos níveis deve somar 100%.");return}
-  let questoes;try{questoes=gerarQuestoesArena({quantidade,descritores:sel,configuracaoDescritores:lerConfiguracaoDescritores(),distribuicaoNiveis:dist})}catch(e){alert((e.message||"Erro ao gerar questões.")+"\n\nObservação: enquanto o question-bank.js antigo ainda estiver instalado, Arenas acima de 40 questões só funcionarão depois de substituirmos esse arquivo.");return}
+  const dist=lerDistribuicaoNiveis();
+  let questoes;
+  try{
+    questoes=gerarQuestoesArena({
+      quantidade,
+      descritores:sel,
+      configuracaoDescritores:lerConfiguracaoDescritores(),
+      distribuicaoNiveis:dist
+    });
+  }catch(e){
+    alert(e.message||"Erro ao gerar questões.");
+    return
+  }
   const cfgBoss={pctAcertos:Math.max(0,Math.min(100,Number(bossPctAcertos.value||0))),pctConcluidos:Math.max(0,Math.min(100,Number(bossPctConcluidos.value||0)))};
   const evidencia={};sel.forEach(d=>{const i=questoes.findIndex(q=>String(q?.descritor||q?.descriptor||"").toUpperCase()===String(d).toUpperCase());if(i>=0)evidencia[d]=i});
-  const cod=gerarCodigo(),dados={codigo:cod,nome:nomeArena.value||"Arena Matemática",turma:turma.value,quantidade:questoes.length,quantidadeSolicitada:quantidade,limite:Number(limite.value||60),descritores:sel,configuracaoDescritores:lerConfiguracaoDescritores(),distribuicaoNiveis:dist,configBoss:cfgBoss,questoes,questaoEvidenciaPorDescritor:evidencia,status:"preparacao",entradaLiberada:false,aceitaNovos:false,questaoAtual:0,competidores:{},novaFase:true,versaoArena:"nova-fase-2026-v1",criadaEm:new Date().toISOString()};
+  const cod=gerarCodigo(),dados={codigo:cod,nome:nomeArena.value||"Arena Matemática",turma:turma.value,quantidade:questoes.length,quantidadeSolicitada:quantidade,limite:Number(limite.value||60),descritores:sel,configuracaoDescritores:lerConfiguracaoDescritores(),distribuicaoNiveis:dist,distribuicaoNiveisFallback:dist,motorAdaptativo:true,versaoMotorAdaptativo:"arena-adaptativa-2026-v3",configBoss:cfgBoss,questoes,questaoEvidenciaPorDescritor:evidencia,status:"preparacao",entradaLiberada:false,aceitaNovos:false,questaoAtual:0,competidores:{},novaFase:true,versaoArena:"coliseu-professor-2026-v6.3",criadaEm:new Date().toISOString()};
   try{await salvarArena(cod,dados);salvarLocal(dados);restaurar(dados);conectarArena(cod);mensagem.innerHTML=`🏛️ Arena criada. Código <strong>${cod}</strong>. Agora libere os estudantes.`}catch(e){console.error(e);alert("Erro ao criar Arena no Firebase.")}
 }
 window.liberar=async()=>{const a=arenaLocal();if(!a?.codigo){alert("Crie ou retome uma Arena primeiro.");return}await liberarEntrada(a.codigo);mensagem.innerHTML="🔓 Entrada dos estudantes <strong>LIBERADA</strong>."}
@@ -647,8 +664,31 @@ window.bloquear=async()=>{const a=arenaLocal();if(!a?.codigo)return;await bloque
 window.acao=async(tipo)=>{const a=arenaLocal();if(!a?.codigo){alert("Crie ou retome uma Arena primeiro.");return}await definirStatusArena(a.codigo,tipo);mensagem.innerHTML=`⚡ Arena <strong>${{iniciada:"iniciada",pausada:"pausada",continuada:"continuada",encerrada:"encerrada"}[tipo]}</strong>.`}
 window.marcarAMA=()=>{document.querySelectorAll(".desc input").forEach(x=>{if(!x.disabled)x.checked=AMA.includes(x.value)});renderConfiguracaoDescritores();atualizarDescritorEspecial();sincronizarNucleos()}
 window.limpar=()=>{document.querySelectorAll(".desc input").forEach(x=>x.checked=false);document.querySelectorAll(".selNucleo").forEach(x=>x.checked=false);renderConfiguracaoDescritores();atualizarDescritorEspecial()}
-window.reutilizarArena=()=>{const a=arenaLocal();if(!a?.codigo||a.status!=="encerrada"){alert("Encerre a Arena atual antes de reutilizar.");return}sessionStorage.setItem("arenaConfigReuso",JSON.stringify({nome:a.nome,turma:a.turma,quantidade:a.quantidade||40,limite:a.limite||60,descritores:a.descritores||[],configuracaoDescritores:a.configuracaoDescritores||{},distribuicaoNiveis:a.distribuicaoNiveis||{abb:40,basico:35,proficiente:25,avancado:0},configBoss:a.configBoss||{pctAcertos:60,pctConcluidos:70}}));localStorage.removeItem("arenaPAEBES");location.reload()}
-function restaurarReuso(){try{const r=sessionStorage.getItem("arenaConfigReuso");if(!r)return;const c=JSON.parse(r);nomeArena.value=c.nome||nomeArena.value;turma.value=c.turma||turma.value;qtd.value=Number(c.quantidade||40);limite.value=Number(c.limite||60);document.querySelectorAll(".desc input").forEach(x=>x.checked=(c.descritores||[]).includes(x.value));const d=c.distribuicaoNiveis||{};pctAbb.value=d.abb??40;pctBasico.value=d.basico??35;pctProficiente.value=d.proficiente??25;pctAvancado.value=d.avancado??0;const cb=c.configBoss||{};bossPctAcertos.value=Number(cb.pctAcertos??60);bossPctConcluidos.value=Number(cb.pctConcluidos??70);renderConfiguracaoDescritores(c.configuracaoDescritores||{});atualizarDescritorEspecial();sincronizarNucleos();sessionStorage.removeItem("arenaConfigReuso");mensagem.innerHTML="♻️ Configuração reaproveitada. Ajuste e crie uma nova Arena."}catch(e){console.error(e)}}
+window.reutilizarArena=()=>{const a=arenaLocal();if(!a?.codigo||a.status!=="encerrada"){alert("Encerre a Arena atual antes de reutilizar.");return}sessionStorage.setItem("arenaConfigReuso",JSON.stringify({nome:a.nome,turma:a.turma,quantidade:a.quantidade||40,limite:a.limite||60,descritores:a.descritores||[],configuracaoDescritores:a.configuracaoDescritores||{},distribuicaoNiveis:a.distribuicaoNiveis||DISTRIBUICAO_FALLBACK,configBoss:a.configBoss||{pctAcertos:60,pctConcluidos:70}}));localStorage.removeItem("arenaPAEBES");location.reload()}
+function restaurarReuso(){
+  try{
+    const r=sessionStorage.getItem("arenaConfigReuso");
+    if(!r)return;
+    const c=JSON.parse(r);
+    nomeArena.value=c.nome||nomeArena.value;
+    turma.value=c.turma||turma.value;
+    qtd.value=Number(c.quantidade||40);
+    limite.value=Number(c.limite||60);
+    document.querySelectorAll(".desc input").forEach(
+      x=>x.checked=(c.descritores||[]).includes(x.value)
+    );
+    const cb=c.configBoss||{};
+    bossPctAcertos.value=Number(cb.pctAcertos??60);
+    bossPctConcluidos.value=Number(cb.pctConcluidos??70);
+    renderConfiguracaoDescritores(c.configuracaoDescritores||{});
+    atualizarDescritorEspecial();
+    sincronizarNucleos();
+    sessionStorage.removeItem("arenaConfigReuso");
+    mensagem.innerHTML="♻️ Configuração reaproveitada. Ajuste os descritores e crie uma nova Arena.";
+  }catch(e){
+    console.error(e)
+  }
+}
 
 window.liberarBoss=async()=>{const a=arenaLocal();if(!a?.codigo){alert("Crie ou retome uma Arena primeiro.");return}const cs=Object.values(a.competidores||{});if(!cs.length){alert("Ainda não há competidores.");return}const cfg=configBossAtual(a),concluidos=cs.filter(c=>c?.regularConcluida===true).length,pct=concluidos/cs.length*100;if(pct<cfg.pctConcluidos){alert(`Ainda não atingiu o critério do Boss.\n\nConcluíram: ${concluidos}/${cs.length} (${Math.round(pct)}%)\nMínimo: ${cfg.pctConcluidos}%`);return}const automaticos=cs.filter(c=>elegivelBossAutomatico(c,a)).length;if(confirm(`Liberar o BOSS FINAL agora?\n\n${automaticos} estudante(s) terão acesso automático.`)){await liberarBossFinal(a.codigo,{bonusXP:300});mensagem.innerHTML=`👑 <strong>BOSS FINAL LIBERADO.</strong> ${automaticos} acesso(s) automático(s).`}}
 window.abrirGerenciamentoIndividual=()=>{const a=arenaLocal(),lista=Object.values(a?.competidores||{});if(!lista.length){alert("Ainda não há competidores.");return}manageCompetidor.innerHTML=lista.map(c=>`<option value="${c.id||c.jogadorId}">${c.nome||"Competidor"} — ${Number(c.xp||0)} XP</option>`).join("");managePanel.classList.toggle("ativo")}
