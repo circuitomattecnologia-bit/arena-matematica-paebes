@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ARENA MATEMÁTICA — ESTUDANTE FINAL v6.7 — CORREÇÃO VISUAL + VÍDEO FINAL + MOSAICO DINÂMICO
+<!-- ARENA MATEMÁTICA — ESTUDANTE FINAL v7.1 — CRONÔMETRO FIXO — CORREÇÃO VISUAL + VÍDEO FINAL + MOSAICO DINÂMICO
 Abertura: vídeo sem contagem → fotos/confetes → mosaico → espada/comandante → nome da Arena → começou.
 Motor adaptativo: arena-adaptativa-2026-v3.
 -->
@@ -5347,7 +5347,7 @@ function iniciarCronometroQuestao(q,idx,precisaFoto) {
 
     /* Nunca desconta saltos grandes do relógio causados por travamento, aba em segundo plano, câmera ou renderização. */
     const bruto=Math.max(0,(agora-cronometroQuestao.ultimoTick)/1000);
-    const delta=Math.min(0.75,bruto);
+    const delta=Math.min(0.30,bruto);
     cronometroQuestao.ultimoTick=agora;
     cronometroQuestao.decorrido+=delta;
 
