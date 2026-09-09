@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ARENA MATEMÁTICA — ESTUDANTE FINAL v7.1 — CRONÔMETRO FIXO — CORREÇÃO VISUAL + VÍDEO FINAL + MOSAICO DINÂMICO
+<!-- ARENA MATEMÁTICA — ESTUDANTE FINAL v6.7 — CORREÇÃO VISUAL + VÍDEO FINAL + MOSAICO DINÂMICO
 Abertura: vídeo sem contagem → fotos/confetes → mosaico → espada/comandante → nome da Arena → começou.
 Motor adaptativo: arena-adaptativa-2026-v3.
 -->
@@ -5310,6 +5310,7 @@ let cronometroGeracao=0;
 function iniciarCronometroQuestao(q,idx,precisaFoto) {
   const chave=chaveQuestaoAtual(q,idx);
 
+  /* Se é a mesma questão, preserva exatamente o tempo e garante que exista um único intervalo ativo. */
   if (cronometroQuestao?.chave === chave) {
     $("photoTimeBonus").style.display = precisaFoto ? "inline-flex" : "none";
     atualizarCronometroUI();
@@ -5319,19 +5320,13 @@ function iniciarCronometroQuestao(q,idx,precisaFoto) {
     questaoFinalizando=false;
     const base=tempoBasePorNivel(q);
     const bonus=precisaFoto ? 60 : 0;
-    const agora=Date.now();
     cronometroQuestao={
       chave,base,bonus,
       normalRestante:base+bonus,
       extraRestante:30,
       fase:"normal",
       decorrido:0,
-      inicioReal:agora,
-      deadlineNormal:agora+((base+bonus)*1000),
-      deadlineExtra:null,
-      ultimoTick:agora,
-      pausadoDesde:null,
-      zerouEm:null,
+      ultimoTick:Date.now(),
       esgotado:false
     };
   }
@@ -5345,62 +5340,44 @@ function iniciarCronometroQuestao(q,idx,precisaFoto) {
 
   cronometroInterval=setInterval(async()=>{
     if (minhaGeracao!==cronometroGeracao) return;
-    const c=cronometroQuestao;
-    if (!c || c.chave!==chave || questaoFinalizando || c.esgotado) return;
+    if (!cronometroQuestao || cronometroQuestao.chave!==chave || questaoFinalizando || cronometroQuestao.esgotado) return;
 
     const agora=Date.now();
+    if (!arenaRodando()) { cronometroQuestao.ultimoTick=agora; return; }
 
-    /* Arena pausada: congela o relógio e empurra o prazo pelo mesmo tempo da pausa. */
-    if (!arenaRodando()) {
-      if (!c.pausadoDesde) c.pausadoDesde=agora;
-      c.ultimoTick=agora;
-      return;
-    }
-    if (c.pausadoDesde) {
-      const pausa=Math.max(0,agora-c.pausadoDesde);
-      if (c.fase==="normal") c.deadlineNormal+=pausa;
-      else if (c.deadlineExtra) c.deadlineExtra+=pausa;
-      c.pausadoDesde=null;
-    }
+    /* Nunca desconta saltos grandes do relógio causados por travamento, aba em segundo plano, câmera ou renderização. */
+    const bruto=Math.max(0,(agora-cronometroQuestao.ultimoTick)/1000);
+    const delta=Math.min(0.75,bruto);
+    cronometroQuestao.ultimoTick=agora;
+    cronometroQuestao.decorrido+=delta;
 
-    /* v7.2: fonte única da verdade = prazo absoluto. Nenhum observer/render/Firebase pode antecipar o relógio. */
-    if (c.fase==="normal") {
-      c.normalRestante=Math.max(0,(c.deadlineNormal-agora)/1000);
-      c.decorrido=Math.max(0,((baseSeguro(c.base)+c.bonus)*1000-(c.deadlineNormal-agora))/1000);
-      if (agora>=c.deadlineNormal) {
-        c.normalRestante=0;
-        c.fase="extra";
-        c.extraRestante=30;
-        c.deadlineExtra=agora+30000;
-        c.zerouEm=null;
+    if (cronometroQuestao.fase==="normal") {
+      cronometroQuestao.normalRestante=Math.max(0,cronometroQuestao.normalRestante-delta);
+      if (cronometroQuestao.normalRestante<=0) {
+        cronometroQuestao.normalRestante=0;
+        cronometroQuestao.fase="extra";
+        cronometroQuestao.extraRestante=30;
+        cronometroQuestao.ultimoTick=agora;
         atualizarCronometroUI();
         return;
       }
-    } else if (c.fase==="extra") {
-      c.extraRestante=Math.max(0,(c.deadlineExtra-agora)/1000);
-      if (agora>=c.deadlineExtra) {
-        c.extraRestante=0;
+    } else if (cronometroQuestao.fase==="extra") {
+      cronometroQuestao.extraRestante=Math.max(0,cronometroQuestao.extraRestante-delta);
+      if (cronometroQuestao.extraRestante<=0) {
+        cronometroQuestao.extraRestante=0;
+        cronometroQuestao.esgotado=true;
         atualizarCronometroUI();
-        /* Segurança visual: 00:00 precisa aparecer antes de qualquer encerramento automático. */
-        if (!c.zerouEm) { c.zerouEm=agora; return; }
-        if ((agora-c.zerouEm)<1000) return;
-        c.esgotado=true;
         pararCronometroQuestao();
         await responderQuestao(true);
         return;
       }
     }
-    c.ultimoTick=agora;
     atualizarCronometroUI();
-  },200);
+  },250);
 }
-function baseSeguro(v){ const n=Number(v); return Number.isFinite(n)&&n>0?n:120; }
 function metadadosTempo(esgotado=false) {
   const c=cronometroQuestao;
-  const total=(Number(c?.base||0)+Number(c?.bonus||0)+30);
-  const restante=Number(c?.fase==="extra"?c?.extraRestante:c?.normalRestante)||0;
-  const decorrido=Math.max(0,total-restante-(c?.fase==="normal"?30:0));
-  return {tempoBaseSeg:c?.base ?? 0,bonusFotoSeg:c?.bonus ?? 0,tempoExtraSeg:30,tempoDecorridoSeg:Math.round(decorrido),tempoEsgotado:Boolean(esgotado),naoRespondida:Boolean(esgotado)};
+  return {tempoBaseSeg:c?.base ?? 0,bonusFotoSeg:c?.bonus ?? 0,tempoExtraSeg:30,tempoDecorridoSeg:Math.round(c?.decorrido ?? 0),tempoEsgotado:Boolean(esgotado),naoRespondida:Boolean(esgotado)};
 }
 
 function xpDaQuestao(q={}) {
@@ -5742,6 +5719,7 @@ async function renderQuestao() {
 }
 
 async function responderQuestao(porTempo=false) {
+  porTempo = (porTempo === true);
   if (questaoFinalizando) return;
   if (!porTempo && selecionada===null) return;
 
@@ -7098,7 +7076,7 @@ $("aberturaVideo")
 
 $("confirmBtn")
   .onclick =
-  responderQuestao;
+  () => responderQuestao(false);
 
 $("bossBtn")
   .onclick =
