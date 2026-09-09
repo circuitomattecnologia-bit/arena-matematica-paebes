@@ -4164,45 +4164,40 @@ async function abrirEvidenceCamera() {
     return;
   }
 
-  $("evidenceModal")
-    .style.display =
-    "flex";
-
-  $("evidencePreview")
-    .style.display =
-    "none";
-
-  $("evidenceVideo")
-    .style.display =
-    "block";
-
-  $("evidenceCaptureBtn")
-    .classList
-    .remove(
-      "hidden"
-    );
-
-  $("evidenceRetryBtn")
-    .classList
-    .add(
-      "hidden"
-    );
-
-  $("evidenceSendBtn")
-    .classList
-    .add(
-      "hidden"
-    );
-
-  $("evidenceCaptureBtn")
-    .textContent =
-    "ATIVAR CÂMERA";
-
-  $("evidenceMsg")
-    .textContent =
-    "Ative a câmera e fotografe somente a resolução desta questão no caderno.";
-
+  /*
+    v7.4 — RESET COMPLETO DA CÂMERA DE EVIDÊNCIA.
+    Cada nova questão de foto começa com uma sessão limpa.
+    Isso impede que estados disabled/preview/stream da evidência anterior
+    travem o botão TIRAR FOTO na próxima questão.
+  */
   pararEvidenceStream();
+
+  const video = $("evidenceVideo");
+  try { video.pause(); } catch {}
+  try { video.srcObject = null; } catch {}
+
+  evidenceCameraPronta = false;
+
+  $("evidencePreview").style.display = "none";
+  $("evidencePreview").removeAttribute("src");
+  $("evidencePreview").dataset.data = "";
+
+  $("evidenceVideo").style.display = "block";
+
+  $("evidenceCaptureBtn").classList.remove("hidden");
+  $("evidenceCaptureBtn").disabled = false;
+  $("evidenceCaptureBtn").textContent = "ATIVAR CÂMERA";
+
+  $("evidenceRetryBtn").classList.add("hidden");
+  $("evidenceRetryBtn").disabled = false;
+
+  $("evidenceSendBtn").classList.add("hidden");
+  $("evidenceSendBtn").disabled = false;
+
+  $("evidenceModal").style.display = "flex";
+
+  $("evidenceMsg").textContent =
+    "Ative a câmera e fotografe somente a resolução desta questão no caderno.";
 
 }
 
@@ -4340,34 +4335,21 @@ function capturarEvidencia() {
 
 function refazerEvidencia() {
 
-  $("evidencePreview")
-    .style.display =
-    "none";
+  $("evidencePreview").style.display = "none";
+  $("evidencePreview").dataset.data = "";
 
-  $("evidenceVideo")
-    .style.display =
-    "block";
+  $("evidenceVideo").style.display = "block";
 
-  $("evidenceCaptureBtn")
-    .classList
-    .remove(
-      "hidden"
-    );
+  $("evidenceCaptureBtn").classList.remove("hidden");
+  $("evidenceCaptureBtn").disabled = false;
 
-  $("evidenceRetryBtn")
-    .classList
-    .add(
-      "hidden"
-    );
+  $("evidenceRetryBtn").classList.add("hidden");
+  $("evidenceRetryBtn").disabled = false;
 
-  $("evidenceSendBtn")
-    .classList
-    .add(
-      "hidden"
-    );
+  $("evidenceSendBtn").classList.add("hidden");
+  $("evidenceSendBtn").disabled = false;
 
-  $("evidenceCaptureBtn")
-    .textContent =
+  $("evidenceCaptureBtn").textContent =
     evidenceCameraPronta
       ? "TIRAR FOTO"
       : "ATIVAR CÂMERA";
@@ -7124,7 +7106,7 @@ window
   );
 
 console.log(
-  "Arena Matemática — estudante adaptativo carregado."
+  "Arena Matemática — estudante v7.4 carregado (reset câmera de evidência)."
 );
 
 </script>
